@@ -370,8 +370,8 @@ export default function HomeScreen() {
             colorKey="extend"
           />
 
-          <Tile iconName={ICON.shop} label="Shop" colorKey="shop" disabled />
-          <Tile iconName={ICON.tasks} label="Tasks" colorKey="tasks" disabled />
+          <Tile iconName={ICON.shop} label="Shop" colorKey="shop" onPress={() => router.push("/Child/store" as Href)} />
+          <Tile iconName={ICON.tasks} label="Tasks" colorKey="tasks" onPress={() => router.push("/Child/tasks" as Href)} />
           <Tile
             iconName={ICON.achievements}
             label="Achievements"
