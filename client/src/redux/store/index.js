@@ -7,6 +7,7 @@ import parentHomeReducer from "../slices/parentHome-slice";
 import { injectDispatch } from '../../api/request';
 import notificationsReducer from "../slices/notification-slice";
 import auditSliceReducer from "../slices/audit-slice";
+import tasksReducer from "../slices/tasks-slice";
 
 export const store = configureStore({
   reducer: {
@@ -17,6 +18,7 @@ export const store = configureStore({
     parentHome: parentHomeReducer,
     notifications: notificationsReducer,
     audit: auditSliceReducer,
+    tasks: tasksReducer,
   },
 });
 

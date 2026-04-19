@@ -218,4 +218,9 @@ export const styles = StyleSheet.create({
     color: "#9B5B00",
     lineHeight: 22,
   },
+  completedDateText: {
+  fontSize: 12,
+  color: "#64748B",
+  marginTop: 2,
+},
 });

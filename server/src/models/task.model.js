@@ -17,6 +17,7 @@ export const TaskSchema = new mongoose.Schema(
         isApproved: { type: Boolean, default: false },
         isRegulary: { type: Boolean, default: false },
         isTemporary: { type: Boolean, default: false },
+        requireProof: { type: Boolean, default: false },
     }, { timestamps: true }
 );
 
