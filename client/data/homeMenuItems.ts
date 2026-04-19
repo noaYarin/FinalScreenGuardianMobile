@@ -12,14 +12,20 @@ export type HomeMenuItem = {
 export const MENU_ITEMS: HomeMenuItem[] = [
   {
     key: "location",
-    labelKey: "homeMenu.items.location",
+    labelKey: "location",
     icon: "map-marker",
     route: "/Parent/childLocation" as Href,
   },
   {
     key: "history",
-    labelKey: "homeMenu.items.history",
+    labelKey: "history",
     icon: "history",
     route: "/Parent/activityHistory" as Href,
+  },
+    {
+    key: "tasks",
+    labelKey: "tasks",
+    icon: "format-list-checkbox",
+    route: "/Parent/tasks" as Href,
   },
 ];
