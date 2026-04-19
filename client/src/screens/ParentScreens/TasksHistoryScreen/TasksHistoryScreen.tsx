@@ -7,19 +7,19 @@ import {
   Image,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import ChildDeviceSelector from "../../../components/ChildDeviceSelector/ChildDeviceSelector";
 import { styles } from "./styles";
+import { getMyChildrenThunk } from "../../../redux/thunks/childrenThunks";
+import { getParentTasksThunk } from "../../../redux/thunks/tasksThunks";
 
 type UiChild = {
   id: string;
   name: string;
 };
-
-type HistoryStatus = "completed" | "approved";
 
 type HistoryTaskItem = {
   id: string;
@@ -27,13 +27,11 @@ type HistoryTaskItem = {
   childId: string;
   childName: string;
   coins: number;
-  completedAt: string;
+  completedAtLabel: string;
   recurrenceLabel: string;
   note: string;
-  status: HistoryStatus;
-  approvedBy?: string;
-  hasProofImage?: boolean;
-  proofImageUrl?: string;
+  hasProofImage: boolean;
+  proofImageUrl: string;
 };
 
 const FALLBACK_CHILDREN: UiChild[] = [
@@ -42,78 +40,32 @@ const FALLBACK_CHILDREN: UiChild[] = [
   { id: "child-3", name: "Mia" },
 ];
 
-const MOCK_HISTORY_TASKS: HistoryTaskItem[] = [
-  {
-    id: "h1",
-    title: "Help set the table",
-    childId: "child-2",
-    childName: "Noah",
-    coins: 18,
-    completedAt: "Yesterday · 19:00",
-    recurrenceLabel: "Daily",
-    note: "Completed successfully before dinner.",
-    status: "completed",
-  },
-  {
-    id: "h2",
-    title: "Read for 20 minutes",
-    childId: "child-1",
-    childName: "Emma",
-    coins: 15,
-    completedAt: "Yesterday · 18:20",
-    recurrenceLabel: "Weekly",
-    note: "Finished reading chapter 4.",
-    status: "completed",
-  },
-  {
-    id: "h3",
-    title: "Water the plants",
-    childId: "child-1",
-    childName: "Emma",
-    coins: 20,
-    completedAt: "2 days ago · 17:15",
-    recurrenceLabel: "Daily",
-    note: "Photo reviewed and approved by parent.",
-    status: "approved",
-    approvedBy: "Mom",
-    hasProofImage: true,
-    proofImageUrl:
-      "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "h4",
-    title: "Clean the study desk",
-    childId: "child-3",
-    childName: "Mia",
-    coins: 30,
-    completedAt: "3 days ago · 16:05",
-    recurrenceLabel: "Weekly",
-    note: "Desk was fully cleaned and photo was approved.",
-    status: "approved",
-    approvedBy: "Dad",
-    hasProofImage: true,
-    proofImageUrl:
-      "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "h5",
-    title: "Pack school bag",
-    childId: "child-2",
-    childName: "Noah",
-    coins: 12,
-    completedAt: "4 days ago · 20:10",
-    recurrenceLabel: "Daily",
-    note: "Everything was ready for the next morning.",
-    status: "completed",
-  },
-];
+function formatCompletedLabel(completedAt: string | null | undefined) {
+  if (!completedAt) {
+    return "Completed";
+  }
+
+  try {
+    const date = new Date(completedAt);
+    if (!Number.isNaN(date.getTime())) {
+      return date.toLocaleDateString("en-GB");
+    }
+  } catch {}
+
+  return "Completed";
+}
 
 export default function TasksHistoryScreen() {
+  const dispatch = useDispatch<any>();
   const { width } = useWindowDimensions();
   const isWide = width >= 700;
 
   const reduxChildren = useSelector(
     (state: any) => state?.children?.childrenList ?? []
+  );
+
+  const parentTasks = useSelector(
+    (state: any) => state?.tasks?.parentTasks ?? []
   );
 
   const children: UiChild[] = useMemo(() => {
@@ -129,7 +81,11 @@ export default function TasksHistoryScreen() {
 
   const [viewMode, setViewMode] = useState<"all" | "single">("all");
   const [selectedChildId, setSelectedChildId] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<HistoryStatus>("completed");
+
+  useEffect(() => {
+    dispatch(getMyChildrenThunk());
+    dispatch(getParentTasksThunk());
+  }, [dispatch]);
 
   useEffect(() => {
     if (!selectedChildId && children.length > 0) {
@@ -137,29 +93,48 @@ export default function TasksHistoryScreen() {
     }
   }, [children, selectedChildId]);
 
-  const filteredHistory = useMemo((): HistoryTaskItem[] => {
-    if (viewMode === "all") {
-      return MOCK_HISTORY_TASKS;
+  const mappedHistoryTasks = useMemo((): HistoryTaskItem[] => {
+    if (!Array.isArray(parentTasks)) {
+      return [];
     }
 
-    return MOCK_HISTORY_TASKS.filter(
-      (task: HistoryTaskItem) => task.childId === selectedChildId
-    );
-  }, [viewMode, selectedChildId]);
+    return parentTasks
+      .filter((task: any) => !!task?.completedAt && !!task?.isApproved)
+      .map((task: any) => {
+        const childId = String(task?.childId ?? "");
+        const childName =
+          children.find((child) => String(child.id) === childId)?.name ?? "Child";
 
-  const completedTasks = useMemo(() => {
-    return filteredHistory.filter(
-      (task: HistoryTaskItem) => task.status === "completed"
-    );
-  }, [filteredHistory]);
+        const proofImg =
+          typeof task?.proofImg === "string" ? task.proofImg.trim() : "";
 
-  const approvedTasks = useMemo(() => {
-    return filteredHistory.filter(
-      (task: HistoryTaskItem) => task.status === "approved"
-    );
-  }, [filteredHistory]);
+        const hasProofImage =
+          proofImg !== "" && proofImg !== "default.png";
 
-  const visibleTasks = activeTab === "completed" ? completedTasks : approvedTasks;
+        return {
+          id: String(task?._id ?? task?.id ?? Math.random()),
+          title: task?.title ?? "Untitled task",
+          childId,
+          childName,
+          coins: Number(task?.coinsReward ?? 0),
+          completedAtLabel: formatCompletedLabel(task?.completedAt),
+          recurrenceLabel: task?.isRegulary ? "Daily / Recurring" : "One time",
+          note: "Task was completed and approved by the parent.",
+          hasProofImage,
+          proofImageUrl: hasProofImage ? proofImg : "",
+        };
+      });
+  }, [parentTasks, children]);
+
+  const visibleTasks = useMemo((): HistoryTaskItem[] => {
+    if (viewMode === "all") {
+      return mappedHistoryTasks;
+    }
+
+    return mappedHistoryTasks.filter(
+      (task) => String(task.childId) === String(selectedChildId)
+    );
+  }, [mappedHistoryTasks, viewMode, selectedChildId]);
 
   const selectedChildName =
     children.find((child) => child.id === selectedChildId)?.name ?? "Child";
@@ -177,7 +152,7 @@ export default function TasksHistoryScreen() {
                 Task History
               </AppText>
               <AppText weight="medium" style={styles.subtitle}>
-                Review completed and approved tasks from previous days.
+                Review approved tasks from previous days.
               </AppText>
             </View>
           </View>
@@ -238,97 +213,11 @@ export default function TasksHistoryScreen() {
             ) : null}
           </View>
 
-          <View style={styles.tabsRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Show completed tasks"
-              onPress={() => setActiveTab("completed")}
-              style={({ pressed }) => [
-                styles.tabButton,
-                activeTab === "completed" && styles.tabButtonActive,
-                pressed && styles.pressed,
-              ]}
-            >
-              <MaterialCommunityIcons
-                name="check-circle-outline"
-                size={18}
-                color={activeTab === "completed" ? "#FFFFFF" : "#4C6FFF"}
-              />
-              <AppText
-                weight={activeTab === "completed" ? "extraBold" : "bold"}
-                style={[
-                  styles.tabButtonText,
-                  activeTab === "completed" && styles.tabButtonTextActive,
-                ]}
-              >
-                Completed
-              </AppText>
-              <View
-                style={[
-                  styles.tabCountBadge,
-                  activeTab === "completed" && styles.tabCountBadgeActive,
-                ]}
-              >
-                <AppText
-                  weight="bold"
-                  style={[
-                    styles.tabCountText,
-                    activeTab === "completed" && styles.tabCountTextActive,
-                  ]}
-                >
-                  {completedTasks.length}
-                </AppText>
-              </View>
-            </Pressable>
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Show approved tasks"
-              onPress={() => setActiveTab("approved")}
-              style={({ pressed }) => [
-                styles.tabButton,
-                activeTab === "approved" && styles.tabButtonActive,
-                pressed && styles.pressed,
-              ]}
-            >
-              <MaterialCommunityIcons
-                name="shield-check-outline"
-                size={18}
-                color={activeTab === "approved" ? "#FFFFFF" : "#4C6FFF"}
-              />
-              <AppText
-                weight={activeTab === "approved" ? "extraBold" : "bold"}
-                style={[
-                  styles.tabButtonText,
-                  activeTab === "approved" && styles.tabButtonTextActive,
-                ]}
-              >
-                Approved
-              </AppText>
-              <View
-                style={[
-                  styles.tabCountBadge,
-                  activeTab === "approved" && styles.tabCountBadgeActive,
-                ]}
-              >
-                <AppText
-                  weight="bold"
-                  style={[
-                    styles.tabCountText,
-                    activeTab === "approved" && styles.tabCountTextActive,
-                  ]}
-                >
-                  {approvedTasks.length}
-                </AppText>
-              </View>
-            </Pressable>
-          </View>
-
           <View style={styles.listSection}>
             <View style={styles.listHeader}>
               <View>
                 <AppText weight="extraBold" style={styles.listTitle}>
-                  {activeTab === "completed" ? "Completed Tasks" : "Approved Tasks"}
+                  Approved Tasks
                 </AppText>
                 <AppText weight="medium" style={styles.listSubtitle}>
                   {viewMode === "all"
@@ -346,7 +235,7 @@ export default function TasksHistoryScreen() {
 
             <View style={styles.listContent}>
               {visibleTasks.length > 0 ? (
-                visibleTasks.map((task: HistoryTaskItem) => (
+                visibleTasks.map((task) => (
                   <View key={task.id} style={styles.taskCard}>
                     <View style={styles.taskTopRow}>
                       <View style={styles.taskMainInfo}>
@@ -354,7 +243,7 @@ export default function TasksHistoryScreen() {
                           {task.title}
                         </AppText>
                         <AppText weight="medium" style={styles.taskMeta}>
-                          {task.childName} · {task.completedAt}
+                          {task.childName} · {task.completedAtLabel}
                         </AppText>
                       </View>
 
@@ -374,11 +263,11 @@ export default function TasksHistoryScreen() {
                       {task.note}
                     </AppText>
 
-                    {task.hasProofImage && task.proofImageUrl ? (
+                    {task.hasProofImage ? (
                       <Image
                         source={{ uri: task.proofImageUrl }}
-                        resizeMode="cover"
                         style={styles.proofImage}
+                        resizeMode="cover"
                       />
                     ) : null}
 
@@ -389,36 +278,23 @@ export default function TasksHistoryScreen() {
                         </AppText>
                       </View>
 
-                      {task.status === "approved" ? (
-                        <View style={styles.approvedPill}>
-                          <MaterialCommunityIcons
-                            name="shield-check"
-                            size={15}
-                            color="#15803D"
-                          />
-                          <AppText weight="bold" style={styles.approvedPillText}>
-                            Approved{task.approvedBy ? ` by ${task.approvedBy}` : ""}
-                          </AppText>
-                        </View>
-                      ) : (
-                        <View style={styles.completedPill}>
-                          <MaterialCommunityIcons
-                            name="check-circle-outline"
-                            size={15}
-                            color="#4C6FFF"
-                          />
-                          <AppText weight="bold" style={styles.completedPillText}>
-                            Completed
-                          </AppText>
-                        </View>
-                      )}
+                      <View style={styles.approvedPill}>
+                        <MaterialCommunityIcons
+                          name="check-decagram-outline"
+                          size={15}
+                          color="#15803D"
+                        />
+                        <AppText weight="bold" style={styles.approvedPillText}>
+                          Approved
+                        </AppText>
+                      </View>
                     </View>
                   </View>
                 ))
               ) : (
                 <View style={styles.emptyState}>
                   <MaterialCommunityIcons
-                    name="history"
+                    name="clipboard-text-search-outline"
                     size={32}
                     color="#94A3B8"
                   />

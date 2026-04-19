@@ -4,13 +4,16 @@ import {
   ScrollView,
   Pressable,
   TextInput,
+  Alert,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useSelector } from "react-redux";
+import { router } from "expo-router";
+import { useDispatch, useSelector } from "react-redux";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import { styles } from "./styles";
+import { createTaskThunk, getParentTasksThunk } from "../../../redux/thunks/tasksThunks";
 
 type UiChild = {
   id: string;
@@ -26,7 +29,10 @@ const FALLBACK_CHILDREN: UiChild[] = [
 const RECURRENCE_OPTIONS = ["Daily", "Weekly", "Custom"] as const;
 
 export default function AddTaskScreen() {
+  const dispatch = useDispatch<any>();
+
   const reduxChildren = useSelector((state: any) => state?.children?.childrenList ?? []);
+  const isCreating = useSelector((state: any) => state?.tasks?.isCreating ?? false);
 
   const children: UiChild[] = useMemo(() => {
     if (Array.isArray(reduxChildren) && reduxChildren.length > 0) {
@@ -46,6 +52,7 @@ export default function AddTaskScreen() {
   const [recurrenceType, setRecurrenceType] =
     useState<(typeof RECURRENCE_OPTIONS)[number]>("Daily");
   const [assignedChildIds, setAssignedChildIds] = useState<string[]>([]);
+  const [requireProof, setRequireProof] = useState(false);
 
   useEffect(() => {
     if (children.length > 0 && assignedChildIds.length === 0) {
@@ -64,6 +71,54 @@ export default function AddTaskScreen() {
 
       return [...prev, childId];
     });
+  };
+
+  const handleCreateTask = async () => {
+    const trimmedTitle = taskTitle.trim();
+    const trimmedDescription = taskDescription.trim();
+
+    if (!trimmedTitle) {
+      Alert.alert("Missing title", "Please enter a task title.");
+      return;
+    }
+
+    if (assignedChildIds.length === 0) {
+      Alert.alert("No child selected", "Please select at least one child.");
+      return;
+    }
+
+    try {
+      await dispatch(
+        createTaskThunk({
+          title: trimmedTitle,
+          description: trimmedDescription,
+          coinsReward: coins,
+          isRecurring,
+          recurrenceType,
+          assignedChildIds,
+          requireProof,
+        })
+      ).unwrap();
+
+      await dispatch(getParentTasksThunk()).unwrap();
+
+      Alert.alert("Success", "Task created successfully.");
+
+      setTaskTitle("");
+      setTaskDescription("");
+      setCoins(25);
+      setIsRecurring(true);
+      setRecurrenceType("Daily");
+      setAssignedChildIds(children.length > 0 ? [children[0].id] : []);
+      setRequireProof(false);
+
+      router.back();
+    } catch (error: any) {
+      Alert.alert(
+        "Create task failed",
+        typeof error === "string" ? error : "Something went wrong."
+      );
+    }
   };
 
   return (
@@ -246,6 +301,56 @@ export default function AddTaskScreen() {
 
             <View style={styles.formGroup}>
               <AppText weight="bold" style={styles.label}>
+                Is a proof photo required?
+              </AppText>
+
+              <View style={styles.segmentRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Proof photo required yes"
+                  onPress={() => setRequireProof(true)}
+                  style={({ pressed }) => [
+                    styles.segmentButton,
+                    requireProof && styles.segmentButtonActive,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <AppText
+                    weight={requireProof ? "extraBold" : "medium"}
+                    style={[
+                      styles.segmentText,
+                      requireProof && styles.segmentTextActive,
+                    ]}
+                  >
+                    Yes
+                  </AppText>
+                </Pressable>
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Proof photo required no"
+                  onPress={() => setRequireProof(false)}
+                  style={({ pressed }) => [
+                    styles.segmentButton,
+                    !requireProof && styles.segmentButtonActive,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <AppText
+                    weight={!requireProof ? "extraBold" : "medium"}
+                    style={[
+                      styles.segmentText,
+                      !requireProof && styles.segmentTextActive,
+                    ]}
+                  >
+                    No
+                  </AppText>
+                </Pressable>
+              </View>
+            </View>
+
+            <View style={styles.formGroup}>
+              <AppText weight="bold" style={styles.label}>
                 Assign to children
               </AppText>
 
@@ -326,14 +431,25 @@ export default function AddTaskScreen() {
                   </AppText>
                 </View>
               </View>
+
+              <View style={styles.previewMetaRow}>
+                <View style={styles.previewMetaPill}>
+                  <AppText weight="bold" style={styles.previewMetaText}>
+                    {requireProof ? "Photo required" : "Photo optional"}
+                  </AppText>
+                </View>
+              </View>
             </View>
 
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Create task"
+              onPress={handleCreateTask}
+              disabled={isCreating}
               style={({ pressed }) => [
                 styles.primaryButton,
                 pressed && styles.pressed,
+                isCreating && { opacity: 0.7 },
               ]}
             >
               <MaterialCommunityIcons
@@ -342,7 +458,7 @@ export default function AddTaskScreen() {
                 color="#FFFFFF"
               />
               <AppText weight="extraBold" style={styles.primaryButtonText}>
-                Create Task
+                {isCreating ? "Creating..." : "Create Task"}
               </AppText>
             </Pressable>
           </View>

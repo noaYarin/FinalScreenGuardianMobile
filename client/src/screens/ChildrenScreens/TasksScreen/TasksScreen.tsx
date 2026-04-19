@@ -1,14 +1,21 @@
-import React, { useState } from "react";
-import { View, Pressable, ScrollView } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { View, Pressable, ScrollView, Alert } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useDispatch, useSelector } from "react-redux";
+import * as ImagePicker from "expo-image-picker";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import { styles } from "./styles";
+import {
+  getChildTasksThunk,
+  submitTaskThunk,
+} from "../../../redux/thunks/tasksThunks";
 
 const ICON = {
   coin: "cash-multiple",
   check: "check",
+  checkCircle: "check-circle-outline",
   camera: "camera-outline",
 } as const;
 
@@ -17,23 +24,159 @@ type Task = {
   title: string;
   coins: number;
   done: boolean;
+  hasProofImage: boolean;
+  isApproved: boolean;
+  requireProof: boolean;
+  completedAt: string | null;
 };
 
-export default function TasksScreen() {
-  const [activeTab, setActiveTab] = useState<"done" | "todo">("done");
+function formatDate(dateStr: string | null) {
+  if (!dateStr) return "";
 
-  const tasks: Task[] = [
-    { id: "1", title: "Homework", coins: 15, done: true },
-    { id: "2", title: "Read a Book", coins: 10, done: true },
-    { id: "3", title: "Clean the Room", coins: 10, done: false },
-    { id: "4", title: "Walk the Dog", coins: 8, done: false },
-    { id: "5", title: "Help in the Kitchen", coins: 12, done: false },
-  ];
+  try {
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) {
+      return "";
+    }
+    return d.toLocaleDateString("en-GB");
+  } catch {
+    return "";
+  }
+}
+
+export default function TasksScreen() {
+  const dispatch = useDispatch<any>();
+
+  const childTasks = useSelector((state: any) => state?.tasks?.childTasks ?? []);
+
+  const [activeTab, setActiveTab] = useState<"done" | "todo">("todo");
+  const [submittingTaskId, setSubmittingTaskId] = useState<string | null>(null);
+
+  useEffect(() => {
+    dispatch(getChildTasksThunk());
+  }, [dispatch]);
+
+  const tasks: Task[] = useMemo(() => {
+    if (!Array.isArray(childTasks)) {
+      return [];
+    }
+
+    return childTasks.map((task: any) => {
+      const proofImg =
+        typeof task?.proofImg === "string" ? task.proofImg.trim() : "";
+
+      const hasProofImage =
+        proofImg !== "" && proofImg !== "default.png";
+
+      return {
+        id: String(task?._id ?? task?.id ?? Math.random()),
+        title: task?.title ?? "Untitled task",
+        coins: Number(task?.coinsReward ?? 0),
+        done: !!task?.completedAt,
+        hasProofImage,
+        isApproved: !!task?.isApproved,
+        requireProof: !!task?.requireProof,
+        completedAt: task?.completedAt ?? null,
+      };
+    });
+  }, [childTasks]);
 
   const filteredTasks =
     activeTab === "done"
       ? tasks.filter((task) => task.done)
       : tasks.filter((task) => !task.done);
+
+  const weeklyCoins = useMemo(() => {
+    return tasks.reduce((sum, task) => {
+      return task.isApproved ? sum + Number(task.coins ?? 0) : sum;
+    }, 0);
+  }, [tasks]);
+
+  const submitWithoutPhoto = async (task: Task) => {
+    try {
+      setSubmittingTaskId(task.id);
+
+      await dispatch(
+        submitTaskThunk({
+          taskId: task.id,
+          proofImg: "",
+        })
+      ).unwrap();
+
+      await dispatch(getChildTasksThunk()).unwrap();
+
+      Alert.alert("Success", "Task submitted successfully.");
+    } catch (error: any) {
+      Alert.alert(
+        "Submit failed",
+        typeof error === "string" ? error : "Something went wrong."
+      );
+    } finally {
+      setSubmittingTaskId(null);
+    }
+  };
+
+  const pickImageAndSubmit = async (task: Task) => {
+    try {
+      setSubmittingTaskId(task.id);
+
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permissionResult.granted) {
+        Alert.alert(
+          "Permission needed",
+          "Please allow access to your photo library."
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      if (result.canceled) {
+        return;
+      }
+
+      const asset = result.assets?.[0];
+      const imageUri = asset?.uri ?? "";
+
+      if (!imageUri) {
+        Alert.alert("No image selected", "Please choose an image.");
+        return;
+      }
+
+      await dispatch(
+        submitTaskThunk({
+          taskId: task.id,
+          proofImg: imageUri,
+        })
+      ).unwrap();
+
+      await dispatch(getChildTasksThunk()).unwrap();
+
+      Alert.alert("Success", "Photo uploaded and task submitted.");
+    } catch (error: any) {
+      Alert.alert(
+        "Upload failed",
+        typeof error === "string" ? error : "Something went wrong."
+      );
+    } finally {
+      setSubmittingTaskId(null);
+    }
+  };
+
+  const handleTaskAction = async (task: Task) => {
+    if (task.requireProof) {
+      await pickImageAndSubmit(task);
+      return;
+    }
+
+    await submitWithoutPhoto(task);
+  };
 
   return (
     <ScreenLayout>
@@ -50,7 +193,7 @@ export default function TasksScreen() {
               accessibilityLabel="Show pending tasks"
             >
               <AppText weight="extraBold" style={styles.tabText}>
-                Pending Tasks
+                Pending
               </AppText>
             </Pressable>
 
@@ -64,7 +207,7 @@ export default function TasksScreen() {
               accessibilityLabel="Show completed tasks"
             >
               <AppText weight="extraBold" style={styles.tabText}>
-                Completed Tasks
+                Completed
               </AppText>
             </Pressable>
           </View>
@@ -73,82 +216,107 @@ export default function TasksScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
           >
-            {filteredTasks.map((task) => (
-              <View key={task.id} style={styles.card}>
-                <View style={styles.cardHeader}>
-                  <AppText
-                    weight="extraBold"
-                    style={styles.taskTitle}
-                    numberOfLines={2}
-                  >
-                    {task.title}
-                  </AppText>
+            {filteredTasks.map((task) => {
+              const isSubmitting = submittingTaskId === task.id;
+              const ActionIcon = task.requireProof ? ICON.camera : ICON.checkCircle;
 
-                  <View style={styles.coinsBadge}>
-                    <MaterialCommunityIcons
-                      name={ICON.coin}
-                      size={18}
-                      color="#B46B00"
-                    />
-                    <AppText weight="extraBold" style={styles.coinsText}>
-                      {task.coins}
-                    </AppText>
-                  </View>
-                </View>
-
-                {task.done ? (
-                  <View style={styles.statusBoxDone}>
-                    <View
-                      style={[
-                        styles.statusIconCircle,
-                        styles.statusIconCircleDone,
-                      ]}
+              return (
+                <View key={task.id} style={styles.card}>
+                  <View style={styles.cardHeader}>
+                    <AppText
+                      weight="extraBold"
+                      style={styles.taskTitle}
+                      numberOfLines={2}
                     >
+                      {task.title}
+                    </AppText>
+
+                    <View style={styles.coinsBadge}>
                       <MaterialCommunityIcons
-                        name={ICON.check}
+                        name={ICON.coin}
                         size={18}
-                        color="#0F8A5F"
+                        color="#B46B00"
                       />
+                      <AppText weight="extraBold" style={styles.coinsText}>
+                        {task.coins}
+                      </AppText>
                     </View>
-
-                    <AppText weight="bold" style={styles.statusTextDone}>
-                      Photo Uploaded
-                    </AppText>
                   </View>
-                ) : (
-                  <View style={styles.todoArea}>
-                    <AppText style={styles.todoHint}>
-                      No photo uploaded
-                    </AppText>
 
-                    <Pressable
-                      style={styles.uploadBtn}
-                      accessibilityRole="button"
-                      accessibilityLabel="Upload photo as proof of task completion"
-                    >
-                      <View style={styles.uploadBtnInner}>
-                        <View
-                          style={[
-                            styles.statusIconCircle,
-                            styles.statusIconCircleUpload,
-                          ]}
-                        >
-                          <MaterialCommunityIcons
-                            name={ICON.camera}
-                            size={18}
-                            color="#2F6DEB"
-                          />
-                        </View>
-
-                        <AppText weight="extraBold" style={styles.uploadText}>
-                          Upload Photo
-                        </AppText>
+                  {task.done ? (
+                    <View style={styles.statusBoxDone}>
+                      <View
+                        style={[
+                          styles.statusIconCircle,
+                          styles.statusIconCircleDone,
+                        ]}
+                      >
+                        <MaterialCommunityIcons
+                          name={ICON.check}
+                          size={18}
+                          color="#0F8A5F"
+                        />
                       </View>
-                    </Pressable>
-                  </View>
-                )}
-              </View>
-            ))}
+
+                      <View>
+                        <AppText weight="bold" style={styles.statusTextDone}>
+                          {task.hasProofImage ? "Photo Uploaded" : "Task Submitted"}
+                        </AppText>
+
+                        {task.completedAt ? (
+                          <AppText style={styles.completedDateText}>
+                            {formatDate(task.completedAt)}
+                          </AppText>
+                        ) : null}
+                      </View>
+                    </View>
+                  ) : (
+                    <View style={styles.todoArea}>
+                      <AppText style={styles.todoHint}>
+                        {task.requireProof
+                          ? "Photo required for submission"
+                          : "You can confirm completion without a photo"}
+                      </AppText>
+
+                      <Pressable
+                        style={styles.uploadBtn}
+                        onPress={() => handleTaskAction(task)}
+                        disabled={isSubmitting}
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          task.requireProof
+                            ? "Upload photo as proof of task completion"
+                            : "Mark task as completed"
+                        }
+                      >
+                        <View style={styles.uploadBtnInner}>
+                          <View
+                            style={[
+                              styles.statusIconCircle,
+                              styles.statusIconCircleUpload,
+                            ]}
+                          >
+                            <MaterialCommunityIcons
+                              name={ActionIcon}
+                              size={18}
+                              color="#2F6DEB"
+                            />
+                          </View>
+
+                          <AppText weight="extraBold" style={styles.uploadText}>
+                            {isSubmitting
+                              ? "Submitting..."
+                              : task.requireProof
+                              ? "Upload Photo"
+                              : "Mark as Done"}
+                          </AppText>
+                        </View>
+                      </Pressable>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
 
             <View style={styles.weekBox}>
               <View style={styles.weekInner}>
@@ -161,7 +329,7 @@ export default function TasksScreen() {
                 </View>
 
                 <AppText weight="extraBold" style={styles.weekText}>
-                  Coins earned this week: 38
+                  Coins earned: {weeklyCoins}
                 </AppText>
               </View>
             </View>

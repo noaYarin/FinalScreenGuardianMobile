@@ -4,15 +4,21 @@ import {
   ScrollView,
   Pressable,
   useWindowDimensions,
+  Alert,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, type Href } from "expo-router";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import ChildDeviceSelector from "../../../components/ChildDeviceSelector/ChildDeviceSelector";
 import { styles } from "./styles";
+import { getMyChildrenThunk } from "../../../redux/thunks/childrenThunks";
+import {
+  approveTaskThunk,
+  getParentTasksThunk,
+} from "../../../redux/thunks/tasksThunks";
 
 type UiChild = {
   id: string;
@@ -40,83 +46,39 @@ const FALLBACK_CHILDREN: UiChild[] = [
   { id: "child-3", name: "Mia" },
 ];
 
-const MOCK_TASKS: TaskCardItem[] = [
-  {
-    id: "1",
-    title: "Tidy up your room",
-    childId: "child-1",
-    childName: "Emma",
-    coins: 25,
-    dueLabel: "Today · 18:00",
-    recurrenceLabel: "Daily",
-    note: "This task is still open and has not been completed yet.",
-    status: "notDoneYet",
-  },
-  {
-    id: "2",
-    title: "Read for 20 minutes",
-    childId: "child-1",
-    childName: "Emma",
-    coins: 15,
-    dueLabel: "Today · 19:00",
-    recurrenceLabel: "Weekly",
-    note: "Still waiting to be done today.",
-    status: "notDoneYet",
-  },
-  {
-    id: "3",
-    title: "Feed the cat",
-    childId: "child-2",
-    childName: "Noah",
-    coins: 20,
-    dueLabel: "Today · 08:00",
-    recurrenceLabel: "Daily",
-    note: "The task was not completed yet.",
-    status: "notDoneYet",
-  },
-  {
-    id: "4",
-    title: "Water the plants",
-    childId: "child-1",
-    childName: "Emma",
-    coins: 20,
-    dueLabel: "Today · 17:20",
-    recurrenceLabel: "Daily",
-    note: "Photo submitted and waiting for parent approval.",
-    status: "pending",
-    hasProofImage: true,
-  },
-  {
-    id: "5",
-    title: "Clean the study desk",
-    childId: "child-3",
-    childName: "Mia",
-    coins: 30,
-    dueLabel: "Today · 16:05",
-    recurrenceLabel: "Weekly",
-    note: "Marked as done and proof image was uploaded.",
-    status: "pending",
-    hasProofImage: true,
-  },
-  {
-    id: "6",
-    title: "Help set the table",
-    childId: "child-2",
-    childName: "Noah",
-    coins: 18,
-    dueLabel: "Yesterday · 19:00",
-    recurrenceLabel: "Daily",
-    note: "Completed and approved.",
-    status: "completed",
-  },
-];
+function formatDueLabel(task: any) {
+  if (task?.endDate) {
+    try {
+      const date = new Date(task.endDate);
+      if (!Number.isNaN(date.getTime())) {
+        return date.toLocaleDateString("en-GB");
+      }
+    } catch {}
+  }
+
+  if (task?.startDate) {
+    try {
+      const date = new Date(task.startDate);
+      if (!Number.isNaN(date.getTime())) {
+        return date.toLocaleDateString("en-GB");
+      }
+    } catch {}
+  }
+
+  return "No due date";
+}
 
 export default function TasksScreen() {
+  const dispatch = useDispatch<any>();
   const { width } = useWindowDimensions();
   const isWide = width >= 700;
 
   const reduxChildren = useSelector(
     (state: any) => state?.children?.childrenList ?? []
+  );
+
+  const parentTasks = useSelector(
+    (state: any) => state?.tasks?.parentTasks ?? []
   );
 
   const children: UiChild[] = useMemo(() => {
@@ -135,20 +97,71 @@ export default function TasksScreen() {
   const [activeTab, setActiveTab] = useState<"pending" | "notDoneYet">("pending");
 
   useEffect(() => {
+    dispatch(getMyChildrenThunk());
+    dispatch(getParentTasksThunk());
+  }, [dispatch]);
+
+  useEffect(() => {
     if (!selectedChildId && children.length > 0) {
       setSelectedChildId(children[0].id);
     }
   }, [children, selectedChildId]);
 
-  const filteredTasks = useMemo((): TaskCardItem[] => {
-    if (viewMode === "all") {
-      return MOCK_TASKS;
+  const mappedTasks = useMemo((): TaskCardItem[] => {
+    if (!Array.isArray(parentTasks)) {
+      return [];
     }
 
-    return MOCK_TASKS.filter(
+    return parentTasks.map((task: any) => {
+      const childId = String(task?.childId ?? "");
+      const childName =
+        children.find((child) => String(child.id) === childId)?.name ?? "Child";
+
+      const proofImg =
+        typeof task?.proofImg === "string" ? task.proofImg.trim() : "";
+
+      const hasProofImage =
+        proofImg !== "" && proofImg !== "default.png";
+
+      let status: TaskStatus = "notDoneYet";
+
+      if (task?.completedAt && !task?.isApproved) {
+        status = "pending";
+      } else if (task?.completedAt && task?.isApproved) {
+        status = "completed";
+      } else {
+        status = "notDoneYet";
+      }
+
+      return {
+        id: String(task?._id ?? task?.id ?? Math.random()),
+        title: task?.title ?? "Untitled task",
+        childId,
+        childName,
+        coins: Number(task?.coinsReward ?? 0),
+        dueLabel: formatDueLabel(task),
+        recurrenceLabel: task?.isRegulary ? "Daily / Recurring" : "One time",
+        note:
+          status === "pending"
+            ? "Photo submitted and waiting for parent approval."
+            : status === "completed"
+            ? "Completed and approved."
+            : "This task is still open and has not been completed yet.",
+        status,
+        hasProofImage,
+      };
+    });
+  }, [parentTasks, children]);
+
+  const filteredTasks = useMemo((): TaskCardItem[] => {
+    if (viewMode === "all") {
+      return mappedTasks;
+    }
+
+    return mappedTasks.filter(
       (task: TaskCardItem) => task.childId === selectedChildId
     );
-  }, [viewMode, selectedChildId]);
+  }, [mappedTasks, viewMode, selectedChildId]);
 
   const pendingTasks = useMemo(() => {
     return filteredTasks.filter(
@@ -166,6 +179,19 @@ export default function TasksScreen() {
 
   const selectedChildName =
     children.find((child) => child.id === selectedChildId)?.name ?? "Child";
+
+  const handleApproveTask = async (taskId: string) => {
+    try {
+      await dispatch(approveTaskThunk(taskId)).unwrap();
+      await dispatch(getParentTasksThunk()).unwrap();
+      Alert.alert("Success", "Task approved successfully.");
+    } catch (error: any) {
+      Alert.alert(
+        "Approve failed",
+        typeof error === "string" ? error : "Something went wrong."
+      );
+    }
+  };
 
   return (
     <ScreenLayout>
@@ -429,6 +455,32 @@ export default function TasksScreen() {
                         </View>
                       ) : null}
                     </View>
+
+                    {task.status === "pending" ? (
+                      <View style={styles.taskBottomRow}>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`Approve ${task.title}`}
+                          onPress={() => handleApproveTask(task.id)}
+                          style={({ pressed }) => [
+                            styles.addTaskButtonGreen,
+                            pressed && styles.pressed,
+                          ]}
+                        >
+                          <MaterialCommunityIcons
+                            name="check-circle-outline"
+                            size={18}
+                            color="#16A34A"
+                          />
+                          <AppText
+                            weight="extraBold"
+                            style={styles.addTaskButtonGreenText}
+                          >
+                            Approve
+                          </AppText>
+                        </Pressable>
+                      </View>
+                    ) : null}
                   </View>
                 ))
               ) : (
