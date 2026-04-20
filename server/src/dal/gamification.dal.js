@@ -1,5 +1,5 @@
 import ParentModel from "../models/parent.model.js";
-import AchievementModel from "../models/achievement.schema.js";
+import AchievementModel from "../models/achievement.model.js";
 
 // Finds a single achievement document by its unique key.
 export async function findAchievementByKeyDal(key) {

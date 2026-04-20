@@ -5,7 +5,7 @@ import {
   saveParentDal,
 } from "../dal/gamification.dal.js";
 
-import AppError from "../utils/appError.js";
+import { AppError } from "../utils/appError.js";
 import { Common } from "../constants/errors.js";
 
 // Returns how much XP is required to advance from the current level.
