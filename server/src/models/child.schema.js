@@ -11,13 +11,24 @@ export const ChildSchema = new mongoose.Schema(
     birthDate: { type: Date },
     gender: { type: String, enum: Object.values(Gender), default: Gender.OTHER },
     interests: { type: [String], default: [] },
-    coins: { type: Number, default: 0 },
+    coins: { type: Number, default: 0, min: 0 },
     isActive: { type: Boolean, default: true },
     role: { type: String, enum: Object.values(Role), default: Role.CHILD },
-    achievementIds: {
-      type: [mongoose.Schema.Types.ObjectId],
-      ref: "Achievement",
-      default: []
+    achievements: {
+      type: [
+        {
+          achievementId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Achievement",
+            required: true,
+          },
+          unlockedAt: {
+            type: Date,
+            default: Date.now,
+          },
+        },
+      ],
+      default: [],
     },
     avatar: { type: AvatarSchema, default: () => ({}) },
   },
