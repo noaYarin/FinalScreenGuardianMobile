@@ -28,4 +28,10 @@ export const MENU_ITEMS: HomeMenuItem[] = [
     icon: "format-list-checkbox",
     route: "/Parent/tasks" as Href,
   },
+   {
+    key: "rewards",
+    labelKey: "rewards",
+    icon: "diamond-stone",
+    route: "/Parent/rewards" as Href,
+  },
 ];

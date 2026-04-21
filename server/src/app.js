@@ -13,6 +13,7 @@ import childRoutes from "./routes/child.routes.js";
 import auditRoutes from "./routes/audit.route.js";
 import taskRoutes from "./routes/task.routes.js";
 import gamificationRoutes from "./routes/gamification.routes.js";
+import rewardRoutes from "./routes/reward.routes.js";
 
 const app = express();
 // Maximum allowed characters 
@@ -20,7 +21,7 @@ app.use(express.json({ limit: '5mb' }));
 
 app.use(cors());
 app.use(express.json());
-
+app.use("/api/v1/rewards", rewardRoutes);
 app.use("/api/v1/health", healthRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/parent", parentRoutes);
