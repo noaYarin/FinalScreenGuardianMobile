@@ -21,6 +21,8 @@ function getMenuLabel(item: HomeMenuItem) {
       return "Activity History";
     case "tasks":
       return "Tasks";
+    case "rewards":
+      return "Rewards";
     default:
       return "Menu Item";
   }
@@ -34,6 +36,8 @@ function getMenuAccessibilityLabel(item: HomeMenuItem) {
       return "Open activity history";
     case "tasks":
       return "Open tasks";
+    case "rewards":
+      return "Open rewards";
     default:
       return "Open menu item";
   }

@@ -9,7 +9,6 @@ export async function createTasksForChildren(parentId, payload) {
     coinsReward: payload.coinsReward ?? 0,
     icon: "default.png",
     proofImg: "default.png",
-    points: payload.coinsReward ?? 0,
     completedAt: null,
     startDate: null,
     endDate: null,

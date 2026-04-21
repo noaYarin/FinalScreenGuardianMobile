@@ -64,9 +64,10 @@ export async function submitTaskController(req, res, next) {
 
 export async function approveTaskController(req, res, next) {
   try {
+    const parentId = req.user.parentId;
     const { taskId } = req.params;
 
-    const data = await approveTask(taskId);
+    const data = await approveTask(parentId, taskId);
 
     res.json({ ok: true, data });
   } catch (err) {

@@ -6,7 +6,10 @@ import {
   submitTaskDal,
   approveTaskDal,
 } from "../dal/task.dal.js";
-import { getChildrenByParentId } from "../dal/parent.dal.js";
+import {
+  getChildrenByParentId,
+  incrementChildCoinsByParentId,
+} from "../dal/parent.dal.js";
 import { AppError } from "../utils/appError.js";
 
 export async function createTask(parentId, payload) {
@@ -115,6 +118,62 @@ export async function submitTask(taskId, childId, proofImg) {
   return await submitTaskDal(taskId, proofImg);
 }
 
-export async function approveTask(taskId) {
-  return await approveTaskDal(taskId);
+export async function approveTask(parentId, taskId) {
+  const task = await getTaskById(taskId);
+
+  if (!task) {
+    throw new AppError({
+      code: "TASK_NOT_FOUND",
+      message: "Task not found",
+      statusCode: 404,
+    });
+  }
+
+  if (String(task.parentId) !== String(parentId)) {
+    throw new AppError({
+      code: "FORBIDDEN_TASK_ACCESS",
+      message: "This task does not belong to this parent",
+      statusCode: 403,
+    });
+  }
+
+  if (!task.completedAt) {
+    throw new AppError({
+      code: "TASK_NOT_COMPLETED",
+      message: "Task cannot be approved before it is completed",
+      statusCode: 400,
+    });
+  }
+
+  if (task.isApproved) {
+    throw new AppError({
+      code: "TASK_ALREADY_APPROVED",
+      message: "Task was already approved",
+      statusCode: 400,
+    });
+  }
+
+  const rewardAmount = Number(task.coinsReward ?? 0);
+
+  const updatedChild = await incrementChildCoinsByParentId(
+    task.parentId,
+    task.childId,
+    rewardAmount
+  );
+
+  if (!updatedChild) {
+    throw new AppError({
+      code: "CHILD_NOT_FOUND",
+      message: "Child not found",
+      statusCode: 404,
+    });
+  }
+
+  const approvedTask = await approveTaskDal(taskId);
+
+  return {
+    task: approvedTask,
+    child: updatedChild,
+    addedCoins: rewardAmount,
+  };
 }

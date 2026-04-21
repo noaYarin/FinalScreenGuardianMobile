@@ -9,7 +9,6 @@ export const TaskSchema = new mongoose.Schema(
         coinsReward: { type: Number, required: true, default: 0 },
         icon: { type: String, default: "default.png" },
         proofImg: { type: String, default: "default.png" },
-        points: { type: Number, required: true, default: 0 },
         completedAt: { type: Date, default: null },
         startDate: { type: Date, default: null },
         endDate: { type: Date, default: null },

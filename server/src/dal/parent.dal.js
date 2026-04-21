@@ -216,3 +216,90 @@ export async function deleteChildByParentId(parentId, childId) {
 
   return updated;
 }
+
+export async function decrementChildCoinsByParentId(parentId, childId, amount) {
+  const updatedParent = await ParentModel.findOneAndUpdate(
+    {
+      _id: parentId,
+      children: {
+        $elemMatch: {
+          _id: childId,
+          coins: { $gte: amount },
+        },
+      },
+    },
+    {
+      $inc: {
+        "children.$.coins": -amount,
+      },
+    },
+    {
+      new: false,
+    }
+  ).lean();
+
+  if (!updatedParent) {
+    return null;
+  }
+
+  const parentAfterUpdate = await ParentModel.findOne(
+    {
+      _id: parentId,
+      "children._id": childId,
+    },
+    {
+      "children.$": 1,
+    }
+  ).lean();
+
+  if (
+    !parentAfterUpdate ||
+    !parentAfterUpdate.children ||
+    parentAfterUpdate.children.length === 0
+  ) {
+    return null;
+  }
+
+  return parentAfterUpdate.children[0];
+}
+
+export async function incrementChildCoinsByParentId(parentId, childId, amount) {
+  const updatedParent = await ParentModel.findOneAndUpdate(
+    {
+      _id: parentId,
+      "children._id": childId,
+    },
+    {
+      $inc: {
+        "children.$.coins": amount,
+      },
+    },
+    {
+      new: false,
+    }
+  ).lean();
+
+  if (!updatedParent) {
+    return null;
+  }
+
+  const parentAfterUpdate = await ParentModel.findOne(
+    {
+      _id: parentId,
+      "children._id": childId,
+    },
+    {
+      "children.$": 1,
+    }
+  ).lean();
+
+  if (
+    !parentAfterUpdate ||
+    !parentAfterUpdate.children ||
+    parentAfterUpdate.children.length === 0
+  ) {
+    return null;
+  }
+
+  return parentAfterUpdate.children[0];
+}
