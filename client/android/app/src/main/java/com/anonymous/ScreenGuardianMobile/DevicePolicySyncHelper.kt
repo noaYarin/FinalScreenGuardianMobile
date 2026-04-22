@@ -154,10 +154,8 @@ object DevicePolicySyncHelper {
             val errorCode = error?.optString("code") ?: ""
 
             errorCode == "DEVICE_NOT_FOUND" ||
-                errorCode == "DEVICE_NOT_ACTIVE" ||
-                errorCode == "DEVICE_DELETED" ||
-                errorCode == "DEVICE_UNPAIRED"
-        } catch (e: Exception) {
+                errorCode == "DEVICE_NOT_ACTIVE"
+                    } catch (e: Exception) {
             false
         }
     }
