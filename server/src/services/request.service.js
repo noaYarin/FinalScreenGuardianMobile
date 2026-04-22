@@ -54,7 +54,6 @@ export async function createRequest({ parentId, childId, deviceId, requestedMinu
 
     await validateDeviceAccess({ deviceId, parentId, childId });
 
-    // check duplicate pending request
     const existingPending = await requestDal.findPendingRequestForDevice({
         parentId,
         childId,
@@ -74,6 +73,9 @@ export async function createRequest({ parentId, childId, deviceId, requestedMinu
         status: RequestStatus.PENDING
     });
 
+    const childList = await getChildrenByParentId(parentId);
+    const child = ensureChildBelongsToParent(childList, childId);
+    const childName = child?.name ? String(child.name) : "Your child";
 
     try {
         await notifyParent({
@@ -82,10 +84,11 @@ export async function createRequest({ parentId, childId, deviceId, requestedMinu
             type: NotificationType.EXTENSION_REQUEST_CREATED,
             severity: NotificationSeverity.INFO,
             title: "New Extension Request",
-            description: "Your child requested more screen time"
+            description: `${childName} is requesting an extension of ${minutes} minutes.`,
+            data: { link: "/Parent/pending-requests", requestId: String(request._id) }
         });
     } catch (err) {
-        console.error("notifyParent failed in createRequest:", err.message);
+        console.error("notifyParent failed in createRequest", err.message);
     }
 
     return request;
