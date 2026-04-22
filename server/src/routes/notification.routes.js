@@ -7,6 +7,7 @@ import {
   readAllNotificationsController,
   markNotificationAsReadController,
   deleteParentNotificationController,
+  registerFcmTokenController,
 } from "../controllers/notification.controller.js";
 
 const router = Router();
@@ -30,5 +31,7 @@ router.delete(
   requireParent,
   deleteParentNotificationController
 );
+
+router.post("/register-token", authJwt, requireParent, registerFcmTokenController);
 
 export default router;
