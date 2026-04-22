@@ -33,6 +33,12 @@ object DevicePolicySyncHelper {
      *      "extraMinutesToday": number
      *   }
      * }
+     *
+     * Important:
+     * If the device was removed while it was offline, the server will no longer
+     * return a valid policy for it. In that case, fetchAndSavePolicy detects a
+     * permanent device-removal response and clears the local managed state
+     * instead of keeping stale policy values.
      */
     fun applyPolicyData(context: Context, data: JSONObject) {
         val screenTime = data.optJSONObject("screenTime") ?: JSONObject()
@@ -87,7 +93,19 @@ object DevicePolicySyncHelper {
                 val responseBody = readResponse(connection)
 
                 if (responseCode !in 200..299) {
-                    Log.e(TAG, "Policy fetch failed. code=$responseCode body=$responseBody")
+                    if (isPermanentDeviceRemoval(responseCode, responseBody)) {
+                        Log.w(
+                            TAG,
+                            "Policy fetch indicates device is no longer managed. code=$responseCode body=$responseBody"
+                        )
+                        clearLocalManagedState(context)
+                        return@Thread
+                    }
+
+                    Log.e(
+                        TAG,
+                        "Policy fetch failed temporarily. code=$responseCode body=$responseBody"
+                    )
                     return@Thread
                 }
 
@@ -103,6 +121,59 @@ object DevicePolicySyncHelper {
                 finishOnMain(onFinished)
             }
         }.start()
+    }
+
+    /**
+     * Returns true only for permanent backend responses that mean this device
+     * is no longer managed and should clear its local policy/session state.
+     *
+     * We intentionally do NOT treat general failures as deletion:
+     * - network loss
+     * - timeout
+     * - 5xx server errors
+     * - temporary backend issues
+     *
+     * Only explicit device-management errors should trigger a local reset.
+     * The backend returns errors in this shape:
+     * {
+     *   "ok": false,
+     *   "error": {
+     *     "code": "...",
+     *     "message": "..."
+     *   }
+     * }
+     */
+    private fun isPermanentDeviceRemoval(responseCode: Int, responseBody: String): Boolean {
+        if (responseCode != 400 && responseCode != 404) {
+            return false
+        }
+
+        return try {
+            val root = JSONObject(responseBody)
+            val error = root.optJSONObject("error")
+            val errorCode = error?.optString("code") ?: ""
+
+            errorCode == "DEVICE_NOT_FOUND" ||
+                errorCode == "DEVICE_NOT_ACTIVE" ||
+                errorCode == "DEVICE_DELETED" ||
+                errorCode == "DEVICE_UNPAIRED"
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Clears all locally stored managed-device state after the server confirms
+     * that this device is no longer linked or managed.
+     *
+     * This prevents the native layer from continuing to enforce an old cached
+     * policy after the device was deleted or unpaired on the backend.
+     */
+    private fun clearLocalManagedState(context: Context) {
+        PolicyStore.clearAll(context)
+        DeviceServerSyncHelper.clearSessionCache()
+
+        Log.w(TAG, "Cleared local managed state because device is no longer managed by server")
     }
 
     private fun finishOnMain(onFinished: (() -> Unit)?) {
