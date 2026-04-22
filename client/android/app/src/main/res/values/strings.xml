@@ -1,6 +1,8 @@
 <resources>
-    <string name="app_name">ScreenGuardianMobile</string>
+    <string name="app_name">Screen Guardian</string>
     <string name="accessibility_service_description">
     ScreenGuardian monitors app changes in order to enforce child device restrictions.
 </string>
+    <string name="default_notification_channel_id">default</string>
+    <string name="default_notification_channel_name">General</string>
 </resources>

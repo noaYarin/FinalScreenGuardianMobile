@@ -38,8 +38,12 @@ package com.screenguardianmobile
  *   (such as orientation / locale changes) to Expo modules.
  */
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.Application
+import android.content.Context
 import android.content.res.Configuration
+import android.os.Build
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
@@ -75,8 +79,20 @@ class MainApplication : Application(), ReactApplication {
   override val reactHost: ReactHost
     get() = ReactNativeHostWrapper.createReactHost(applicationContext, reactNativeHost)
 
+  private fun ensureDefaultNotificationChannel() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+    val channelId = getString(R.string.default_notification_channel_id)
+    val channelName = getString(R.string.default_notification_channel_name)
+    val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    val existing = manager.getNotificationChannel(channelId)
+    if (existing != null) return
+    val channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_DEFAULT)
+    manager.createNotificationChannel(channel)
+  }
+
   override fun onCreate() {
     super.onCreate()
+    ensureDefaultNotificationChannel()
     DefaultNewArchitectureEntryPoint.releaseLevel = try {
       ReleaseLevel.valueOf(BuildConfig.REACT_NATIVE_RELEASE_LEVEL.uppercase())
     } catch (e: IllegalArgumentException) {
