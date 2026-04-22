@@ -4,14 +4,14 @@ import { requireParent } from "../middlewares/requireParent.js";
 import {
   getChildAchievementsDataController,
   unlockAchievementForChildController,
-} from "../controllers/gamification.controller.js";
+} from "../controllers/achievements.controller.js";
 
 const router = Router();
 
-// GET /api/v1/gamification/child/:childId/achievements
+// GET /api/v1/achievements/child/:childId/
 // Get the child's avatar, achievements, and xp points
 router.get(
-  "/child/:childId/achievements",
+  "/child/:childId",
   authJwt,
   requireParent,
   getChildAchievementsDataController

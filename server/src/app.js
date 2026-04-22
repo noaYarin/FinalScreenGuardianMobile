@@ -12,7 +12,7 @@ import recommendationRoutes from "./routes/recommendation.routes.js";
 import childRoutes from "./routes/child.routes.js";
 import auditRoutes from "./routes/audit.route.js";
 import taskRoutes from "./routes/task.routes.js";
-import gamificationRoutes from "./routes/gamification.routes.js";
+import achievementsRoutes from "./routes/achievements.routes.js";
 import rewardRoutes from "./routes/reward.routes.js";
 
 const app = express();
@@ -33,7 +33,7 @@ app.use("/api/v1/recommendations", recommendationRoutes);
 app.use("/api/v1/child", childRoutes);
 app.use("/api/v1/audit", auditRoutes);
 app.use("/api/v1/tasks", taskRoutes);
-app.use("/api/v1/gamification", gamificationRoutes);
+app.use("/api/v1/achievements", achievementsRoutes);
 app.use(errorHandler);
 
 export default app;
