@@ -1,5 +1,6 @@
 import {
   findAchievementByKeyDal,
+  findAllAchievementsDal,
   findParentWithChildDal,
   getChildFromParent,
   saveParentDal,
@@ -13,28 +14,30 @@ function getXpRequiredForLevel(level) {
   return 100 + (level - 1) * 50;
 }
 
-// Returns the avatar image name that matches the child's current level.
-function getAvatarImageByLevel(level) {
-  if (level >= 9) return "avatar_stage_5.png";
-  if (level >= 7) return "avatar_stage_4.png";
-  if (level >= 5) return "avatar_stage_3.png";
-  if (level >= 3) return "avatar_stage_2.png";
+// Returns the avatar image name that matches the child's gender and current level.
+function getAvatarImageByLevel(level, gender) {
+  const prefix = gender === "girl" ? "avatar_girl" : "avatar_boy";
 
-  return "avatar_stage_1.png";
+  if (level >= 9) return `${prefix}_stage_5.png`;
+  if (level >= 7) return `${prefix}_stage_4.png`;
+  if (level >= 5) return `${prefix}_stage_3.png`;
+  if (level >= 3) return `${prefix}_stage_2.png`;
+
+  return `${prefix}_stage_1.png`;
 }
 
 // Ensures the avatar object always has safe default values before calculations.
-function normalizeAvatar(avatar = {}) {
+function normalizeAvatar(avatar = {}, gender) {
   return {
     level: avatar.level ?? 1,
     currentXp: avatar.currentXp ?? 0,
-    img: avatar.img || "avatar_stage_1.png",
+    img: avatar.img || getAvatarImageByLevel(1, gender),
   };
 }
 
 // Adds XP to the avatar, applies level-ups if needed, and updates the image.
-export function addXpToAvatar(avatar, xpToAdd) {
-  const safeAvatar = normalizeAvatar(avatar);
+export function addXpToAvatar(avatar, xpToAdd, gender) {
+  const safeAvatar = normalizeAvatar(avatar, gender);
   let level = safeAvatar.level;
   let currentXp = safeAvatar.currentXp + xpToAdd;
 
@@ -49,15 +52,37 @@ export function addXpToAvatar(avatar, xpToAdd) {
   return {
     level,
     currentXp,
-    img: getAvatarImageByLevel(level),
+    img: getAvatarImageByLevel(level, gender),
   };
 }
 
 // Checks whether the child has already unlocked a specific achievement.
 function hasChildUnlockedAchievement(child, achievementId) {
-  return child.achievements.some(
+  const childAchievements = child.achievements ?? [];
+
+  return childAchievements.some(
     (item) => String(item.achievementId) === String(achievementId)
   );
+}
+
+// Builds a full achievements list for the UI by merging the catalog with the child's unlocked achievements.
+function buildAchievementsForUi(allAchievements, childAchievements = []) {
+  return allAchievements.map((achievement) => {
+    const unlockedItem = childAchievements.find(
+      (item) => String(item.achievementId) === String(achievement._id)
+    );
+
+    return {
+      _id: String(achievement._id),
+      key: achievement.key,
+      title: achievement.title,
+      description: achievement.description,
+      icon: achievement.icon,
+      xpReward: achievement.xpReward ?? 0,
+      unlocked: Boolean(unlockedItem),
+      unlockedAt: unlockedItem?.unlockedAt ?? null,
+    };
+  });
 }
 
 // Unlocks an achievement for a child, grants its XP reward, and updates the avatar.
@@ -98,7 +123,11 @@ export async function unlockAchievementForChildService(
     unlockedAt: new Date(),
   });
 
-  child.avatar = addXpToAvatar(child.avatar, achievement.xpReward ?? 0);
+  child.avatar = addXpToAvatar(
+    child.avatar,
+    achievement.xpReward ?? 0,
+    child.gender
+  );
 
   await saveParentDal(parent);
 
@@ -106,19 +135,19 @@ export async function unlockAchievementForChildService(
     unlocked: true,
     reason: null,
     achievement: {
-      _id: achievement._id,
+      _id: String(achievement._id),
       key: achievement.key,
       title: achievement.title,
       description: achievement.description,
       icon: achievement.icon,
-      xpReward: achievement.xpReward,
+      xpReward: achievement.xpReward ?? 0,
     },
     avatar: child.avatar,
   };
 }
 
-// Returns the child's current gamification state for the app UI.
-export async function getChildGamificationDataService(parentId, childId) {
+// Returns the child's achievements data for the achievements screen.
+export async function getChildAchievementsDataService(parentId, childId) {
   const parent = await findParentWithChildDal(parentId, childId);
 
   if (!parent) {
@@ -131,16 +160,12 @@ export async function getChildGamificationDataService(parentId, childId) {
     throw new AppError(Common.CHILD_NOT_FOUND);
   }
 
-  const requiredXp = getXpRequiredForLevel(child.avatar?.level ?? 1);
+  const allAchievements = await findAllAchievementsDal();
 
   return {
-    avatar: {
-      level: child.avatar?.level ?? 1,
-      currentXp: child.avatar?.currentXp ?? 0,
-      img: child.avatar?.img || "avatar_stage_1.png",
-      requiredXp,
-    },
-    achievements: child.achievements,
-    coins: child.coins ?? 0,
+    achievements: buildAchievementsForUi(
+      allAchievements,
+      child.achievements ?? []
+    ),
   };
 }

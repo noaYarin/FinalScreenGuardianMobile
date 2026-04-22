@@ -6,6 +6,13 @@ export async function findAchievementByKeyDal(key) {
   return await AchievementModel.findOne({ key });
 }
 
+// Returns all achievement documents from the catalog.
+export async function findAllAchievementsDal() {
+  return await AchievementModel.find().sort({ createdAt: 1 });
+}
+
+
+
 // Finds the parent document that contains the requested child.
 export async function findParentWithChildDal(parentId, childId) {
   return await ParentModel.findOne(
