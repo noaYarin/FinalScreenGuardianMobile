@@ -27,6 +27,8 @@ import type { AppDispatch, RootState } from "@/src/redux/store/types";
 import { connectSocket, emitEvent, onEvent } from "@/src/services/socket";
 import { REQUEST_CHILD_LOCATION } from "@/src/constants/socketEvents";
 import { getChildProfileImageUri } from "@/src/utils/childProfileImage";
+import { avatarImages, defaultAvatarImage } from "@/src/utils/avatarImages";
+
 
 const { DeviceControl } = NativeModules;
 

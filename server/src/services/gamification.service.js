@@ -14,28 +14,30 @@ function getXpRequiredForLevel(level) {
   return 100 + (level - 1) * 50;
 }
 
-// Returns the avatar image name that matches the child's current level.
-function getAvatarImageByLevel(level) {
-  if (level >= 9) return "avatar_stage_5.png";
-  if (level >= 7) return "avatar_stage_4.png";
-  if (level >= 5) return "avatar_stage_3.png";
-  if (level >= 3) return "avatar_stage_2.png";
+// Returns the avatar image name that matches the child's gender and current level.
+function getAvatarImageByLevel(level, gender) {
+  const prefix = gender === "girl" ? "avatar_girl" : "avatar_boy";
 
-  return "avatar_stage_1.png";
+  if (level >= 9) return `${prefix}_stage_5.png`;
+  if (level >= 7) return `${prefix}_stage_4.png`;
+  if (level >= 5) return `${prefix}_stage_3.png`;
+  if (level >= 3) return `${prefix}_stage_2.png`;
+
+  return `${prefix}_stage_1.png`;
 }
 
 // Ensures the avatar object always has safe default values before calculations.
-function normalizeAvatar(avatar = {}) {
+function normalizeAvatar(avatar = {}, gender) {
   return {
     level: avatar.level ?? 1,
     currentXp: avatar.currentXp ?? 0,
-    img: avatar.img || "avatar_stage_1.png",
+    img: avatar.img || getAvatarImageByLevel(1, gender),
   };
 }
 
 // Adds XP to the avatar, applies level-ups if needed, and updates the image.
-export function addXpToAvatar(avatar, xpToAdd) {
-  const safeAvatar = normalizeAvatar(avatar);
+export function addXpToAvatar(avatar, xpToAdd, gender) {
+  const safeAvatar = normalizeAvatar(avatar, gender);
   let level = safeAvatar.level;
   let currentXp = safeAvatar.currentXp + xpToAdd;
 
@@ -50,7 +52,7 @@ export function addXpToAvatar(avatar, xpToAdd) {
   return {
     level,
     currentXp,
-    img: getAvatarImageByLevel(level),
+    img: getAvatarImageByLevel(level, gender),
   };
 }
 
@@ -121,7 +123,11 @@ export async function unlockAchievementForChildService(
     unlockedAt: new Date(),
   });
 
-  child.avatar = addXpToAvatar(child.avatar, achievement.xpReward ?? 0);
+  child.avatar = addXpToAvatar(
+    child.avatar,
+    achievement.xpReward ?? 0,
+    child.gender
+  );
 
   await saveParentDal(parent);
 
