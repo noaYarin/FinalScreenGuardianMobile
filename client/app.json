@@ -4,10 +4,10 @@
     "slug": "ScreenGuardianMobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/icons/icon.png",
     "scheme": "screenguardianmobile",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -19,6 +19,13 @@
       }
     },
     "android": {
+  "permissions": [
+    "PACKAGE_USAGE_STATS",
+    "SYSTEM_ALERT_WINDOW",
+    "POST_NOTIFICATIONS",
+    "QUERY_ALL_PACKAGES",
+    "INTERNET"
+  ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -43,10 +50,11 @@
     },
     "plugins": [
       "expo-router",
+      "./plugins/withFcmAndroid",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/icons/icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",

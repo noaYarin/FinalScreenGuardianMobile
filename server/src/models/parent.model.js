@@ -8,6 +8,7 @@ const ParentSchema = new mongoose.Schema(
     password: { type: String },
     name: { type: String },
     phoneNumber: { type: String },
+    fcmToken: { type: String, default: null },
     role: { type: String, enum: Object.values(Role), default: Role.PARENT },
     children: { type: [ChildSchema], default: [] },
     // Forgot password - add password reset code and expires

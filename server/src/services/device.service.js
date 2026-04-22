@@ -756,17 +756,27 @@ export async function updateDeviceUsageByChild({
 
     pushDeviceStatusUpdate(lockedDevice);
 
+    let childName = "";
+    try {
+      const childList = await getChildrenByParentId(lockedDevice.parentId);
+      const child = childList.find((c) => String(c._id) === String(lockedDevice.childId));
+      childName = child?.name ? String(child.name) : "Your child";
+    } catch (err) {
+      console.error("getChildrenByParentId failed in updateDeviceUsageByChild", err.message);
+    }
+
     try {
       await notifyParent({
         parentId: lockedDevice.parentId,
         childId: lockedDevice.childId,
-        type: NotificationType.SCREEN_TIME_ENDED,
+        type: NotificationType.DEVICE_LOCKED,
         severity: NotificationSeverity.CRITICAL,
-        title: "Screen Time Ended",
-        description: "Your child has reached the daily screen time limit"
+        title: "Device Locked",
+        description: `Screen time for ${childName} has ended and the device has been locked.`,
+        data: { link: "/Parent/child-stats", childId: String(lockedDevice.childId) }
       });
     } catch (err) {
-      console.error("notifyParent failed in updateDeviceUsageByChild (ended):", err.message);
+      console.error("notifyParent failed in updateDeviceUsageByChild (ended)", err.message);
     }
 
     try {
@@ -779,7 +789,7 @@ export async function updateDeviceUsageByChild({
         description: "You have reached your daily screen time limit"
       });
     } catch (err) {
-      console.error("notifyChild failed in updateDeviceUsageByChild (ended):", err.message);
+      console.error("notifyChild failed in updateDeviceUsageByChild (ended)", err.message);
     }
 
     try {
@@ -789,7 +799,7 @@ export async function updateDeviceUsageByChild({
         actionType: AuditActionType.LOCK_DEVICE,
       });
     } catch (err) {
-      console.error("sendAuditLog failed in updateDeviceUsageByChild (ended):", err.message);
+      console.error("sendAuditLog failed in updateDeviceUsageByChild (ended)", err.message);
     }
 
     return buildCurrentStatus(lockedDevice);

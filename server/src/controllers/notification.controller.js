@@ -3,6 +3,7 @@ import {
   markNotificationAsRead,
   readAllNotifications,
   deleteParentNotification,
+  registerParentFcmToken,
 } from "../services/notification.service.js";
 
 // Return notifications for the logged-in parent
@@ -63,6 +64,27 @@ export async function deleteParentNotificationController(req, res, next) {
     const parentId = req.user.parentId;
     const { notificationId } = req.params;
     const data = await deleteParentNotification(parentId, notificationId);
+    res.status(200).json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// POST /api/v1/notifications/register-token
+// Register or update FCM token for the logged-in parent user
+export async function registerFcmTokenController(req, res, next) {
+  try {
+    const parentId = req.user.parentId;
+    const fcmToken = req.body?.fcmToken;
+
+    if (!fcmToken || typeof fcmToken !== "string") {
+      return res.status(400).json({
+        ok: false,
+        error: { code: "BAD_REQUEST", message: "fcmToken is required" },
+      });
+    }
+
+    const data = await registerParentFcmToken(parentId, fcmToken);
     res.status(200).json({ ok: true, data });
   } catch (err) {
     next(err);

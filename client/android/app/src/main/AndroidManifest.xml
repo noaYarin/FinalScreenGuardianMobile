@@ -2,10 +2,11 @@
     xmlns:tools="http://schemas.android.com/tools">
 
   <uses-permission android:name="android.permission.INTERNET"/>
-  <!-- OPTIONAL PERMISSIONS, REMOVE WHATEVER YOU DO NOT NEED -->
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- OPTIONAL PERMISSIONS, REMOVE WHATEVER YOU DO NOT NEED -->
   <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
   <uses-permission android:name="android.permission.VIBRATE"/>
-  <!-- These require runtime permissions on M -->
+    <!-- These require runtime permissions on M -->
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
@@ -13,7 +14,6 @@
       android:name="android.permission.PACKAGE_USAGE_STATS"
       tools:ignore="ProtectedPermissions" />
   <!-- END OPTIONAL PERMISSIONS -->
-
 
   <queries>
     <!-- Support checking for http(s) links via the Linking API -->
@@ -24,8 +24,28 @@
     </intent>
   </queries>
 
-  <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="false" android:theme="@style/AppTheme" android:supportsRtl="false">
-    <activity android:name=".MainActivity" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize" android:theme="@style/Theme.App.SplashScreen" android:exported="true">
+  <application 
+      android:name=".MainApplication" 
+      android:label="@string/app_name" 
+      android:icon="@mipmap/ic_launcher" 
+      android:roundIcon="@mipmap/ic_launcher_round" 
+      android:allowBackup="false" 
+      android:theme="@style/AppTheme" 
+      android:supportsRtl="false"
+      android:usesCleartextTraffic="true">
+
+    <meta-data
+        android:name="com.google.firebase.messaging.default_notification_channel_id"
+        android:value="@string/default_notification_channel_id"
+        tools:replace="android:value" />
+
+    <activity 
+        android:name=".MainActivity" 
+        android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode" 
+        android:launchMode="singleTask" 
+        android:windowSoftInputMode="adjustResize" 
+        android:theme="@style/Theme.App.SplashScreen" 
+        android:exported="true">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
         <category android:name="android.intent.category.LAUNCHER"/>
@@ -33,26 +53,27 @@
     </activity>
 
     <activity
-    android:name=".BlockScreenActivity"
-    android:exported="false"
-    android:excludeFromRecents="true"
-    android:launchMode="singleTask"
-    android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        android:name=".BlockScreenActivity"
+        android:exported="false"
+        android:excludeFromRecents="true"
+        android:launchMode="singleTask"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
-<service
-    android:name=".ScreenGuardianAccessibilityService"
-    android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-    android:exported="false">
-    <intent-filter>
-        <action android:name="android.accessibilityservice.AccessibilityService" />
-    </intent-filter>
+    <service
+        android:name=".ScreenGuardianAccessibilityService"
+        android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+        android:exported="false">
+        <intent-filter>
+            <action android:name="android.accessibilityservice.AccessibilityService" />
+        </intent-filter>
+        <meta-data
+            android:name="android.accessibilityservice"
+            android:resource="@xml/accessibility_service_config" />
+    </service>
 
-    <meta-data
-        android:name="android.accessibilityservice"
-        android:resource="@xml/accessibility_service_config" />
-</service>
     <meta-data
         android:name="com.google.android.geo.API_KEY"
         android:value="${GOOGLE_MAPS_API_KEY}" />
+
   </application>
 </manifest>
