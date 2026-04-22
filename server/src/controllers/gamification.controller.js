@@ -1,14 +1,14 @@
 import {
-  getChildGamificationDataService,
+  getChildAchievementsDataService,
   unlockAchievementForChildService,
 } from "../services/gamification.service.js";
 
-export async function getChildGamificationDataController(req, res, next) {
+export async function getChildAchievementsDataController(req, res, next) {
   try {
     const parentId = req.user.parentId;
     const { childId } = req.params;
 
-    const data = await getChildGamificationDataService(parentId, childId);
+    const data = await getChildAchievementsDataService(parentId, childId);
 
     res.status(200).json({
       ok: true,
