@@ -15,8 +15,13 @@ export type ChildAvatar = {
   level?: number;
   img?: string;
   currentXp?: number;
-  nextLevelXp?: number;
 };
+
+export type ChildAchievement = {
+  achievementId: string;
+  unlockedAt?: string;
+};
+
 
 export type Child = {
   _id: string;
@@ -28,7 +33,7 @@ export type Child = {
   coins: number;
   isActive: boolean;
   role: ChildRole;
-  achievementIds?: string[];
+  achievements?: ChildAchievement[];
   avatar?: ChildAvatar;
 };
 
