@@ -223,7 +223,6 @@ export default function ChildDetailsScreen() {
         })
       ).unwrap();
 
-      emitEvent(DELETE_DEVICE, { deviceId, childId: effectiveChildId });
     } catch {
       showErrorToast("Could not remove the device. Please try again.", "Error");
     } finally {

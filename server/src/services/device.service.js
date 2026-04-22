@@ -17,10 +17,12 @@ import {
   findDeviceStatusById,
   updateDeviceUsedTodayMinutes,
   updateDeviceHeartbeat,
+  releaseDevicePolicyBeforeDelete
 
 } from "../dal/device.dal.js";
 import { getChildrenByParentId } from "../dal/parent.dal.js";
-import { emitPolicyUpdated, emitDeviceStatusUpdated } from "../socketHandler.js";
+import { getIO, emitPolicyUpdated, emitDeviceStatusUpdated } from "../socketHandler.js";
+import { FORCE_CHILD_LOGOUT } from "../constants/socketEvents.js";
 import { formatJerusalemOffsetIsoNow } from "../utils/time.js";
 
 function assertDailyLimitMinutes(value) {
@@ -436,7 +438,21 @@ export async function deleteDeviceForParent(parentId, childId, deviceId) {
       ? String(device.name).trim()
       : "A device";
 
+  await releaseDevicePolicyBeforeDelete(deviceId);
+
+  const io = getIO();
+
+  if (io) {
+    io.to(`child_${String(childId)}`).emit(FORCE_CHILD_LOGOUT, {
+      deviceId: String(deviceId),
+      reason: "DEVICE_DELETED",
+      message: "This device has been disconnected by the parent."
+    });
+  }
+
+
   await deleteDeviceById(deviceId);
+
 
   try {
     await notifyParent({

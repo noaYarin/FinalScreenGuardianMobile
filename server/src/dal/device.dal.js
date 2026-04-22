@@ -163,18 +163,25 @@ export async function findDeviceDailyLimitById(deviceId) {
 export async function updateDeviceDailyLimit(deviceId, { isLimitEnabled, dailyLimitMinutes }) {
   assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
 
+  const fieldsToSet = {
+    "screenTime.isLimitEnabled": isLimitEnabled,
+    "screenTime.dailyLimitMinutes": dailyLimitMinutes
+  };
+
+  // If the parent turns the daily limit off, clear any approved extra time
+  // so the next time the limit is enabled it starts from a clean state.
+  if (isLimitEnabled === false) {
+    fieldsToSet["screenTime.extraMinutesToday"] = 0;
+  }
+
   return DeviceModel.findByIdAndUpdate(
     deviceId,
     {
-      $set: {
-        "screenTime.isLimitEnabled": isLimitEnabled,
-        "screenTime.dailyLimitMinutes": dailyLimitMinutes
-      }
+      $set: fieldsToSet
     },
     { new: true }
   ).lean();
 }
-
 
 
 export async function findDeviceStatusById(deviceId) {

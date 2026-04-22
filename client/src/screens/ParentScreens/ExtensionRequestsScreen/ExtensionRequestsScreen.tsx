@@ -201,7 +201,7 @@ export default function ExtensionRequestsScreen() {
               title="How requests work"
               lines={[
                 "Approving a request adds extra minutes for the current day only",
-                "Approved extra time stays until the daily reset, even if the daily limit is turned off and on again",
+                "Approved extra time stays until the daily reset or turning the daily limit off",
                 "Requests on this screen affect only the daily limit and do not control manual lock or unlock actions",
                 "If the device is offline or Usage Access is turned off, the remaining time shown here may update after the device reconnects and syncs",
               ]}
