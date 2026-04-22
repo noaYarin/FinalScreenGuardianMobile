@@ -4,6 +4,9 @@ import { Href, Stack, useRouter, useSegments } from "expo-router";
 import { Provider as ReduxProvider, useDispatch, useSelector } from "react-redux";
 import { showInfoToast } from "@/src/utils/appToast";
 import { RootSiblingParent } from "react-native-root-siblings";
+import { registerFcmNotificationTapHandlers } from "@/src/notifications/fcmNavigation";
+import { shouldBlockDefaultRedirect } from "@/src/notifications/fcmNavigation";
+import { useAndroidPostNotificationsPermission } from "@/src/hooks/useAndroidPostNotificationsPermission";
 
 import store from "../src/redux/store";
 import { COLORS } from "@/constants/theme";
@@ -19,16 +22,27 @@ import { clearChildrenList } from "@/src/redux/slices/children-slice";
 import { addNotificationFromSocket } from "@/src/redux/slices/notification-slice";
 import { updateChildSummaryFromSocket } from "@/src/redux/slices/parentHome-slice";
 import { bumpPendingRequestsRefreshKey } from "@/src/redux/slices/requests-slice";
+import { useParentFcmTokenSync } from "@/src/hooks/useParentFcmTokenSync";
 
 function AppStack() {
   const dispatch = useDispatch();
   const router = useRouter();
   const segments = useSegments() as string[];
+  useAndroidPostNotificationsPermission();
 
   const { token, childToken, parentId, activeChildId } = useSelector(
     (state: any) => state.auth
   );
+
+  useParentFcmTokenSync(token, parentId);
   const myCurrentDeviceId = useSelector((state: any) => state.auth.deviceId);
+
+  useEffect(() => {
+    const unsubscribe = registerFcmNotificationTapHandlers(router);
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [router]);
 
   useEffect(() => {
 
@@ -46,7 +60,6 @@ function AppStack() {
         const targetDeviceId = data?.deviceId;
 
         if (targetDeviceId && targetDeviceId !== myCurrentDeviceId) {
-          console.log("Logout event received for a different device. Ignoring.");
           return;
         }
 
@@ -115,11 +128,16 @@ function AppStack() {
 
     if (!isIndexRoute) return;
 
-    if (childToken) {
-      router.replace("/Child" as Href);
-    } else if (token) {
-      router.replace("/Parent" as Href);
-    }
+    const timeout = setTimeout(() => {
+      if (shouldBlockDefaultRedirect()) return;
+      if (childToken) {
+        router.replace("/Child" as Href);
+      } else if (token) {
+        router.replace("/Parent" as Href);
+      }
+    }, 900);
+
+    return () => clearTimeout(timeout);
   }, [childToken, token, segments, router]);
 
   return (

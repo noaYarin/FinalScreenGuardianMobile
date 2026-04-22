@@ -62,3 +62,11 @@ export async function apiDeleteParentNotification(
   );
 }
 
+export async function apiRegisterFcmToken(fcmToken: string): Promise<{ success: boolean }> {
+  return api.post<{success: boolean  }>(
+    `${URL}/register-token`,
+    { fcmToken },
+    { requireAuth: true, role: "PARENT" }
+  );
+}
+
