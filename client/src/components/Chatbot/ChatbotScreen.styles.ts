@@ -35,15 +35,28 @@ export const styles = StyleSheet.create({
 
   questionsRow: {
     width: "100%",
+  },
+
+  masonryGrid: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    rowGap: 10,
-    columnGap: 10,
+    width: "100%",
+    alignItems: "flex-start",
+  },
+
+  masonryColumn: {
+    width: "48%",
+  },
+
+  masonrySpacer: {
+    width: "4%",
+  },
+
+  questionCell: {
+    paddingVertical: 6,
   },
 
   questionBubble: {
-    width: "48%",
+    width: "100%",
     backgroundColor: "#EAF2FF",
     borderWidth: 0,
     borderRadius: 999,
@@ -52,7 +65,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     maxWidth: "100%",
-    alignSelf: "flex-start",
+    alignSelf: "stretch",
     shadowColor: "#000",
     shadowOpacity: 0.06,
     shadowRadius: 12,

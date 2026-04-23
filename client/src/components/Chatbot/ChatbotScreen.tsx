@@ -54,7 +54,7 @@ export default function ChatbotScreen({ role }: Props) {
     setMessages([
       {
         _id: "welcome",
-        text:"Hi! Pick a topic and I’ll help you.",
+        text:"Hi! Pick a question and I’ll help you.",
         createdAt: new Date(),
         user: BOT_USER,
       },
@@ -103,28 +103,73 @@ export default function ChatbotScreen({ role }: Props) {
               </AppText>
             </View>
           ) : (
-            questionBubbles.map((item, idx) => (
-            (() => {
-              const bg = CHILD_ACCENT_COLORS[idx % CHILD_ACCENT_COLORS.length];
-              return (
-            <Pressable
-              key={String(item.menuOptionNumber ?? idx)}
-              onPress={() => handleSelectOption(item.menuOptionNumber)}
-              accessibilityRole="button"
-              accessibilityLabel={item.question}
-              style={({ pressed }) => [
-                styles.questionBubble,
-                questionBubbleBg(bg),
-                pressed ? styles.questionBubblePressed : null,
-              ]}
-            >
-              <AppText weight="bold" style={styles.questionBubbleText}>
-                {item.question}
-              </AppText>
-            </Pressable>
-              );
-            })()
-          ))
+            <View style={styles.masonryGrid}>
+              <View style={styles.masonryColumn}>
+                {questionBubbles
+                  .filter((_, idx) => idx % 2 === 0)
+                  .map((item, colIdx) => {
+                    const absoluteIdx = colIdx * 2;
+                    const bg =
+                      CHILD_ACCENT_COLORS[absoluteIdx % CHILD_ACCENT_COLORS.length];
+
+                    return (
+                      <View
+                        key={String(item.menuOptionNumber ?? absoluteIdx)}
+                        style={styles.questionCell}
+                      >
+                        <Pressable
+                          onPress={() => handleSelectOption(item.menuOptionNumber)}
+                          accessibilityRole="button"
+                          accessibilityLabel={item.question}
+                          style={({ pressed }) => [
+                            styles.questionBubble,
+                            questionBubbleBg(bg),
+                            pressed ? styles.questionBubblePressed : null,
+                          ]}
+                        >
+                          <AppText weight="bold" style={styles.questionBubbleText}>
+                            {item.question}
+                          </AppText>
+                        </Pressable>
+                      </View>
+                    );
+                  })}
+              </View>
+
+              <View style={styles.masonrySpacer} />
+
+              <View style={styles.masonryColumn}>
+                {questionBubbles
+                  .filter((_, idx) => idx % 2 === 1)
+                  .map((item, colIdx) => {
+                    const absoluteIdx = colIdx * 2 + 1;
+                    const bg =
+                      CHILD_ACCENT_COLORS[absoluteIdx % CHILD_ACCENT_COLORS.length];
+
+                    return (
+                      <View
+                        key={String(item.menuOptionNumber ?? absoluteIdx)}
+                        style={styles.questionCell}
+                      >
+                        <Pressable
+                          onPress={() => handleSelectOption(item.menuOptionNumber)}
+                          accessibilityRole="button"
+                          accessibilityLabel={item.question}
+                          style={({ pressed }) => [
+                            styles.questionBubble,
+                            questionBubbleBg(bg),
+                            pressed ? styles.questionBubblePressed : null,
+                          ]}
+                        >
+                          <AppText weight="bold" style={styles.questionBubbleText}>
+                            {item.question}
+                          </AppText>
+                        </Pressable>
+                      </View>
+                    );
+                  })}
+              </View>
+            </View>
           )}
         </View>
       </View>
