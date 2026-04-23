@@ -27,6 +27,8 @@ export default function ChatbotScreen({ role }: Props) {
   const [sending, setSending] = useState(false);
 
   const insets = useSafeAreaInsets();
+  const bottomChatPadding = 14;
+  const roleExtraBottomPadding = role === "CHILD" ? 14 : 0;
 
   const myUser = useMemo(
     () => ({
@@ -87,7 +89,12 @@ export default function ChatbotScreen({ role }: Props) {
   );
 
   return (
-    <View style={styles.screen}>
+    <View
+      style={[
+        styles.screen,
+        role === "CHILD" ? { backgroundColor: "transparent" } : null,
+      ]}
+    >
       <View style={styles.topSection}>
         <View style={styles.sectionTitle}>
           <AppText weight="bold" style={styles.sectionTitleText}>
@@ -174,13 +181,26 @@ export default function ChatbotScreen({ role }: Props) {
         </View>
       </View>
 
-      <View style={[styles.chatCard, { marginBottom: Math.max(insets.bottom, 0) }]}>
+      <View
+        style={[
+          styles.chatCard,
+          {
+            marginBottom:
+              Math.max(insets.bottom, 0) +
+              bottomChatPadding +
+              roleExtraBottomPadding,
+          },
+        ]}
+      >
         <GiftedChat
           messages={messages}
           onSend={() => {
           }}
           user={myUser}
           renderInputToolbar={() => null}
+          messagesContainerStyle={{
+            paddingBottom: bottomChatPadding + roleExtraBottomPadding,
+          }}
           isTyping={sending}
           timeTextStyle={{
             left: { color: "#64748B" },

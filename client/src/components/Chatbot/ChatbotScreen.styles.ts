@@ -14,7 +14,7 @@ export const styles = StyleSheet.create({
     paddingTop: 16,
     paddingHorizontal: 16,
     paddingBottom: 14,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "transparent",
     borderBottomWidth: 1,
     borderBottomColor: "#EEF3F8",
   },

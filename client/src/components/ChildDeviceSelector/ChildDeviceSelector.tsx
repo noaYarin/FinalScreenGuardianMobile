@@ -86,7 +86,8 @@ export default function ChildDeviceSelector({
     return mapped;
   }, [devicesByChild, selectedChildId, includeAllDevicesOption, allDevicesLabel]);
 
-  const shouldCenterDevices = currentChildDevices.length <= 2;
+  const shouldCenterDevices =
+    currentChildDevices.length <= (includeAllDevicesOption ? 3 : 2);
 
   const getDeviceTypeLabel = (type: DeviceType) => {
     return type === "tablet" ? "Tablet" : "Phone";

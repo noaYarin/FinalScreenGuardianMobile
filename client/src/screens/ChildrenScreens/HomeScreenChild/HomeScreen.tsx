@@ -18,7 +18,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
-import { styles, TILE_COLORS } from "./styles";
+import { styles as rawStyles, TILE_COLORS } from "./styles";
 
 import { Child } from "@/src/redux/slices/children-slice";
 import { fetchCurrentChildProfileThunk } from "@/src/redux/thunks/childrenThunks";
@@ -31,6 +31,7 @@ import { avatarImages, defaultAvatarImage } from "@/src/utils/avatarImages";
 
 
 const { DeviceControl } = NativeModules;
+const styles = rawStyles as any;
 
 const ICON = {
   points: "star-circle",
@@ -232,6 +233,7 @@ export default function HomeScreen() {
     screenTime.limitEnabled && total > 0
       ? Math.min((screenTime.usedTodayMinutes / total) * 100, 100)
       : 0;
+  const isNoLimit = !screenTime.limitEnabled;
 
   return (
     <ScreenLayout>
@@ -273,28 +275,30 @@ export default function HomeScreen() {
                   {`Hi, ${userName}`}
                 </AppText>
 
-                <Pressable
-                  onPress={() => setIsStatsOpen((prev) => !prev)}
-                  style={({ pressed }) => [
-                    styles.statsToggle,
-                    pressed && styles.statsTogglePressed,
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityLabel={
-                    isStatsOpen
-                      ? "Hide points, level and coins"
-                      : "Show points, level and coins"
-                  }
-                >
-                  <AppText weight="bold" style={styles.statsToggleText}>
-                    {isStatsOpen ? "Hide stats" : "Show stats"}
-                  </AppText>
-                  <MaterialCommunityIcons
-                    name={isStatsOpen ? ICON.statsOpen : ICON.statsClosed}
-                    size={18}
-                    color="#2563EB"
-                  />
-                </Pressable>
+                <View style={styles.headerActionsRow}>
+                  <Pressable
+                    onPress={() => setIsStatsOpen((prev) => !prev)}
+                    style={({ pressed }) => [
+                      styles.statsToggle,
+                      pressed && styles.statsTogglePressed,
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      isStatsOpen
+                        ? "Hide points, level and coins"
+                        : "Show points, level and coins"
+                    }
+                  >
+                    <AppText weight="bold" style={styles.statsToggleText}>
+                      {isStatsOpen ? "Hide stats" : "Show stats"}
+                    </AppText>
+                    <MaterialCommunityIcons
+                      name={isStatsOpen ? ICON.statsOpen : ICON.statsClosed}
+                      size={18}
+                      color="#2563EB"
+                    />
+                  </Pressable>
+                </View>
               </View>
             </View>
           </View>
@@ -324,8 +328,8 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.card}>
-          <View style={styles.cardTitleRow}>
-            <View style={styles.cardTitleLeft}>
+          <View style={styles.cardTitleRowCentered}>
+            <View style={[styles.cardTitleLeft, styles.cardTitleLeftCentered]}>
               <View style={styles.iconBadge}>
                 <MaterialCommunityIcons
                   name={ICON.time}
@@ -345,6 +349,7 @@ export default function HomeScreen() {
             style={[
               styles.timerValue,
               { fontSize: timerSize, writingDirection: "ltr", textAlign: "left" },
+              styles.timerValueCentered,
             ]}
           >
             {!screenTime.limitEnabled
@@ -352,11 +357,13 @@ export default function HomeScreen() {
               : formatTime(screenTime.remainingMinutes)}
           </AppText>
 
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${percent}%` }]} />
-          </View>
+          {isNoLimit ? null : (
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${percent}%` }]} />
+            </View>
+          )}
 
-          <AppText weight="bold" style={styles.timerSub}>
+          <AppText weight="bold" style={[styles.timerSub, styles.timerSubCentered]}>
             {!screenTime.limitEnabled
               ? "There is no active limit right now"
               : "Your time is almost over"}
@@ -389,12 +396,6 @@ export default function HomeScreen() {
             disabled
           />
           <Tile iconName={ICON.bulb} label="Ideas" colorKey="ideas" disabled />
-          <Tile
-            iconName={ICON.chatbot}
-            label="Chatbot"
-            colorKey="help"
-            onPress={() => router.push("/Child/chatbot" as Href)}
-          />
           <Tile iconName={ICON.help} label="Help" colorKey="help" disabled />
         </View>
 
@@ -487,7 +488,6 @@ function Tile({
           <View
             style={[
               styles.tileIconWrap,
-              { backgroundColor: c.badge },
               disabled && styles.tileIconDisabled,
             ]}
           >

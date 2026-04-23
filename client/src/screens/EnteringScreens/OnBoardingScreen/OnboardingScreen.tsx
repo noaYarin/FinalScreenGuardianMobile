@@ -17,7 +17,7 @@ import { OnboardingButton } from "../../../components/OnboardingButton";
 import { COLORS } from "../../../../constants/theme";
 import { styles } from "./onboarding.styles";
 
-const CHOOSE_CHILD_AGE = "/Entering/chooseChildAge";
+const NEXT_ROUTE = "/Entering/roleSelectionRoute";
 
 type OnboardingSlide = {
   id: string;
@@ -65,12 +65,12 @@ export const OnboardingScreen: React.FC = () => {
 
   const isLastSlide = currentIndex === slides.length - 1;
 
-  const goToChooseChildAge = () => {
-    router.push(CHOOSE_CHILD_AGE as any);
+  const goToNext = () => {
+    router.push(NEXT_ROUTE as any);
   };
 
   const handleSkipOnboarding = () => {
-    goToChooseChildAge();
+    goToNext();
   };
 
   const handleLayout = (event: LayoutChangeEvent) => {
@@ -123,7 +123,7 @@ export const OnboardingScreen: React.FC = () => {
 
   const handlePrimaryPress = () => {
     if (indexRef.current >= slides.length - 1) {
-      goToChooseChildAge();
+      goToNext();
       return;
     }
 

@@ -14,6 +14,7 @@ export const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     color: "#1F2937",
+    textAlign: "center",
   },
 
   childrenViewport: {

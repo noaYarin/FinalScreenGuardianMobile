@@ -19,7 +19,8 @@ export const styles = StyleSheet.create({
     alignItems: "stretch",
     paddingHorizontal: 14,
     paddingTop: 8,
-    paddingBottom: 16,
+    paddingBottom: 40,
+    backgroundColor: "transparent",
   },
 
   pageSmall: {
@@ -67,6 +68,13 @@ export const styles = StyleSheet.create({
     direction: "ltr",
   },
 
+  headerActionsRow: {
+    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+  },
+
   avatarWrap: {
     borderRadius: 999,
     overflow: "hidden",
@@ -102,7 +110,6 @@ export const styles = StyleSheet.create({
   },
 
   statsToggle: {
-    marginTop: 10,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
@@ -115,6 +122,8 @@ export const styles = StyleSheet.create({
     alignSelf: "flex-start",
     direction: "ltr",
   },
+
+  // chatbot button moved to Stack header (route)
 
   statsTogglePressed: {
     opacity: 0.82,
@@ -217,12 +226,21 @@ export const styles = StyleSheet.create({
     direction: "ltr",
   },
 
+  cardTitleRowCentered: {
+    alignItems: "center",
+  },
+
   cardTitleLeft: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
     alignSelf: "flex-start",
     direction: "ltr",
+  },
+
+  cardTitleLeftCentered: {
+    justifyContent: "center",
+    alignSelf: "center",
   },
 
   iconBadge: {
@@ -254,6 +272,11 @@ export const styles = StyleSheet.create({
     alignSelf: "stretch",
   },
 
+  timerValueCentered: {
+    textAlign: "center",
+    alignSelf: "center",
+  },
+
   progressTrack: {
     width: "100%",
     height: 8,
@@ -276,6 +299,11 @@ export const styles = StyleSheet.create({
     includeFontPadding: false,
     writingDirection: "ltr",
     alignSelf: "stretch",
+  },
+
+  timerSubCentered: {
+    textAlign: "center",
+    alignSelf: "center",
   },
 
   grid: {
@@ -326,15 +354,15 @@ export const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#FFFFFF",
+    borderWidth: 0,
+    borderColor: "transparent",
   },
 
   tileText: {
     color: "#0F172A",
     textAlign: "center",
-    fontSize: 13,
-    lineHeight: 16,
+    fontSize: 11,
+    lineHeight: 13,
     includeFontPadding: false,
   },
 
