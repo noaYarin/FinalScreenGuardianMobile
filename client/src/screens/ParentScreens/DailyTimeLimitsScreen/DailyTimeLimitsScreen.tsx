@@ -301,14 +301,7 @@ export default function DailyTimeLimitsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.container}>
-          <View style={styles.heroCard}>
-                <AppText weight="extraBold" style={styles.heroTitle}>
-                  Manage screen time by child and device
-                </AppText>
-
-                <AppText weight="medium" style={styles.heroSubtitle}>
-                  Choose a child and device, then set or update the daily screen-time limit.
-                </AppText>
+          <View style={styles.infoBulbRow}>
             <InfoHint
               title="How daily limits work"
               lines={[
@@ -319,7 +312,16 @@ export default function DailyTimeLimitsScreen() {
                 "If the device is offline, changes will apply when it reconnects",
               ]}
             />
+          </View>
 
+          <View style={styles.heroCard}>
+                <AppText weight="extraBold" style={styles.heroTitle}>
+                  Manage screen time by child and device
+                </AppText>
+
+                <AppText weight="medium" style={styles.heroSubtitle}>
+                  Choose a child and device, then set or update the daily screen-time limit.
+                </AppText>
           </View>
 
           <ChildDeviceSelector

@@ -188,15 +188,7 @@ export default function ExtensionRequestsScreen() {
     <ScreenLayout>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.container}>
-          <View style={styles.heroCard}>
-            <AppText weight="extraBold" style={styles.heroTitle}>
-              Extension Requests
-            </AppText>
-
-            <AppText weight="medium" style={styles.heroSubtitle}>
-              Review and manage pending requests for extra daily screen time
-            </AppText>
-
+          <View style={styles.infoBulbRow}>
             <InfoHint
               title="How requests work"
               lines={[
@@ -206,6 +198,16 @@ export default function ExtensionRequestsScreen() {
                 "If the device is offline or Usage Access is turned off, the remaining time shown here may update after the device reconnects and syncs",
               ]}
             />
+          </View>
+
+          <View style={styles.heroCard}>
+            <AppText weight="extraBold" style={styles.heroTitle}>
+              Extension Requests
+            </AppText>
+
+            <AppText weight="medium" style={styles.heroSubtitle}>
+              Review and manage pending requests for extra daily screen time
+            </AppText>
 
           </View>
 
@@ -254,28 +256,38 @@ export default function ExtensionRequestsScreen() {
                         />
                       </View>
 
-                      <View style={styles.cardTopTextWrap}>
+                      <View
+                        style={[
+                          styles.cardTopTextWrap,
+                          deviceName === "All devices"
+                            ? styles.cardTopTextWrapCentered
+                            : null,
+                        ]}
+                      >
                         <AppText weight="extraBold" style={styles.deviceName}>
                           {deviceName}
                         </AppText>
 
-                        <AppText weight="medium" style={styles.childName}>
+                        <AppText
+                          weight="medium"
+                          style={[
+                            styles.childName,
+                            deviceName === "All devices" ? styles.childNameCentered : null,
+                          ]}
+                        >
                           {childName}
                         </AppText>
                       </View>
                     </View>
 
-                    <View style={styles.infoGrid}>
-                      <View style={styles.infoChip}>
-                        <MaterialCommunityIcons
-                          name="clock-plus-outline"
-                          size={16}
-                          color="#315BFF"
-                        />
-                        <AppText weight="bold" style={styles.infoChipText}>
-                          Requested extra time: {request.requestedMinutes} minutes
-                        </AppText>
-                      </View>
+                    <View style={styles.extraTimeBox}>
+                      <AppText weight="bold" style={styles.extraTimeLabel}>
+                        Requested extra time
+                      </AppText>
+
+                      <AppText weight="medium" style={styles.extraTimeText}>
+                        {request.requestedMinutes} minutes
+                      </AppText>
                     </View>
 
                     <View style={styles.reasonBox}>
