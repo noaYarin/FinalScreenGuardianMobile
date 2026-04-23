@@ -23,6 +23,8 @@ function getMenuLabel(item: HomeMenuItem) {
       return "Tasks";
     case "rewards":
       return "Rewards";
+    case "chatbot":
+      return "Chatbot";
     default:
       return "Menu Item";
   }
@@ -38,6 +40,8 @@ function getMenuAccessibilityLabel(item: HomeMenuItem) {
       return "Open tasks";
     case "rewards":
       return "Open rewards";
+    case "chatbot":
+      return "Open chatbot";
     default:
       return "Open menu item";
   }

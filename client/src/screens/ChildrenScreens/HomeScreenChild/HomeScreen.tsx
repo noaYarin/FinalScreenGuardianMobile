@@ -45,6 +45,7 @@ const ICON = {
   goals: "target",
   reports: "information-box",
   bulb: "lightbulb-on-outline",
+  chatbot: "chat-processing-outline",
   help: "help-circle-outline",
   panic: "alert-circle-outline",
   statsClosed: "chevron-down",
@@ -388,6 +389,12 @@ export default function HomeScreen() {
             disabled
           />
           <Tile iconName={ICON.bulb} label="Ideas" colorKey="ideas" disabled />
+          <Tile
+            iconName={ICON.chatbot}
+            label="Chatbot"
+            colorKey="help"
+            onPress={() => router.push("/Child/chatbot" as Href)}
+          />
           <Tile iconName={ICON.help} label="Help" colorKey="help" disabled />
         </View>
 

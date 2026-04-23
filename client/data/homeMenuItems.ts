@@ -34,4 +34,10 @@ export const MENU_ITEMS: HomeMenuItem[] = [
     icon: "diamond-stone",
     route: "/Parent/rewards" as Href,
   },
+  {
+    key: "chatbot",
+    labelKey: "chatbot",
+    icon: "chat-processing-outline",
+    route: "/Parent/chatbot" as Href,
+  },
 ];
