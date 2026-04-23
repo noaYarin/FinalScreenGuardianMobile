@@ -1,7 +1,14 @@
 import React from "react";
-import { Tabs } from "expo-router";
+import { Text } from "react-native";
+import { Tabs, router, type Href } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { COLORS } from "@/constants/theme";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/src/redux/store/types";
+import {
+  ParentMenuHeaderButton,
+  ParentNotificationsHeaderButton,
+} from "@/src/components/Navigation/ParentHeaderButtons";
 
 const TAB_LABELS: Record<string, string> = {
   home: "Home",
@@ -12,19 +19,22 @@ const TAB_LABELS: Record<string, string> = {
 };
 
 export default function ParentTabsLayout() {
+  const unreadNotificationsCount = useSelector(
+    (state: RootState) => state.notifications?.unreadCount ?? 0
+  );
+
   return (
     <Tabs
-      screenOptions={({ route }) => {
-        const title = TAB_LABELS[route.name];
-
-        return {
+        screenOptions={({ route }) => {
+          return {
           sceneContainerStyle: {
             backgroundColor: COLORS.light.background,
           },
           headerStyle: {
             backgroundColor: COLORS.light.tint,
           },
-          title,
+          title: "",
+          headerTitle: "",
           tabBarShowLabel: true,
           tabBarStyle: {
             height: 72,
@@ -41,9 +51,20 @@ export default function ParentTabsLayout() {
           tabBarInactiveTintColor: COLORS.light.tabIconDefault,
           headerTitleAlign: "center",
           headerShadowVisible: false,
-        };
-      }}
-    >
+          headerLeft: () => (
+            <ParentMenuHeaderButton
+              onPress={() => router.push("/Parent/homeMenu" as Href)}
+            />
+          ),
+          headerRight: () => (
+            <ParentNotificationsHeaderButton
+              onPress={() => router.push("/Parent/systemAlerts" as Href)}
+              unreadCount={unreadNotificationsCount}
+            />
+          ),
+          };
+        }}
+      >
       <Tabs.Screen
         name="children"
         options={{

@@ -42,16 +42,9 @@ export const enteringFormStyles = StyleSheet.create({
     fontSize: 22,
     textAlign: "center",
     marginTop: 8,
-  },
-
-  subtitle: {
-    fontSize: 14,
-    textAlign: "center",
-    color: "#6B7280",
-    marginTop: 4,
     marginBottom: 14,
   },
-
+  
   input: {
     width: "100%",
     flexDirection: "row",

@@ -75,7 +75,6 @@ export default function LoginParentScreen() {
           iconName={ICON.users}
           iconGradientColors={["#2563EB", "#7C3AED"]}
           title="Connect to Parents"
-          subtitle="Manage your family's screen time"
           error={error}
           submitLabel="Connect"
           onSubmit={onSubmit}
