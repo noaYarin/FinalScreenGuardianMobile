@@ -15,6 +15,11 @@ export const styles = StyleSheet.create({
     gap: 18,
   },
 
+  infoBulbRow: {
+    width: "100%",
+    alignSelf: "flex-start",
+  },
+
   heroCard: {
     position: "relative",
     overflow: "hidden",
@@ -157,6 +162,10 @@ export const styles = StyleSheet.create({
     gap: 2,
   },
 
+  cardTopTextWrapCentered: {
+    alignItems: "center",
+  },
+
   deviceName: {
     fontSize: 20,
     color: "#1D2433",
@@ -165,6 +174,12 @@ export const styles = StyleSheet.create({
   childName: {
     fontSize: 14,
     color: "#6F7A8F",
+  },
+
+  childNameCentered: {
+    textAlign: "center",
+    width: "100%",
+    alignSelf: "center",
   },
 
   infoGrid: {
@@ -191,6 +206,24 @@ export const styles = StyleSheet.create({
   infoChipText: {
     fontSize: 13,
     color: "#344054",
+  },
+
+  extraTimeBox: {
+    borderRadius: 18,
+    padding: 14,
+    backgroundColor: "#F8FAFD",
+    gap: 6,
+  },
+
+  extraTimeLabel: {
+    fontSize: 13,
+    color: "#4B5565",
+  },
+
+  extraTimeText: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: "#1D2433",
   },
 
   reasonBox: {

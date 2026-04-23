@@ -184,10 +184,6 @@ export default function SystemAlertsScreen() {
             <AppText weight="extraBold" style={styles.heroTitle}>
               Notifications
             </AppText>
-
-            <AppText weight="medium" style={styles.heroSubtitle}>
-              Stay updated on important activity and unusual events
-            </AppText>
           </View>
 
           <View style={styles.heroIconWrap}>
@@ -264,10 +260,6 @@ export default function SystemAlertsScreen() {
       </View>
 
       <View style={styles.listTitleRow}>
-        <AppText weight="bold" style={styles.sectionTitle}>
-          Recent notifications
-        </AppText>
-
         {unreadCount > 0 && (
           <Pressable
             onPress={handleMarkAllRead}
