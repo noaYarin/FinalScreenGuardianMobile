@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { showErrorToast, showInfoToast } from "@/src/utils/appToast";
@@ -26,9 +25,7 @@ import { updateDeviceLocation } from "@/src/redux/thunks/deviceThunks";
 import type { AppDispatch, RootState } from "@/src/redux/store/types";
 import { connectSocket, emitEvent, onEvent } from "@/src/services/socket";
 import { REQUEST_CHILD_LOCATION } from "@/src/constants/socketEvents";
-import { getChildProfileImageUri } from "@/src/utils/childProfileImage";
-import { avatarImages, defaultAvatarImage } from "@/src/utils/avatarImages";
-
+import { getAvatarImage } from "@/src/utils/avatarImages";
 
 const { DeviceControl } = NativeModules;
 const styles = rawStyles as any;
@@ -200,15 +197,22 @@ export default function HomeScreen() {
     "Child"
   ).trim();
 
-  const avatarLetter = userName.length ? (Array.from(userName)[0] ?? "?") : "?";
 
-  const profileImageUri = useMemo(
-    () => getChildProfileImageUri(activeChildData?.img),
-    [activeChildData?.img]
+  const avatarLevel = activeChildData?.avatar?.level ?? 1;
+
+  const homeAvatarImage = useMemo(
+    () =>
+      getAvatarImage({
+        gender: activeChildData?.gender,
+        level: avatarLevel,
+        imageName: activeChildData?.avatar?.img,
+      }),
+    [activeChildData?.gender, avatarLevel, activeChildData?.avatar?.img]
   );
 
+
   const pointsValue = activeChildData?.avatar?.currentXp ?? 0;
-  const levelValue = activeChildData?.avatar?.level ?? 0;
+  const levelValue = activeChildData?.avatar?.level ?? 1;
   const coinsValue =
     activeChildData?.coins != null ? String(activeChildData.coins) : "0";
 
@@ -244,26 +248,13 @@ export default function HomeScreen() {
               <View
                 style={[styles.avatarWrap, { width: avatarSize, height: avatarSize }]}
               >
-                {profileImageUri ? (
-                  <Image
-                    source={{ uri: profileImageUri }}
-                    style={styles.avatarPhoto}
-                    contentFit="cover"
-                    transition={160}
-                    accessibilityLabel={userName}
-                  />
-                ) : (
-                  <LinearGradient
-                    colors={["#3B82F6", "#BDE0FE"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.avatarGradient}
-                  >
-                    <AppText weight="extraBold" style={styles.avatarLetter}>
-                      {avatarLetter}
-                    </AppText>
-                  </LinearGradient>
-                )}
+                <Image
+                  source={homeAvatarImage}
+                  style={styles.avatarPhoto}
+                  contentFit="contain"
+                  transition={160}
+                  accessibilityLabel={`${userName} avatar`}
+                />
               </View>
 
               <View style={styles.headerTextSide}>
@@ -403,7 +394,7 @@ export default function HomeScreen() {
           disabled
           style={({ pressed }) => [
             styles.panicBtn,
-            styles.panicDisabled, 
+            styles.panicDisabled,
             pressed && styles.panicPressed,
           ]}
           accessibilityRole="button"
@@ -411,7 +402,7 @@ export default function HomeScreen() {
           accessibilityState={{ disabled: true }}
         >
           <View style={styles.panicContent}>
-           
+
             <View style={styles.panicIconBadge}>
               <MaterialCommunityIcons name={ICON.panic} size={18} color="#fff" />
             </View>

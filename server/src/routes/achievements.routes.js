@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authJwt } from "../middlewares/authJwt.js";
-import { requireParent } from "../middlewares/requireParent.js";
+import { requireChild } from "../middlewares/requireChild.js";
+
 import {
   getChildAchievementsDataController,
   unlockAchievementForChildController,
@@ -13,7 +14,7 @@ const router = Router();
 router.get(
   "/child/:childId",
   authJwt,
-  requireParent,
+  requireChild,
   getChildAchievementsDataController
 );
 

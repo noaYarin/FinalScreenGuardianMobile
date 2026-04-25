@@ -22,7 +22,7 @@ export async function fetchChildAchievements(
     `/api/v1/achievements/child/${childId}`,
     {
       requireAuth: true,
-      role: "PARENT",
+      role: "CHILD",
     }
   );
 }
