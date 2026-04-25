@@ -135,82 +135,6 @@ export const styles = StyleSheet.create({
     color: "#6B7280",
   },
 
-  statsGrid: {
-    width: "100%",
-    flexDirection: "row",
-    flexWrap: "nowrap",
-    justifyContent: "center",
-    marginBottom: 18,
-  },
-
-  statCard: {
-    borderRadius: 20,
-    borderWidth: 1,
-    minHeight: 110,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    justifyContent: "space-between",
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-  },
-
-  statCardBlue: {
-    backgroundColor: "#EAF2FF",
-    borderColor: "#D6E6FF",
-  },
-
-  statCardPink: {
-    backgroundColor: "#FFEAF0",
-    borderColor: "#FFD6E2",
-  },
-
-  statHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-
-  statIconBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-
-  statIconBadgeBlue: {
-    backgroundColor: "#CFE3FF",
-  },
-
-  statIconBadgePink: {
-    backgroundColor: "#FFC9D8",
-  },
-
-  statLabel: {
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 18,
-    color: "#4B5563",
-  },
-
-  statValue: {
-    fontSize: 18,
-    lineHeight: 24,
-  },
-
-  statValueBlue: {
-    color: "#2F6DEB",
-  },
-
-  statValuePink: {
-    color: "#D81B60",
-  },
-
   achievementsList: {
     width: "100%",
     gap: 14,
@@ -227,6 +151,7 @@ export const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
+    overflow: "hidden",
   },
 
   achievementCardGold: {
@@ -237,6 +162,12 @@ export const styles = StyleSheet.create({
   achievementCardLight: {
     backgroundColor: "#F8F7FF",
     borderColor: "#E7DBFF",
+  },
+
+  achievementCardLocked: {
+    backgroundColor: "#F7F3FC",
+    borderColor: "#E8DFF6",
+    opacity: 0.96,
   },
 
   achievementCardPressed: {
@@ -267,21 +198,31 @@ export const styles = StyleSheet.create({
     backgroundColor: "#E9DDFF",
   },
 
+  achievementIconBoxLocked: {
+    backgroundColor: "#ECE7F5",
+    borderWidth: 1,
+    borderColor: "#DED5EC",
+  },
+
   achievementTextArea: {
     flex: 1,
     alignItems: "stretch",
+    minWidth: 0,
   },
 
   achievementTitleRow: {
+    width: "100%",
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 10,
-    marginBottom: 6,
+    marginBottom: 8,
   },
 
   achievementTitle: {
     flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
     fontSize: 20,
     lineHeight: 25,
     color: "#374151",
@@ -289,6 +230,44 @@ export const styles = StyleSheet.create({
 
   achievementTitleGold: {
     color: "#6B4E00",
+  },
+
+  achievementTitleLocked: {
+    color: "#6F6790",
+  },
+
+  lockedBadgeInline: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#7C6AA6",
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 999,
+    flexShrink: 0,
+    marginTop: 2,
+  },
+
+  lockedBadgeText: {
+    fontSize: 11,
+    color: "#FFFFFF",
+  },
+
+  completedBadgeInline: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#10D98B",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    flexShrink: 0,
+    marginTop: 2,
+  },
+
+  completedBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 12,
   },
 
   achievementSubtitle: {
@@ -300,6 +279,10 @@ export const styles = StyleSheet.create({
 
   achievementSubtitleGold: {
     color: "#7A6640",
+  },
+
+  achievementSubtitleLocked: {
+    color: "#948BAA",
   },
 
   achievementBottomArea: {
@@ -323,6 +306,10 @@ export const styles = StyleSheet.create({
 
   rewardPillLight: {
     backgroundColor: "#F3EDFF",
+  },
+
+  rewardPillLocked: {
+    backgroundColor: "#ECE7F5",
   },
 
   pointsPill: {
@@ -351,6 +338,10 @@ export const styles = StyleSheet.create({
     color: "#8A6500",
   },
 
+  rewardTextLocked: {
+    color: "#8E8AA3",
+  },
+
   progressText: {
     fontSize: 13,
     color: "#5B21B6",
@@ -363,20 +354,4 @@ export const styles = StyleSheet.create({
   centerText: {
     textAlign: "center",
   },
-
-  completedBadge: {
-    flexDirection: "row",
-    backgroundColor: "#10D98B",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    alignItems: "center",
-    gap: 6,
-    flexShrink: 0,
-  },
-
-  completedBadgeText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-  },
-})
+});

@@ -11,62 +11,41 @@ import { fetchChildAchievementsThunk } from "@/src/redux/thunks/achievementsThun
 import { fetchCurrentChildProfileThunk } from "@/src/redux/thunks/childrenThunks";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
-import { styles } from "./styles";
 import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
-
+import { styles } from "./styles";
+import { getAchievementIconByKey } from "@/src/utils/achievementIcons";
+import { getLockedAchievementHint } from "@/src/utils/achievementText";
 
 type AchievementCard = {
   id: string;
+  key: string;
   title: string;
   subtitle: string;
   progressText: string;
   rewardText: string;
   icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
   tone: "gold" | "light";
-  completed?: boolean;
+  unlocked: boolean;
 };
 
-function getAchievementIcon(
-  achievement: AchievementUiItem
-): React.ComponentProps<typeof MaterialCommunityIcons>["name"] {
-  switch (achievement.key) {
-    case "first_task_submitted":
-      return "clipboard-check-outline";
-
-    case "five_tasks_submitted":
-      return "clipboard-check-multiple-outline";
-
-    case "first_reward_redeemed":
-      return "gift-outline";
-
-    case "avatar_level_2":
-      return "shield-star-outline";
-
-    case "avatar_level_5":
-      return "star-circle-outline";
-
-    default:
-      return "trophy-outline";
-  }
-}
-
 function mapAchievementToCard(achievement: AchievementUiItem): AchievementCard {
+  const isUnlocked = Boolean(achievement.unlocked);
+
   return {
     id: achievement._id,
+    key: achievement.key,
     title: achievement.title,
     subtitle: achievement.description,
-    progressText: achievement.unlocked ? "Unlocked" : "Locked",
-    rewardText: `${achievement.xpReward} pts`,
-    icon: getAchievementIcon(achievement),
-    tone: achievement.unlocked ? "gold" : "light",
-    completed: achievement.unlocked,
+    progressText: "Unlocked",
+    rewardText: `+${achievement.xpReward ?? 0} XP`,
+    icon: getAchievementIconByKey(achievement.key),
+    tone: isUnlocked ? "gold" : "light",
+    unlocked: isUnlocked,
   };
 }
 
 export default function AchievementsScreen() {
   const { width } = useWindowDimensions();
-
-
   const dispatch = useDispatch<AppDispatch>();
 
   const activeChildId = useSelector(
@@ -85,9 +64,7 @@ export default function AchievementsScreen() {
     (state: RootState) => state.achievements.isLoading
   );
 
-  const error = useSelector(
-    (state: RootState) => state.achievements.error
-  );
+  const error = useSelector((state: RootState) => state.achievements.error);
 
   const activeChildData = useMemo(() => {
     if (!activeChildId) return undefined;
@@ -112,17 +89,13 @@ export default function AchievementsScreen() {
   const heroIconSize = isTabletLarge ? 84 : isTablet ? 74 : 66;
   const sidePadding = isTabletLarge ? 24 : 16;
 
-
-
   const points = activeChildData?.avatar?.currentXp ?? 0;
-
 
   const completedGoals = achievementsFromRedux.filter(
     (achievement) => achievement.unlocked
   ).length;
 
   const totalGoals = achievementsFromRedux.length;
-
 
   const achievements = useMemo(
     () => achievementsFromRedux.map(mapAchievementToCard),
@@ -194,7 +167,7 @@ export default function AchievementsScreen() {
                 </AppText>
               </View>
 
-              <AppText style={styles.heroSummaryLabel}>Points</AppText>
+              <AppText style={styles.heroSummaryLabel}>XP</AppText>
             </View>
           </View>
         </View>
@@ -203,130 +176,151 @@ export default function AchievementsScreen() {
           <AppText style={styles.heroSubtitle}>Loading achievements...</AppText>
         ) : null}
 
-        {error ? <AppText style={styles.heroSubtitle}>{error}</AppText> : null}
+        {error ? (
+          <AppText style={styles.heroSubtitle}>{String(error)}</AppText>
+        ) : null}
 
         {!isLoading && !error && achievements.length === 0 ? (
           <EmptyStateCard
             icon="trophy-outline"
             title="No achievements yet"
-            subtitle="Keep completing goals and healthy habits to unlock your first achievement!"
+            subtitle="Achievements will appear here after the catalog is loaded."
           />
         ) : null}
-        
-        <View style={styles.achievementsList}>
-          {achievements.map((item) => {
-            const isGold = item.tone === "gold";
 
-            return (
-              <Pressable
-                key={item.id}
-                accessibilityRole="button"
-                accessibilityLabel={`${item.title} ${item.subtitle}`}
-                style={({ pressed }) => [
-                  styles.achievementCard,
-                  isGold
-                    ? styles.achievementCardGold
-                    : styles.achievementCardLight,
-                  pressed && styles.achievementCardPressed,
-                ]}
-                onPress={() => { }}
-              >
-                <View style={styles.achievementInner}>
-                  <View
-                    style={[
-                      styles.achievementIconBox,
-                      isGold
-                        ? styles.achievementIconBoxGold
-                        : styles.achievementIconBoxLight,
-                    ]}
-                  >
-                    <MaterialCommunityIcons
-                      name={item.icon}
-                      size={28}
-                      color={isGold ? "#A17B00" : "#7C3AED"}
-                    />
-                  </View>
+        {!isLoading && !error && achievements.length > 0 ? (
+          <View style={styles.achievementsList}>
+            {achievements.map((item) => {
+              const isUnlocked = item.unlocked;
+              const isGold = item.tone === "gold";
 
-                  <View style={styles.achievementTextArea}>
-                    <View style={styles.achievementTitleRow}>
+              return (
+                <Pressable
+                  key={item.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${item.title} ${isUnlocked ? "unlocked" : "locked"
+                    }`}
+                  style={({ pressed }) => [
+                    styles.achievementCard,
+                    isUnlocked
+                      ? isGold
+                        ? styles.achievementCardGold
+                        : styles.achievementCardLight
+                      : styles.achievementCardLocked,
+                    pressed && styles.achievementCardPressed,
+                  ]}
+                  onPress={() => { }}
+                >
+                  <View style={styles.achievementInner}>
+                    <View
+                      style={[
+                        styles.achievementIconBox,
+                        isUnlocked
+                          ? isGold
+                            ? styles.achievementIconBoxGold
+                            : styles.achievementIconBoxLight
+                          : styles.achievementIconBoxLocked,
+                      ]}
+                    >
+                      <MaterialCommunityIcons
+                        name={item.icon}
+                        size={28}
+                        color={
+                          isUnlocked
+                            ? isGold
+                              ? "#A17B00"
+                              : "#7C3AED"
+                            : "#A19AB8"
+                        }
+                      />
+                    </View>
+
+                    <View style={styles.achievementTextArea}>
+                      <View style={styles.achievementTitleRow}>
+                        <AppText
+                          weight="extraBold"
+                          style={[
+                            styles.achievementTitle,
+                            isUnlocked && isGold && styles.achievementTitleGold,
+                            !isUnlocked && styles.achievementTitleLocked,
+                          ]}
+                          numberOfLines={3}
+                        >
+                          {item.title}
+                        </AppText>
+
+                        {isUnlocked ? (
+                          <View style={styles.completedBadgeInline}>
+                            <MaterialCommunityIcons
+                              name="check"
+                              size={14}
+                              color="#FFFFFF"
+                            />
+                            <AppText
+                              weight="bold"
+                              style={styles.completedBadgeText}
+                            >
+                              Done
+                            </AppText>
+                          </View>
+                        ) : (
+                          <View style={styles.lockedBadgeInline}>
+                            <MaterialCommunityIcons
+                              name="lock-outline"
+                              size={13}
+                              color="#FFFFFF"
+                            />
+                            <AppText weight="bold" style={styles.lockedBadgeText}>
+                              Locked
+                            </AppText>
+                          </View>
+                        )}
+                      </View>
+
                       <AppText
-                        weight="extraBold"
                         style={[
-                          styles.achievementTitle,
-                          isGold && styles.achievementTitleGold,
+                          styles.achievementSubtitle,
+                          isUnlocked && isGold && styles.achievementSubtitleGold,
+                          !isUnlocked && styles.achievementSubtitleLocked,
                         ]}
-                        numberOfLines={1}
+                        numberOfLines={3}
                       >
-                        {item.title}
+                        {isUnlocked
+                          ? item.subtitle
+                          : getLockedAchievementHint(item.key, item.subtitle)}
                       </AppText>
 
-                      {item.completed ? (
-                        <View style={styles.completedBadge}>
-                          <MaterialCommunityIcons
-                            name="check"
-                            size={14}
-                            color="#fff"
-                          />
-                          <AppText weight="bold" style={styles.completedBadgeText}>
-                            Done
+                      <View style={styles.achievementBottomArea}>
+                        <View
+                          style={[
+                            styles.rewardPill,
+                            isUnlocked
+                              ? isGold
+                                ? styles.rewardPillGold
+                                : styles.rewardPillLight
+                              : styles.rewardPillLocked,
+                          ]}
+                        >
+                          <AppText
+                            style={[
+                              styles.rewardText,
+                              isUnlocked && isGold && styles.rewardTextGold,
+                              !isUnlocked && styles.rewardTextLocked,
+                              styles.centerText,
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {item.rewardText}
                           </AppText>
                         </View>
-                      ) : null}
-                    </View>
-
-                    <AppText
-                      style={[
-                        styles.achievementSubtitle,
-                        isGold && styles.achievementSubtitleGold,
-                      ]}
-                      numberOfLines={2}
-                    >
-                      {item.subtitle}
-                    </AppText>
-
-                    <View style={styles.achievementBottomArea}>
-                      <View
-                        style={[
-                          styles.rewardPill,
-                          isGold ? styles.rewardPillGold : styles.rewardPillLight,
-                        ]}
-                      >
-                        <AppText
-                          style={[
-                            styles.rewardText,
-                            isGold && styles.rewardTextGold,
-                            styles.centerText,
-                          ]}
-                          numberOfLines={1}
-                        >
-                          {item.rewardText}
-                        </AppText>
-                      </View>
-
-                      <View
-                        style={[
-                          styles.pointsPill,
-                          isGold ? styles.pointsPillGold : styles.pointsPillLight,
-                        ]}
-                      >
-                        <AppText
-                          style={[
-                            styles.progressText,
-                            isGold && styles.progressTextGold,
-                            styles.centerText,
-                          ]}
-                          numberOfLines={1}
-                        >
-                          {item.progressText}
-                        </AppText>
                       </View>
                     </View>
                   </View>
-                </View>
-              </Pressable>
-            );
-          })}
-        </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
       </View>
     </ScreenLayout>
   );

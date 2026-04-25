@@ -298,7 +298,7 @@ export default function HomeScreen() {
             <View style={styles.statsRow}>
               <StatPill
                 icon={ICON.points}
-                text={`Points: ${pointsValue}`}
+                text={`XP: ${pointsValue}`}
                 variant="blue"
                 style={statPillResponsiveStyle}
               />
