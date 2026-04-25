@@ -1,18 +1,19 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { View, Pressable, useWindowDimensions } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { useDispatch, useSelector } from "react-redux";
 
+import type { AppDispatch, RootState } from "@/src/redux/store/types";
+import type { Child } from "@/src/redux/slices/children-slice";
+import type { AchievementUiItem } from "@/src/api/achievements";
+import { fetchChildAchievementsThunk } from "@/src/redux/thunks/achievementsThunks";
+import { fetchCurrentChildProfileThunk } from "@/src/redux/thunks/childrenThunks";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import { styles } from "./styles";
+import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
 
-type StatCard = {
-  id: string;
-  label: string;
-  value: string;
-  icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
-  tone: "blue" | "pink";
-};
 
 type AchievementCard = {
   id: string;
@@ -25,8 +26,85 @@ type AchievementCard = {
   completed?: boolean;
 };
 
+function getAchievementIcon(
+  achievement: AchievementUiItem
+): React.ComponentProps<typeof MaterialCommunityIcons>["name"] {
+  switch (achievement.key) {
+    case "first_task_submitted":
+      return "clipboard-check-outline";
+
+    case "five_tasks_submitted":
+      return "clipboard-check-multiple-outline";
+
+    case "first_reward_redeemed":
+      return "gift-outline";
+
+    case "avatar_level_2":
+      return "shield-star-outline";
+
+    case "avatar_level_5":
+      return "star-circle-outline";
+
+    default:
+      return "trophy-outline";
+  }
+}
+
+function mapAchievementToCard(achievement: AchievementUiItem): AchievementCard {
+  return {
+    id: achievement._id,
+    title: achievement.title,
+    subtitle: achievement.description,
+    progressText: achievement.unlocked ? "Unlocked" : "Locked",
+    rewardText: `${achievement.xpReward} pts`,
+    icon: getAchievementIcon(achievement),
+    tone: achievement.unlocked ? "gold" : "light",
+    completed: achievement.unlocked,
+  };
+}
+
 export default function AchievementsScreen() {
   const { width } = useWindowDimensions();
+
+
+  const dispatch = useDispatch<AppDispatch>();
+
+  const activeChildId = useSelector(
+    (state: RootState) => state.auth.activeChildId
+  );
+
+  const childrenList = useSelector(
+    (state: RootState) => state.children.childrenList
+  );
+
+  const achievementsFromRedux = useSelector(
+    (state: RootState) => state.achievements.achievements
+  );
+
+  const isLoading = useSelector(
+    (state: RootState) => state.achievements.isLoading
+  );
+
+  const error = useSelector(
+    (state: RootState) => state.achievements.error
+  );
+
+  const activeChildData = useMemo(() => {
+    if (!activeChildId) return undefined;
+
+    return childrenList.find(
+      (child: Child) => String(child._id) === String(activeChildId)
+    );
+  }, [childrenList, activeChildId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!activeChildId) return;
+
+      dispatch(fetchCurrentChildProfileThunk());
+      dispatch(fetchChildAchievementsThunk());
+    }, [dispatch, activeChildId])
+  );
 
   const isTabletLarge = width >= 900;
   const isTablet = width >= 650;
@@ -34,58 +112,22 @@ export default function AchievementsScreen() {
   const heroIconSize = isTabletLarge ? 84 : isTablet ? 74 : 66;
   const sidePadding = isTabletLarge ? 24 : 16;
 
-  const gridGap = 14;
-  const statColumns = isTabletLarge ? 4 : 2;
-  const contentWidth = width - sidePadding * 2;
-  const statCardWidth = Math.min(
-    Math.floor((contentWidth - gridGap * (statColumns - 1)) / statColumns),
-    220
+
+
+  const points = activeChildData?.avatar?.currentXp ?? 0;
+
+
+  const completedGoals = achievementsFromRedux.filter(
+    (achievement) => achievement.unlocked
+  ).length;
+
+  const totalGoals = achievementsFromRedux.length;
+
+
+  const achievements = useMemo(
+    () => achievementsFromRedux.map(mapAchievementToCard),
+    [achievementsFromRedux]
   );
-
-  const points = 1200;
-  const completedGoals = 5;
-  const totalGoals = 8;
-  const streakDays = 7;
-  const screenTimeSavedHours = 7;
-
-  const stats: StatCard[] = [
-    {
-      id: "savedTime",
-      label: "Time saved",
-      value: `${screenTimeSavedHours} h`,
-      icon: "clock-outline",
-      tone: "blue",
-    },
-    {
-      id: "streak",
-      label: "Streak days",
-      value: `${streakDays}`,
-      icon: "fire",
-      tone: "pink",
-    },
-  ];
-
-  const achievements: AchievementCard[] = [
-    {
-      id: "focusMaster",
-      title: "Dedicated Beginner",
-      subtitle: "Complete 10 tasks",
-      progressText: "10/10",
-      rewardText: "100 pts",
-      icon: "target",
-      tone: "gold",
-      completed: true,
-    },
-    {
-      id: "kingOfAchievements",
-      title: "King of Achievements",
-      subtitle: "Unlock 20 achievements",
-      progressText: "15/20",
-      rewardText: "1000 pts",
-      icon: "crown-outline",
-      tone: "light",
-    },
-  ];
 
   return (
     <ScreenLayout>
@@ -122,7 +164,11 @@ export default function AchievementsScreen() {
             <View style={[styles.heroSummaryCard, styles.heroSummaryCardGreen]}>
               <View style={styles.heroSummaryTop}>
                 <View style={styles.heroSummaryIconGreen}>
-                  <MaterialCommunityIcons name="target" size={18} color="#0F8A5F" />
+                  <MaterialCommunityIcons
+                    name="target"
+                    size={18}
+                    color="#0F8A5F"
+                  />
                 </View>
 
                 <AppText weight="extraBold" style={styles.heroSummaryValueGreen}>
@@ -144,7 +190,7 @@ export default function AchievementsScreen() {
                 </View>
 
                 <AppText weight="extraBold" style={styles.heroSummaryValueGold}>
-                  {points}
+                  {points.toLocaleString()}
                 </AppText>
               </View>
 
@@ -153,57 +199,20 @@ export default function AchievementsScreen() {
           </View>
         </View>
 
-        <View style={[styles.statsGrid, { gap: gridGap }]}>
-          {stats.map((item) => {
-            const isBlue = item.tone === "blue";
+        {isLoading ? (
+          <AppText style={styles.heroSubtitle}>Loading achievements...</AppText>
+        ) : null}
 
-            return (
-              <View
-                key={item.id}
-                style={[
-                  styles.statCard,
-                  isBlue ? styles.statCardBlue : styles.statCardPink,
-                  { width: statCardWidth },
-                ]}
-              >
-                <View style={styles.statHeader}>
-                  <View
-                    style={[
-                      styles.statIconBadge,
-                      isBlue ? styles.statIconBadgeBlue : styles.statIconBadgePink,
-                    ]}
-                  >
-                    <MaterialCommunityIcons
-                      name={item.icon}
-                      size={18}
-                      color={isBlue ? "#2F6DEB" : "#D81B60"}
-                    />
-                  </View>
+        {error ? <AppText style={styles.heroSubtitle}>{error}</AppText> : null}
 
-                  <AppText
-                    weight="medium"
-                    style={styles.statLabel}
-                    numberOfLines={1}
-                  >
-                    {item.label}
-                  </AppText>
-                </View>
-
-                <AppText
-                  weight="extraBold"
-                  style={[
-                    styles.statValue,
-                    isBlue ? styles.statValueBlue : styles.statValuePink,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {item.value}
-                </AppText>
-              </View>
-            );
-          })}
-        </View>
-
+        {!isLoading && !error && achievements.length === 0 ? (
+          <EmptyStateCard
+            icon="trophy-outline"
+            title="No achievements yet"
+            subtitle="Keep completing goals and healthy habits to unlock your first achievement!"
+          />
+        ) : null}
+        
         <View style={styles.achievementsList}>
           {achievements.map((item) => {
             const isGold = item.tone === "gold";
@@ -215,10 +224,12 @@ export default function AchievementsScreen() {
                 accessibilityLabel={`${item.title} ${item.subtitle}`}
                 style={({ pressed }) => [
                   styles.achievementCard,
-                  isGold ? styles.achievementCardGold : styles.achievementCardLight,
+                  isGold
+                    ? styles.achievementCardGold
+                    : styles.achievementCardLight,
                   pressed && styles.achievementCardPressed,
                 ]}
-                onPress={() => {}}
+                onPress={() => { }}
               >
                 <View style={styles.achievementInner}>
                   <View
@@ -251,7 +262,11 @@ export default function AchievementsScreen() {
 
                       {item.completed ? (
                         <View style={styles.completedBadge}>
-                          <MaterialCommunityIcons name="check" size={14} color="#fff" />
+                          <MaterialCommunityIcons
+                            name="check"
+                            size={14}
+                            color="#fff"
+                          />
                           <AppText weight="bold" style={styles.completedBadgeText}>
                             Done
                           </AppText>

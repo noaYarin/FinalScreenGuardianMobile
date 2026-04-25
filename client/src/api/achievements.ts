@@ -12,14 +12,15 @@ export type AchievementUiItem = {
 };
 
 export type ChildAchievementsResponse = {
-  achievements: AchievementUiItem[];
+  achievements?: AchievementUiItem[];
+  data?: {
+    achievements?: AchievementUiItem[];
+  };
 };
 
-export async function fetchChildAchievements(
-  childId: string
-): Promise<ChildAchievementsResponse> {
+export async function fetchChildAchievements(): Promise<ChildAchievementsResponse> {
   return api.get<ChildAchievementsResponse>(
-    `/api/v1/achievements/child/${childId}`,
+    `/api/v1/achievements/me`,
     {
       requireAuth: true,
       role: "CHILD",

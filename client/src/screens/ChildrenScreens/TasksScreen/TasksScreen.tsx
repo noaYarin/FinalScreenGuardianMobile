@@ -11,6 +11,7 @@ import {
   getChildTasksThunk,
   submitTaskThunk,
 } from "../../../redux/thunks/tasksThunks";
+import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
 
 const ICON = {
   coin: "cash-multiple",
@@ -216,6 +217,19 @@ export default function TasksScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
           >
+
+            {filteredTasks.length === 0 ? (
+              <EmptyStateCard
+                icon={activeTab === "todo" ? "clipboard-text-outline" : "check-circle-outline"}
+                title={activeTab === "todo" ? "No pending tasks" : "No completed tasks yet"}
+                subtitle={
+                  activeTab === "todo"
+                    ? "You do not have any tasks waiting right now."
+                    : "Completed tasks will appear here after you submit them."
+                }
+              />
+            ) : null}
+
             {filteredTasks.map((task) => {
               const isSubmitting = submittingTaskId === task.id;
               const ActionIcon = task.requireProof ? ICON.camera : ICON.checkCircle;
@@ -307,8 +321,8 @@ export default function TasksScreen() {
                             {isSubmitting
                               ? "Submitting..."
                               : task.requireProof
-                              ? "Upload Photo"
-                              : "Mark as Done"}
+                                ? "Upload Photo"
+                                : "Mark as Done"}
                           </AppText>
                         </View>
                       </Pressable>

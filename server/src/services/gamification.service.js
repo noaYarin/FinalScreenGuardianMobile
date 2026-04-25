@@ -117,6 +117,7 @@ export async function unlockAchievementForChildService(
       avatar: child.avatar,
     };
   }
+  child.achievements = child.achievements ?? [];
 
   child.achievements.push({
     achievementId: achievement._id,

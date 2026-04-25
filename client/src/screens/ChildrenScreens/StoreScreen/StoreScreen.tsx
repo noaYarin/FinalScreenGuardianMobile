@@ -12,6 +12,8 @@ import {
   redeemRewardThunk,
 } from "../../../redux/thunks/rewardsThunks";
 import { fetchCurrentChildProfileThunk } from "../../../redux/thunks/childrenThunks";
+import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
+
 
 const ICON = {
   coin: "coins",
@@ -65,15 +67,15 @@ function resolveRewardIcon(iconValue?: string) {
   const allowedIcons: Array<
     React.ComponentProps<typeof MaterialCommunityIcons>["name"]
   > = [
-    "gift-outline",
-    "clock-outline",
-    "movie-open-outline",
-    "ice-cream",
-    "star-circle",
-    "trophy-outline",
-    "gamepad-variant-outline",
-    "ticket-percent-outline",
-  ];
+      "gift-outline",
+      "clock-outline",
+      "movie-open-outline",
+      "ice-cream",
+      "star-circle",
+      "trophy-outline",
+      "gamepad-variant-outline",
+      "ticket-percent-outline",
+    ];
 
   if (allowedIcons.includes(normalized as any)) {
     return normalized as React.ComponentProps<typeof MaterialCommunityIcons>["name"];
@@ -239,19 +241,11 @@ export default function StoreScreen() {
                 </AppText>
               </View>
             ) : rewards.length === 0 ? (
-              <View style={styles.emptyState}>
-                <MaterialCommunityIcons
-                  name="gift-outline"
-                  size={30}
-                  color="#94A3B8"
-                />
-                <AppText weight="extraBold" style={styles.emptyStateTitle}>
-                  No rewards yet
-                </AppText>
-                <AppText weight="medium" style={styles.emptyStateText}>
-                  There are no available rewards right now.
-                </AppText>
-              </View>
+              <EmptyStateCard
+                icon="gift-outline"
+                title="No rewards yet"
+                subtitle="There are no available rewards right now. Check again after your parent adds new rewards."
+              />
             ) : (
               rewards.map((item) => {
                 const canRedeem = coinsBalance >= item.coins;

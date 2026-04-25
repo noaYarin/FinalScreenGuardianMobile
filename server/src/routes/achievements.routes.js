@@ -12,11 +12,10 @@ const router = Router();
 // GET /api/v1/achievements/child/:childId/
 // Get the child's avatar, achievements, and xp points
 router.get(
-  "/child/:childId",
+  "/me",
   authJwt,
   requireChild,
   getChildAchievementsDataController
 );
-
 
 export default router;
