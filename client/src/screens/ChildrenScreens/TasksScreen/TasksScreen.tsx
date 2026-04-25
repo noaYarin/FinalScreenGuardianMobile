@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, Pressable, ScrollView, Alert } from "react-native";
+import { View, Pressable, ScrollView } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
 import * as ImagePicker from "expo-image-picker";
@@ -12,9 +12,11 @@ import {
   submitTaskThunk,
 } from "../../../redux/thunks/tasksThunks";
 import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
-import AchievementUnlockedModal from "../../../components/AchievementUnlockedModal/AchievementUnlockedModal";
-import type { UnlockedAchievementResponse } from "../../../api/achievements";
-import { getFirstUnlockedAchievement } from "../../../utils/achievementPopup";
+import {
+  showSuccessToast,
+  showErrorToast,
+  showWarningToast,
+} from "@/src/utils/appToast";
 
 const ICON = {
   coin: "cash-multiple",
@@ -55,8 +57,6 @@ export default function TasksScreen() {
 
   const [activeTab, setActiveTab] = useState<"done" | "todo">("todo");
   const [submittingTaskId, setSubmittingTaskId] = useState<string | null>(null);
-  const [achievementPopup, setAchievementPopup] =
-    useState<UnlockedAchievementResponse | null>(null);
 
   useEffect(() => {
     dispatch(getChildTasksThunk());
@@ -71,8 +71,7 @@ export default function TasksScreen() {
       const proofImg =
         typeof task?.proofImg === "string" ? task.proofImg.trim() : "";
 
-      const hasProofImage =
-        proofImg !== "" && proofImg !== "default.png";
+      const hasProofImage = proofImg !== "" && proofImg !== "default.png";
 
       return {
         id: String(task?._id ?? task?.id ?? Math.random()),
@@ -102,7 +101,7 @@ export default function TasksScreen() {
     try {
       setSubmittingTaskId(task.id);
 
-      const result = await dispatch(
+      await dispatch(
         submitTaskThunk({
           taskId: task.id,
           proofImg: "",
@@ -111,17 +110,11 @@ export default function TasksScreen() {
 
       await dispatch(getChildTasksThunk()).unwrap();
 
-      const unlockedAchievement = getFirstUnlockedAchievement(result);
-
-      if (unlockedAchievement) {
-        setAchievementPopup(unlockedAchievement);
-      } else {
-        Alert.alert("Success", "Task submitted successfully.");
-      }
+      showSuccessToast("Task submitted successfully.", "Success");
     } catch (error: any) {
-      Alert.alert(
-        "Submit failed",
-        typeof error === "string" ? error : "Something went wrong."
+      showErrorToast(
+        typeof error === "string" ? error : "Something went wrong.",
+        "Submit failed"
       );
     } finally {
       setSubmittingTaskId(null);
@@ -136,9 +129,9 @@ export default function TasksScreen() {
         await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (!permissionResult.granted) {
-        Alert.alert(
-          "Permission needed",
-          "Please allow access to your photo library."
+        showWarningToast(
+          "Please allow access to your photo library.",
+          "Permission needed"
         );
         return;
       }
@@ -157,11 +150,11 @@ export default function TasksScreen() {
       const imageUri = asset?.uri ?? "";
 
       if (!imageUri) {
-        Alert.alert("No image selected", "Please choose an image.");
+        showWarningToast("Please choose an image.", "No image selected");
         return;
       }
 
-      const submitResult = await dispatch(
+      await dispatch(
         submitTaskThunk({
           taskId: task.id,
           proofImg: imageUri,
@@ -170,17 +163,11 @@ export default function TasksScreen() {
 
       await dispatch(getChildTasksThunk()).unwrap();
 
-      const unlockedAchievement = getFirstUnlockedAchievement(submitResult);
-
-      if (unlockedAchievement) {
-        setAchievementPopup(unlockedAchievement);
-      } else {
-        Alert.alert("Success", "Photo uploaded and task submitted.");
-      }
+      showSuccessToast("Photo uploaded and task submitted.", "Success");
     } catch (error: any) {
-      Alert.alert(
-        "Upload failed",
-        typeof error === "string" ? error : "Something went wrong."
+      showErrorToast(
+        typeof error === "string" ? error : "Something went wrong.",
+        "Upload failed"
       );
     } finally {
       setSubmittingTaskId(null);
@@ -197,195 +184,187 @@ export default function TasksScreen() {
   };
 
   return (
-    <>
-      <ScreenLayout>
-        <View style={styles.container}>
-          <View style={styles.contentMaxWidth}>
-            <View style={styles.tabsWrapper}>
-              <Pressable
-                style={[
-                  styles.tabBtn,
-                  activeTab === "todo" ? styles.activeTab : styles.inactiveTab,
-                ]}
-                onPress={() => setActiveTab("todo")}
-                accessibilityRole="button"
-                accessibilityLabel="Show pending tasks"
-              >
-                <AppText weight="extraBold" style={styles.tabText}>
-                  Pending
-                </AppText>
-              </Pressable>
-
-              <Pressable
-                style={[
-                  styles.tabBtn,
-                  activeTab === "done" ? styles.activeTab : styles.inactiveTab,
-                ]}
-                onPress={() => setActiveTab("done")}
-                accessibilityRole="button"
-                accessibilityLabel="Show completed tasks"
-              >
-                <AppText weight="extraBold" style={styles.tabText}>
-                  Completed
-                </AppText>
-              </Pressable>
-            </View>
-
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.listContent}
+    <ScreenLayout>
+      <View style={styles.container}>
+        <View style={styles.contentMaxWidth}>
+          <View style={styles.tabsWrapper}>
+            <Pressable
+              style={[
+                styles.tabBtn,
+                activeTab === "todo" ? styles.activeTab : styles.inactiveTab,
+              ]}
+              onPress={() => setActiveTab("todo")}
+              accessibilityRole="button"
+              accessibilityLabel="Show pending tasks"
             >
-              {filteredTasks.length === 0 ? (
-                <EmptyStateCard
-                  icon={
-                    activeTab === "todo"
-                      ? "clipboard-text-outline"
-                      : "check-circle-outline"
-                  }
-                  title={
-                    activeTab === "todo"
-                      ? "No pending tasks"
-                      : "No completed tasks yet"
-                  }
-                  subtitle={
-                    activeTab === "todo"
-                      ? "You do not have any tasks waiting right now."
-                      : "Completed tasks will appear here after you submit them."
-                  }
-                />
-              ) : null}
+              <AppText weight="extraBold" style={styles.tabText}>
+                Pending
+              </AppText>
+            </Pressable>
 
-              {filteredTasks.map((task) => {
-                const isSubmitting = submittingTaskId === task.id;
-                const ActionIcon = task.requireProof
-                  ? ICON.camera
-                  : ICON.checkCircle;
+            <Pressable
+              style={[
+                styles.tabBtn,
+                activeTab === "done" ? styles.activeTab : styles.inactiveTab,
+              ]}
+              onPress={() => setActiveTab("done")}
+              accessibilityRole="button"
+              accessibilityLabel="Show completed tasks"
+            >
+              <AppText weight="extraBold" style={styles.tabText}>
+                Completed
+              </AppText>
+            </Pressable>
+          </View>
 
-                return (
-                  <View key={task.id} style={styles.card}>
-                    <View style={styles.cardHeader}>
-                      <AppText
-                        weight="extraBold"
-                        style={styles.taskTitle}
-                        numberOfLines={2}
-                      >
-                        {task.title}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
+          >
+            {filteredTasks.length === 0 ? (
+              <EmptyStateCard
+                icon={
+                  activeTab === "todo"
+                    ? "clipboard-text-outline"
+                    : "check-circle-outline"
+                }
+                title={
+                  activeTab === "todo"
+                    ? "No pending tasks"
+                    : "No completed tasks yet"
+                }
+                subtitle={
+                  activeTab === "todo"
+                    ? "You do not have any tasks waiting right now."
+                    : "Completed tasks will appear here after you submit them."
+                }
+              />
+            ) : null}
+
+            {filteredTasks.map((task) => {
+              const isSubmitting = submittingTaskId === task.id;
+              const ActionIcon = task.requireProof
+                ? ICON.camera
+                : ICON.checkCircle;
+
+              return (
+                <View key={task.id} style={styles.card}>
+                  <View style={styles.cardHeader}>
+                    <AppText
+                      weight="extraBold"
+                      style={styles.taskTitle}
+                      numberOfLines={2}
+                    >
+                      {task.title}
+                    </AppText>
+
+                    <View style={styles.coinsBadge}>
+                      <MaterialCommunityIcons
+                        name={ICON.coin}
+                        size={18}
+                        color="#B46B00"
+                      />
+                      <AppText weight="extraBold" style={styles.coinsText}>
+                        {task.coins}
                       </AppText>
+                    </View>
+                  </View>
 
-                      <View style={styles.coinsBadge}>
+                  {task.done ? (
+                    <View style={styles.statusBoxDone}>
+                      <View
+                        style={[
+                          styles.statusIconCircle,
+                          styles.statusIconCircleDone,
+                        ]}
+                      >
                         <MaterialCommunityIcons
-                          name={ICON.coin}
+                          name={ICON.check}
                           size={18}
-                          color="#B46B00"
+                          color="#0F8A5F"
                         />
-                        <AppText weight="extraBold" style={styles.coinsText}>
-                          {task.coins}
+                      </View>
+
+                      <View>
+                        <AppText weight="bold" style={styles.statusTextDone}>
+                          {task.hasProofImage
+                            ? "Photo Uploaded"
+                            : "Task Submitted"}
                         </AppText>
+
+                        {task.completedAt ? (
+                          <AppText style={styles.completedDateText}>
+                            {formatDate(task.completedAt)}
+                          </AppText>
+                        ) : null}
                       </View>
                     </View>
+                  ) : (
+                    <View style={styles.todoArea}>
+                      <AppText style={styles.todoHint}>
+                        {task.requireProof
+                          ? "Photo required for submission"
+                          : "You can confirm completion without a photo"}
+                      </AppText>
 
-                    {task.done ? (
-                      <View style={styles.statusBoxDone}>
-                        <View
-                          style={[
-                            styles.statusIconCircle,
-                            styles.statusIconCircleDone,
-                          ]}
-                        >
-                          <MaterialCommunityIcons
-                            name={ICON.check}
-                            size={18}
-                            color="#0F8A5F"
-                          />
-                        </View>
+                      <Pressable
+                        style={styles.uploadBtn}
+                        onPress={() => handleTaskAction(task)}
+                        disabled={isSubmitting}
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          task.requireProof
+                            ? "Upload photo as proof of task completion"
+                            : "Mark task as completed"
+                        }
+                      >
+                        <View style={styles.uploadBtnInner}>
+                          <View
+                            style={[
+                              styles.statusIconCircle,
+                              styles.statusIconCircleUpload,
+                            ]}
+                          >
+                            <MaterialCommunityIcons
+                              name={ActionIcon}
+                              size={18}
+                              color="#2F6DEB"
+                            />
+                          </View>
 
-                        <View>
-                          <AppText weight="bold" style={styles.statusTextDone}>
-                            {task.hasProofImage
-                              ? "Photo Uploaded"
-                              : "Task Submitted"}
-                          </AppText>
-
-                          {task.completedAt ? (
-                            <AppText style={styles.completedDateText}>
-                              {formatDate(task.completedAt)}
-                            </AppText>
-                          ) : null}
-                        </View>
-                      </View>
-                    ) : (
-                      <View style={styles.todoArea}>
-                        <AppText style={styles.todoHint}>
-                          {task.requireProof
-                            ? "Photo required for submission"
-                            : "You can confirm completion without a photo"}
-                        </AppText>
-
-                        <Pressable
-                          style={styles.uploadBtn}
-                          onPress={() => handleTaskAction(task)}
-                          disabled={isSubmitting}
-                          accessibilityRole="button"
-                          accessibilityLabel={
-                            task.requireProof
-                              ? "Upload photo as proof of task completion"
-                              : "Mark task as completed"
-                          }
-                        >
-                          <View style={styles.uploadBtnInner}>
-                            <View
-                              style={[
-                                styles.statusIconCircle,
-                                styles.statusIconCircleUpload,
-                              ]}
-                            >
-                              <MaterialCommunityIcons
-                                name={ActionIcon}
-                                size={18}
-                                color="#2F6DEB"
-                              />
-                            </View>
-
-                            <AppText weight="extraBold" style={styles.uploadText}>
-                              {isSubmitting
-                                ? "Submitting..."
-                                : task.requireProof
+                          <AppText weight="extraBold" style={styles.uploadText}>
+                            {isSubmitting
+                              ? "Submitting..."
+                              : task.requireProof
                                 ? "Upload Photo"
                                 : "Mark as Done"}
-                            </AppText>
-                          </View>
-                        </Pressable>
-                      </View>
-                    )}
-                  </View>
-                );
-              })}
-
-              <View style={styles.weekBox}>
-                <View style={styles.weekInner}>
-                  <View style={styles.weekIconCircle}>
-                    <MaterialCommunityIcons
-                      name={ICON.coin}
-                      size={18}
-                      color="#B46B00"
-                    />
-                  </View>
-
-                  <AppText weight="extraBold" style={styles.weekText}>
-                    Coins earned: {weeklyCoins}
-                  </AppText>
+                          </AppText>
+                        </View>
+                      </Pressable>
+                    </View>
+                  )}
                 </View>
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      </ScreenLayout>
+              );
+            })}
 
-      <AchievementUnlockedModal
-        visible={achievementPopup !== null}
-        achievement={achievementPopup}
-        onClose={() => setAchievementPopup(null)}
-      />
-    </>
+            <View style={styles.weekBox}>
+              <View style={styles.weekInner}>
+                <View style={styles.weekIconCircle}>
+                  <MaterialCommunityIcons
+                    name={ICON.coin}
+                    size={18}
+                    color="#B46B00"
+                  />
+                </View>
+
+                <AppText weight="extraBold" style={styles.weekText}>
+                  Coins earned: {weeklyCoins}
+                </AppText>
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+    </ScreenLayout>
   );
 }

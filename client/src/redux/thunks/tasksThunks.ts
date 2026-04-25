@@ -3,7 +3,6 @@ import * as tasksApi from "../../api/tasks";
 import type {
   CreateTaskResponse,
   GetTasksResponse,
-  SubmitTaskResponse,
 } from "../../api/tasks";
 
 export const createTaskThunk = createAsyncThunk<
@@ -64,7 +63,7 @@ export const getChildTasksThunk = createAsyncThunk<
 );
 
 export const submitTaskThunk = createAsyncThunk<
-  SubmitTaskResponse,
+  any,
   { taskId: string; proofImg: string },
   { rejectValue: string }
 >(

@@ -8,6 +8,9 @@ import {
 
 import { AppError } from "../utils/appError.js";
 import { Common } from "../constants/errors.js";
+import { notifyChild } from "./notification.service.js";
+import { NotificationType } from "../constants/notificationType.js";
+import { NotificationSeverity } from "../constants/severity.js";
 
 // Returns how much XP is required to advance from the current level.
 function getXpRequiredForLevel(level) {
@@ -85,6 +88,38 @@ function buildAchievementsForUi(allAchievements, childAchievements = []) {
   });
 }
 
+// Sends a real-time child notification for each achievement that was unlocked.
+async function notifyChildAboutUnlockedAchievements(
+  parentId,
+  childId,
+  unlockedAchievements
+) {
+  if (!Array.isArray(unlockedAchievements) || unlockedAchievements.length === 0) {
+    return;
+  }
+
+  for (const achievement of unlockedAchievements) {
+    try {
+      await notifyChild({
+        parentId,
+        childId,
+        type: NotificationType.ACHIEVEMENT_UNLOCKED,
+        severity: NotificationSeverity.SUCCESS,
+        title: "New achievement unlocked!",
+        description: achievement.title,
+        data: {
+          achievement,
+        },
+      });
+    } catch (err) {
+      console.error(
+        "notifyChild failed in notifyChildAboutUnlockedAchievements:",
+        err.message
+      );
+    }
+  }
+}
+
 // Unlocks an achievement for a child, grants its XP reward, and updates the avatar.
 export async function unlockAchievementForChildService(
   parentId,
@@ -117,6 +152,7 @@ export async function unlockAchievementForChildService(
       avatar: child.avatar,
     };
   }
+
   child.achievements = child.achievements ?? [];
 
   child.achievements.push({
@@ -147,8 +183,7 @@ export async function unlockAchievementForChildService(
   };
 }
 
-
-// Unlocks multiple achievements for a child and returns only the achievements that were unlocked in this call.
+// Unlocks multiple achievements for a child, notifies the child, and returns only achievements unlocked in this call.
 export async function unlockAchievementsForChildService(
   parentId,
   childId,
@@ -167,6 +202,12 @@ export async function unlockAchievementsForChildService(
       unlockedAchievements.push(result.achievement);
     }
   }
+
+  await notifyChildAboutUnlockedAchievements(
+    parentId,
+    childId,
+    unlockedAchievements
+  );
 
   return unlockedAchievements;
 }

@@ -1,5 +1,5 @@
 import "react-native-gesture-handler";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Href, Stack, useRouter, useSegments } from "expo-router";
 import { Provider as ReduxProvider, useDispatch, useSelector } from "react-redux";
 import { showInfoToast } from "@/src/utils/appToast";
@@ -11,10 +11,22 @@ import { useAndroidPostNotificationsPermission } from "@/src/hooks/useAndroidPos
 import store from "../src/redux/store";
 import { COLORS } from "@/constants/theme";
 import Initializer from "../src/components/Initializer";
-import { showToastFromSocketNotification } from "@/src/utils/socketNotificationToast";
+import {
+  isAchievementUnlockedNotification,
+  showToastFromSocketNotification,
+} from "@/src/utils/socketNotificationToast";
 import { connectSocket, onEvent, disconnectSocket } from "@/src/services/socket";
-import { LOCATION_LIVE_UPDATE, FORCE_CHILD_LOGOUT, NOTIFICATION_CREATED, DEVICE_STATUS_UPDATED } from "@/src/constants/socketEvents";
-import { clearAllDevices, updateDeviceFromSocket, updateDeviceStatusFromSocket } from "@/src/redux/slices/device-slice";
+import {
+  LOCATION_LIVE_UPDATE,
+  FORCE_CHILD_LOGOUT,
+  NOTIFICATION_CREATED,
+  DEVICE_STATUS_UPDATED,
+} from "@/src/constants/socketEvents";
+import {
+  clearAllDevices,
+  updateDeviceFromSocket,
+  updateDeviceStatusFromSocket,
+} from "@/src/redux/slices/device-slice";
 
 import { logoutChildReducer } from "@/src/redux/slices/auth-slice";
 import { removeChildToken } from "@/src/services/authStorage";
@@ -23,12 +35,17 @@ import { addNotificationFromSocket } from "@/src/redux/slices/notification-slice
 import { updateChildSummaryFromSocket } from "@/src/redux/slices/parentHome-slice";
 import { bumpPendingRequestsRefreshKey } from "@/src/redux/slices/requests-slice";
 import { useParentFcmTokenSync } from "@/src/hooks/useParentFcmTokenSync";
+import AchievementUnlockedModal from "@/src/components/AchievementUnlockedModal/AchievementUnlockedModal";
+import type { UnlockedAchievementResponse } from "@/src/api/achievements";
 
 function AppStack() {
   const dispatch = useDispatch();
   const router = useRouter();
   const segments = useSegments() as string[];
   useAndroidPostNotificationsPermission();
+
+  const [achievementPopup, setAchievementPopup] =
+    useState<UnlockedAchievementResponse | null>(null);
 
   const { token, childToken, parentId, activeChildId } = useSelector(
     (state: any) => state.auth
@@ -45,7 +62,6 @@ function AppStack() {
   }, [router]);
 
   useEffect(() => {
-
     if (!childToken || !activeChildId) return;
 
     connectSocket(
@@ -78,8 +94,26 @@ function AppStack() {
       }
     );
 
+    const unsubscribeNotifications = onEvent(
+      NOTIFICATION_CREATED,
+      (data: any) => {
+        if (isAchievementUnlockedNotification(data)) {
+          const achievement = data?.data?.achievement;
+
+          if (achievement) {
+            setAchievementPopup(achievement);
+          }
+
+          return;
+        }
+
+        showToastFromSocketNotification(data);
+      }
+    );
+
     return () => {
       if (unsubscribeForceLogout) unsubscribeForceLogout();
+      if (unsubscribeNotifications) unsubscribeNotifications();
     };
   }, [childToken, activeChildId, parentId, myCurrentDeviceId, dispatch, router]);
 
@@ -93,25 +127,29 @@ function AppStack() {
         dispatch(updateDeviceFromSocket(data));
       });
 
-
-      const unsubscribeDeviceStatus = onEvent(DEVICE_STATUS_UPDATED, (data: any) => {
-        dispatch(updateDeviceStatusFromSocket(data));
-        dispatch(updateChildSummaryFromSocket(data));
-
-      });
-
-      const unsubscribeNotifications = onEvent(NOTIFICATION_CREATED, (data: any) => {
-        dispatch(addNotificationFromSocket(data));
-
-        const isExtensionRequestCreated =
-          data?.type === "EXTENSION_REQUEST_CREATED";
-
-        if (isExtensionRequestCreated) {
-          dispatch(bumpPendingRequestsRefreshKey());
+      const unsubscribeDeviceStatus = onEvent(
+        DEVICE_STATUS_UPDATED,
+        (data: any) => {
+          dispatch(updateDeviceStatusFromSocket(data));
+          dispatch(updateChildSummaryFromSocket(data));
         }
+      );
 
-        showToastFromSocketNotification(data);
-      });
+      const unsubscribeNotifications = onEvent(
+        NOTIFICATION_CREATED,
+        (data: any) => {
+          dispatch(addNotificationFromSocket(data));
+
+          const isExtensionRequestCreated =
+            data?.type === "EXTENSION_REQUEST_CREATED";
+
+          if (isExtensionRequestCreated) {
+            dispatch(bumpPendingRequestsRefreshKey());
+          }
+
+          showToastFromSocketNotification(data);
+        }
+      );
 
       return () => {
         if (unsubscribeLocation) unsubscribeLocation();
@@ -119,7 +157,6 @@ function AppStack() {
         if (unsubscribeNotifications) unsubscribeNotifications();
       };
     }
-
   }, [segments, token, parentId, dispatch]);
 
   useEffect(() => {
@@ -141,23 +178,31 @@ function AppStack() {
   }, [childToken, token, segments, router]);
 
   return (
-    <Stack
-      screenOptions={{
-        contentStyle: { backgroundColor: COLORS.light.background },
-        headerStyle: { backgroundColor: COLORS.light.tint },
-        headerTitleAlign: "center",
-      }}
-    >
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="Parent"
-        options={{
-          headerShown: false,
-          title: "",
-          headerShadowVisible: false,
+    <>
+      <Stack
+        screenOptions={{
+          contentStyle: { backgroundColor: COLORS.light.background },
+          headerStyle: { backgroundColor: COLORS.light.tint },
+          headerTitleAlign: "center",
         }}
+      >
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="Parent"
+          options={{
+            headerShown: false,
+            title: "",
+            headerShadowVisible: false,
+          }}
+        />
+      </Stack>
+
+      <AchievementUnlockedModal
+        visible={achievementPopup !== null}
+        achievement={achievementPopup}
+        onClose={() => setAchievementPopup(null)}
       />
-    </Stack>
+    </>
   );
 }
 

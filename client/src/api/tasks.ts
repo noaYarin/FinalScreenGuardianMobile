@@ -1,5 +1,4 @@
 import { api } from "./request";
-import type { WithUnlockedAchievements } from "./achievements";
 
 export type CreateTaskResponse = {
   tasks: any[];
@@ -9,19 +8,6 @@ export type CreateTaskResponse = {
 export type GetTasksResponse = {
   tasks: any[];
 };
-
-export type UnlockedAchievementResponse = {
-  _id: string;
-  key: string;
-  title: string;
-  description: string;
-  icon: string;
-  xpReward: number;
-};
-
-export type SubmitTaskResponse = WithUnlockedAchievements<{
-  task: any;
-}>;
 
 const URL = "/api/v1/tasks";
 
@@ -46,20 +32,11 @@ export async function getChildTasks(): Promise<GetTasksResponse> {
   });
 }
 
-
-// Submits a child task and returns the submitted task with any newly unlocked achievements.
-export async function submitTask(
-  taskId: string,
-  body: { proofImg: string }
-): Promise<SubmitTaskResponse> {
-  return api.post<SubmitTaskResponse>(
-    `/api/v1/tasks/${encodeURIComponent(taskId)}/submit`,
-    body,
-    {
-      requireAuth: true,
-      role: "CHILD",
-    }
-  );
+export async function submitTask(taskId: string, body: { proofImg: string }) {
+  return api.post(`/api/v1/tasks/${encodeURIComponent(taskId)}/submit`, body, {
+    requireAuth: true,
+    role: "CHILD",
+  });
 }
 
 export async function approveTask(taskId: string) {

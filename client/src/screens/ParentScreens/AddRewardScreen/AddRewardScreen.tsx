@@ -4,12 +4,15 @@ import {
   ScrollView,
   Pressable,
   TextInput,
-  Alert,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
-
+import {
+  showSuccessToast,
+  showWarningToast,
+  showErrorToast,
+} from "@/src/utils/appToast";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import { styles } from "./styles";
@@ -85,12 +88,12 @@ export default function AddRewardScreen() {
     const trimmedDescription = rewardDescription.trim();
 
     if (!trimmedTitle) {
-      Alert.alert("Missing title", "Please enter a reward title.");
+      showWarningToast("Please enter a reward title.", "Missing title");
       return;
     }
 
     if (assignedChildIds.length === 0) {
-      Alert.alert("No child selected", "Please select at least one child.");
+      showWarningToast("Please select at least one child.", "No child selected");
       return;
     }
 
@@ -106,7 +109,7 @@ export default function AddRewardScreen() {
 
       await dispatch(getParentRewardsThunk()).unwrap();
 
-      Alert.alert("Success", "Reward created successfully.");
+      showSuccessToast("Reward created successfully.", "Success");
 
       setRewardTitle("");
       setRewardDescription("");
@@ -115,9 +118,9 @@ export default function AddRewardScreen() {
 
       router.back();
     } catch (error: any) {
-      Alert.alert(
-        "Create reward failed",
-        typeof error === "string" ? error : "Something went wrong."
+      showErrorToast(
+        typeof error === "string" ? error : "Something went wrong.",
+        "Create reward failed"
       );
     }
   };

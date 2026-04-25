@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, Pressable, ScrollView, Alert } from "react-native";
+import { View, Pressable, ScrollView } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { useDispatch, useSelector } from "react-redux";
@@ -13,7 +13,11 @@ import {
 } from "../../../redux/thunks/rewardsThunks";
 import { fetchCurrentChildProfileThunk } from "../../../redux/thunks/childrenThunks";
 import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
-
+import {
+  showSuccessToast,
+  showWarningToast,
+  showErrorToast,
+} from "@/src/utils/appToast";
 
 const ICON = {
   coin: "coins",
@@ -164,7 +168,10 @@ export default function StoreScreen() {
 
   const handleRedeemReward = async (rewardId: string, rewardCoins: number) => {
     if (coinsBalance < rewardCoins) {
-      Alert.alert("Not enough coins", "You do not have enough coins for this reward.");
+      showWarningToast(
+        "You do not have enough coins for this reward.",
+        "Not enough coins"
+      );
       return;
     }
 
@@ -175,11 +182,11 @@ export default function StoreScreen() {
       await dispatch(fetchCurrentChildProfileThunk()).unwrap();
       await dispatch(getChildRewardsThunk()).unwrap();
 
-      Alert.alert("Success", "Reward redeemed successfully.");
+      showSuccessToast("Reward redeemed successfully.", "Success");
     } catch (error: any) {
-      Alert.alert(
-        "Redeem failed",
-        typeof error === "string" ? error : "Something went wrong."
+      showErrorToast(
+        typeof error === "string" ? error : "Something went wrong.",
+        "Redeem failed"
       );
     } finally {
       setRedeemingRewardId(null);

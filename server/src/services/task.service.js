@@ -95,7 +95,7 @@ export async function getChildTasks(childId) {
   return { tasks };
 }
 
-// Unlocks achievements related to task submission and returns only achievements unlocked in this call.
+// Unlocks task-submission achievements. New achievements are sent to the child through the gamification socket notification flow.
 async function unlockTaskSubmissionAchievements({
   parentId,
   childId,
@@ -119,14 +119,10 @@ async function unlockTaskSubmissionAchievements({
     achievementKeys.push("five_tasks_submitted");
   }
 
-  return await unlockAchievementsForChildService(
-    parentId,
-    childId,
-    achievementKeys
-  );
+  await unlockAchievementsForChildService(parentId, childId, achievementKeys);
 }
 
-// Submits a child task, unlocks task-related achievements, and returns the submitted task with newly unlocked achievements.
+// Submits a child task and unlocks task-related achievements through the global socket notification flow.
 export async function submitTask(taskId, childId, proofImg) {
   const task = await getTaskById(taskId);
 
@@ -156,16 +152,13 @@ export async function submitTask(taskId, childId, proofImg) {
 
   const submittedTask = await submitTaskDal(taskId, proofImg);
 
-  const unlockedAchievements = await unlockTaskSubmissionAchievements({
+  await unlockTaskSubmissionAchievements({
     parentId: task.parentId,
     childId,
     proofImg,
   });
 
-  return {
-    task: submittedTask,
-    unlockedAchievements,
-  };
+  return submittedTask;
 }
 
 // Approves a submitted task, adds coins to the child, and returns the updated task and child data.
