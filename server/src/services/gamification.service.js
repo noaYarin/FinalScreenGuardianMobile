@@ -147,6 +147,30 @@ export async function unlockAchievementForChildService(
   };
 }
 
+
+// Unlocks multiple achievements for a child and returns only the achievements that were unlocked in this call.
+export async function unlockAchievementsForChildService(
+  parentId,
+  childId,
+  achievementKeys
+) {
+  const unlockedAchievements = [];
+
+  for (const key of achievementKeys) {
+    const result = await unlockAchievementForChildService(
+      parentId,
+      childId,
+      key
+    );
+
+    if (result?.unlocked && result?.achievement) {
+      unlockedAchievements.push(result.achievement);
+    }
+  }
+
+  return unlockedAchievements;
+}
+
 // Returns the child's achievements data for the achievements screen.
 export async function getChildAchievementsDataService(parentId, childId) {
   const parent = await findParentWithChildDal(parentId, childId);
