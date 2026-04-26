@@ -387,4 +387,31 @@ export const styles = StyleSheet.create({
   pressed: {
     opacity: 0.85,
   },
+
+  modalOverlay: {
+  flex: 1,
+  backgroundColor: "rgba(0,0,0,0.78)",
+  justifyContent: "center",
+  alignItems: "center",
+  padding: 18,
+},
+
+modalImage: {
+  width: "100%",
+  height: "78%",
+  borderRadius: 18,
+},
+
+modalCloseButton: {
+  position: "absolute",
+  top: 46,
+  right: 18,
+  width: 42,
+  height: 42,
+  borderRadius: 999,
+  backgroundColor: "rgba(15,23,42,0.75)",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 2,
+},
 });

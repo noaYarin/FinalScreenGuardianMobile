@@ -102,8 +102,8 @@ export default function TasksHistoryScreen() {
         const proofImg =
           typeof task?.proofImg === "string" ? task.proofImg.trim() : "";
 
-        const hasProofImage =
-          proofImg !== "" && proofImg !== "default.png";
+const hasProofImage =
+  proofImg.startsWith("data:image/") || proofImg.startsWith("http");
 
         return {
           id: String(task?._id ?? task?.id ?? Math.random()),
