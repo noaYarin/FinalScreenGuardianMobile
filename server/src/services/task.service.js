@@ -213,6 +213,15 @@ export async function approveTask(parentId, taskId) {
     });
   }
 
+  // Unlocks the 100-coins achievement after a parent approves a task.
+  if (Number(updatedChild.coins ?? 0) >= 100) {
+    await unlockAchievementsForChildService(task.parentId, task.childId, [
+      "saved_100_coins",
+    ]);
+  }
+
+  const approvedTask = await approveTaskDal(taskId);
+
   const approvedTask = await approveTaskDal(taskId);
 
   return {
