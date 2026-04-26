@@ -59,6 +59,23 @@ export function addXpToAvatar(avatar, xpToAdd, gender) {
   };
 }
 
+
+// Returns avatar-level achievement keys when the XP reward causes the avatar to cross a level milestone.
+function getAvatarLevelAchievementKeys(previousLevel, newLevel) {
+  const achievementKeys = [];
+
+  if (previousLevel < 2 && newLevel >= 2) {
+    achievementKeys.push("avatar_level_2");
+  }
+
+  if (previousLevel < 5 && newLevel >= 5) {
+    achievementKeys.push("avatar_level_5");
+  }
+
+  return achievementKeys;
+}
+
+
 // Checks whether the child has already unlocked a specific achievement.
 function hasChildUnlockedAchievement(child, achievementId) {
   const childAchievements = child.achievements ?? [];
@@ -160,12 +177,21 @@ export async function unlockAchievementForChildService(
     unlockedAt: new Date(),
   });
 
+  const previousAvatar = normalizeAvatar(child.avatar, child.gender);
+  const previousLevel = previousAvatar.level;
+
   child.avatar = addXpToAvatar(
     child.avatar,
     achievement.xpReward ?? 0,
     child.gender
   );
 
+  // Checks whether this XP reward caused the avatar to reach a level-based achievement.
+  // The batch unlock service will handle duplicate prevention and notifications.
+  const avatarLevelAchievementKeys = getAvatarLevelAchievementKeys(
+    previousLevel,
+    child.avatar.level
+  );
   await saveParentDal(parent);
 
   return {
@@ -180,10 +206,12 @@ export async function unlockAchievementForChildService(
       xpReward: achievement.xpReward ?? 0,
     },
     avatar: child.avatar,
+    avatarLevelAchievementKeys,
   };
 }
 
-// Unlocks multiple achievements for a child, notifies the child, and returns only achievements unlocked in this call.
+// Unlocks multiple achievements for a child, including avatar-level achievements triggered by XP rewards.
+// Notifications are sent only for achievements that were actually unlocked in this flow.
 export async function unlockAchievementsForChildService(
   parentId,
   childId,
@@ -191,7 +219,13 @@ export async function unlockAchievementsForChildService(
 ) {
   const unlockedAchievements = [];
 
-  for (const key of achievementKeys) {
+  // Uses a dynamic queue because unlocking one achievement can grant XP
+  // and trigger additional avatar-level achievements in the same flow.
+  const pendingKeys = [...new Set(achievementKeys)];
+
+  for (let index = 0; index < pendingKeys.length; index += 1) {
+    const key = pendingKeys[index];
+
     const result = await unlockAchievementForChildService(
       parentId,
       childId,
@@ -200,6 +234,14 @@ export async function unlockAchievementsForChildService(
 
     if (result?.unlocked && result?.achievement) {
       unlockedAchievements.push(result.achievement);
+
+      // Add avatar-level achievements that were triggered by the XP reward.
+      // Duplicate keys are skipped here, and already-unlocked achievements are skipped by the single unlock service.
+      for (const avatarKey of result.avatarLevelAchievementKeys ?? []) {
+        if (!pendingKeys.includes(avatarKey)) {
+          pendingKeys.push(avatarKey);
+        }
+      }
     }
   }
 
