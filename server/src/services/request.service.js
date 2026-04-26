@@ -11,6 +11,7 @@ import { sendAuditLog } from "./audit.service.js";
 import { AuditActionType } from "../constants/auditActionType.js";
 import { validateDeviceAccess, pushPolicyUpdate, pushDeviceStatusUpdate } from "./device.service.js";
 import { getChildrenByParentId } from "../dal/parent.dal.js";
+import { unlockAchievementsForChildService } from "./gamification.service.js";
 
 const MIN_MINUTES = 1;
 const MAX_MINUTES = 120;
@@ -89,6 +90,18 @@ export async function createRequest({ parentId, childId, deviceId, requestedMinu
         });
     } catch (err) {
         console.error("notifyParent failed in createRequest", err.message);
+    }
+
+    // Unlocks the first extension request achievement without blocking the request creation flow.
+    try {
+        await unlockAchievementsForChildService(parentId, childId, [
+            "first_extension_request",
+        ]);
+    } catch (err) {
+        console.error(
+            "unlock first_extension_request failed in createRequest:",
+            err.message
+        );
     }
 
     return request;

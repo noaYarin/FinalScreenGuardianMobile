@@ -1,5 +1,4 @@
 import { StyleSheet } from "react-native";
-import { APP_COLORS } from "../../../../constants/theme";
 
 export const TILE_COLORS = {
   apps: { bg: "#EAF2FF", badge: "#CFE3FF", icon: "#2F6DEB", border: "#D6E6FF" },
@@ -19,7 +18,8 @@ export const styles = StyleSheet.create({
     alignItems: "stretch",
     paddingHorizontal: 14,
     paddingTop: 8,
-    paddingBottom: 16,
+    paddingBottom: 40,
+    backgroundColor: "transparent",
   },
 
   pageSmall: {
@@ -57,6 +57,79 @@ export const styles = StyleSheet.create({
     direction: "ltr",
   },
 
+  avatarBlock: {
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    flexShrink: 0,
+  },
+
+  levelBadge: {
+    position: "absolute",
+    top: -4,
+    left: 0,
+    minWidth: 42,
+    height: 28,
+    paddingHorizontal: 8,
+    borderRadius: 999,
+    backgroundColor: "#8B5CF6",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 2,
+  },
+
+  levelBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    lineHeight: 14,
+    includeFontPadding: false,
+    textAlign: "center",
+  },
+
+  xpProgressWrapper: {
+    width: "100%",
+    marginTop: 8,
+  },
+
+  xpProgressHeader: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4,
+    direction: "ltr",
+  },
+
+  xpProgressText: {
+    color: "#64748B",
+    fontSize: 11,
+    lineHeight: 13,
+    includeFontPadding: false,
+    textAlign: "left",
+    writingDirection: "ltr",
+  },
+
+  xpProgressTrack: {
+    width: "100%",
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: "#E6EEF9",
+    overflow: "hidden",
+  },
+
+  xpProgressFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: "#60A5FA",
+  },
+
   headerTextSide: {
     flex: 1,
     minWidth: 0,
@@ -65,6 +138,13 @@ export const styles = StyleSheet.create({
     paddingLeft: 12,
     paddingRight: 0,
     direction: "ltr",
+  },
+
+  headerActionsRow: {
+    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
   },
 
   avatarWrap: {
@@ -101,97 +181,28 @@ export const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
 
-  statsToggle: {
-    marginTop: 10,
+  headerCoinsBadge: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-    backgroundColor: "#EEF4FF",
-    borderWidth: 1,
-    borderColor: "#D6E6FF",
     alignSelf: "flex-start",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: "#FEF3C7",
+    borderWidth: 1,
+    borderColor: "#FDE68A",
     direction: "ltr",
   },
 
-  statsTogglePressed: {
-    opacity: 0.82,
-  },
-
-  statsToggleText: {
-    color: "#2563EB",
-    fontSize: 14,
-    lineHeight: 18,
+  headerCoinsText: {
+    color: "#92400E",
+    fontSize: 13,
+    lineHeight: 16,
     includeFontPadding: false,
     textAlign: "left",
     writingDirection: "ltr",
-    marginRight: 6,
-  },
-
-  statsRow: {
-    width: "100%",
-    marginTop: 14,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    alignItems: "stretch",
-    rowGap: 10,
-    direction: "ltr",
-  },
-
-  statPill: {
-    minWidth: 0,
-    minHeight: 52,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-    direction: "ltr",
-  },
-
-  statPillDesktop: {
-    width: "32%",
-  },
-
-  statPillTablet: {
-    width: "32%",
-  },
-
-  statPillMobile: {
-    width: "100%",
-  },
-
-  statText: {
-    marginLeft: 8,
-    fontSize: 15,
-    lineHeight: 20,
-    color: "#0F172A",
-    flexShrink: 1,
-    textAlign: "center",
-    includeFontPadding: false,
-    writingDirection: "ltr",
-  },
-
-  statPillBlue: {
-    backgroundColor: "#EAF2FF",
-    borderWidth: 1,
-    borderColor: "#D6E6FF",
-  },
-
-  statPillBeige: {
-    backgroundColor: APP_COLORS.beige,
-    borderWidth: 1,
-    borderColor: "#F6E4C7",
-  },
-
-  statPillPrimary: {
-    backgroundColor: "#E9FFF3",
-    borderWidth: 1,
-    borderColor: "#D7F7E8",
   },
 
   card: {
@@ -217,12 +228,21 @@ export const styles = StyleSheet.create({
     direction: "ltr",
   },
 
+  cardTitleRowCentered: {
+    alignItems: "center",
+  },
+
   cardTitleLeft: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
     alignSelf: "flex-start",
     direction: "ltr",
+  },
+
+  cardTitleLeftCentered: {
+    justifyContent: "center",
+    alignSelf: "center",
   },
 
   iconBadge: {
@@ -254,6 +274,11 @@ export const styles = StyleSheet.create({
     alignSelf: "stretch",
   },
 
+  timerValueCentered: {
+    textAlign: "center",
+    alignSelf: "center",
+  },
+
   progressTrack: {
     width: "100%",
     height: 8,
@@ -276,6 +301,11 @@ export const styles = StyleSheet.create({
     includeFontPadding: false,
     writingDirection: "ltr",
     alignSelf: "stretch",
+  },
+
+  timerSubCentered: {
+    textAlign: "center",
+    alignSelf: "center",
   },
 
   grid: {
@@ -326,15 +356,15 @@ export const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#FFFFFF",
+    borderWidth: 0,
+    borderColor: "transparent",
   },
 
   tileText: {
     color: "#0F172A",
     textAlign: "center",
-    fontSize: 13,
-    lineHeight: 16,
+    fontSize: 11,
+    lineHeight: 13,
     includeFontPadding: false,
   },
 
@@ -397,6 +427,243 @@ export const styles = StyleSheet.create({
   },
 
   panicDisabled: {
-  opacity: 0.45,
-},
+    opacity: 0.45,
+  },
+
+  xpCoinsMiniBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: "#FEF3C7",
+    borderWidth: 1,
+    borderColor: "#FDE68A",
+    direction: "ltr",
+  },
+
+  xpCoinsMiniText: {
+    color: "#92400E",
+    fontSize: 11,
+    lineHeight: 13,
+    includeFontPadding: false,
+    textAlign: "left",
+    writingDirection: "ltr",
+  },
+
+  xpLeftText: {
+    marginTop: 4,
+    color: "#64748B",
+    fontSize: 10,
+    lineHeight: 12,
+    includeFontPadding: false,
+    textAlign: "center",
+    writingDirection: "ltr",
+  },
+
+  coinsHintText: {
+    marginTop: 5,
+    color: "#64748B",
+    fontSize: 11,
+    lineHeight: 13,
+    includeFontPadding: false,
+    textAlign: "left",
+    writingDirection: "ltr",
+  },
+  coinsSummaryBadge: {
+    marginTop: 10,
+    alignSelf: "flex-start",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    backgroundColor: "#FFF7ED",
+    borderWidth: 1,
+    borderColor: "#FED7AA",
+  },
+
+  coinsSummaryTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    direction: "ltr",
+  },
+
+  coinsSummaryText: {
+    color: "#9A3412",
+    fontSize: 13,
+    lineHeight: 16,
+    includeFontPadding: false,
+    textAlign: "left",
+    writingDirection: "ltr",
+  },
+
+  coinsSummaryHint: {
+    marginTop: 3,
+    color: "#e9b389",
+    fontSize: 10,
+    lineHeight: 12,
+    includeFontPadding: false,
+    textAlign: "left",
+    writingDirection: "ltr",
+  },
+  avatarModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.38)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+
+  avatarInfoCard: {
+    width: "100%",
+    maxWidth: 330,
+    borderRadius: 28,
+    backgroundColor: "#FFFFFF",
+    padding: 22,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
+  },
+
+  avatarInfoImageWrap: {
+    width: 118,
+    height: 118,
+    borderRadius: 59,
+    backgroundColor: "#EAF3FF",
+    borderWidth: 1.5,
+    borderColor: "#D5E7FF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 14,
+    overflow: "hidden",
+  },
+
+  avatarInfoImage: {
+    width: 124,
+    height: 124,
+  },
+
+  avatarInfoTitle: {
+    fontSize: 21,
+    color: "#2F4A7D",
+    textAlign: "center",
+    marginBottom: 4,
+    includeFontPadding: false,
+  },
+
+  avatarInfoSubtitle: {
+    fontSize: 14,
+    color: "#7B8CA8",
+    textAlign: "center",
+    marginBottom: 14,
+    includeFontPadding: false,
+  },
+
+  avatarInfoProgressTrack: {
+    width: "100%",
+    height: 10,
+    borderRadius: 999,
+    backgroundColor: "#EAF0F8",
+    overflow: "hidden",
+    marginBottom: 8,
+  },
+
+  avatarInfoProgressFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: "#60A5FA",
+  },
+
+  avatarInfoXpText: {
+    fontSize: 13,
+    color: "#51617A",
+    marginBottom: 14,
+    textAlign: "center",
+    includeFontPadding: false,
+  },
+
+  avatarInfoTextBox: {
+    width: "100%",
+    borderRadius: 18,
+    backgroundColor: "#F7FAFF",
+    padding: 14,
+    marginBottom: 14,
+    gap: 8,
+  },
+
+
+  avatarInfoDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: "center",
+    color: "#6B7890",
+    marginBottom: 18,
+    includeFontPadding: false,
+  },
+
+  avatarInfoButton: {
+    minWidth: 120,
+    borderRadius: 999,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    alignItems: "center",
+    backgroundColor: "#60A5FA",
+  },
+
+  avatarInfoButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    includeFontPadding: false,
+  },
+  avatarInfoRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+
+  avatarInfoRowIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#EEF4FF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: -2,
+  },
+
+  avatarInfoXpHint: {
+    fontSize: 12.5,
+    color: "#7B8CA8",
+    marginTop: -8,
+    marginBottom: 14,
+    textAlign: "center",
+    includeFontPadding: false,
+  },
+  avatarStageTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 10,
+  },
+
+  avatarInfoLevelText: {
+    marginTop: 4,
+    fontSize: 13,
+    color: "#64748B",
+    textAlign: "center",
+  },
+  avatarInfoLine: {
+    flex: 1,
+    fontSize: 13.5,
+    lineHeight: 19,
+    color: "#51617A",
+    textAlign: "left",
+    writingDirection: "ltr",
+    includeFontPadding: false,
+  },
 });

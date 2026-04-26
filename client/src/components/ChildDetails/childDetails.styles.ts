@@ -320,6 +320,8 @@ export const childDetailsStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+    alignSelf: "stretch",
+    width: "100%",
     shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowRadius: 6,
@@ -409,6 +411,12 @@ export const childDetailsStyles = StyleSheet.create({
     alignSelf: "flex-start",
     paddingVertical: 6,
     paddingHorizontal: 4,
+  },
+
+  infoHintRow: {
+    width: "100%",
+    alignSelf: "flex-start",
+    marginBottom: 10,
   },
 
   reduxRetryText: {

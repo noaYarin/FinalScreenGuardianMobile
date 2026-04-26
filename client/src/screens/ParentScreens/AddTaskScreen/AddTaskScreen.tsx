@@ -4,8 +4,12 @@ import {
   ScrollView,
   Pressable,
   TextInput,
-  Alert,
 } from "react-native";
+import {
+  showSuccessToast,
+  showErrorToast,
+  showWarningToast,
+} from "@/src/utils/appToast";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
@@ -78,12 +82,12 @@ export default function AddTaskScreen() {
     const trimmedDescription = taskDescription.trim();
 
     if (!trimmedTitle) {
-      Alert.alert("Missing title", "Please enter a task title.");
+      showWarningToast("Please enter a task title.", "Missing title");
       return;
     }
 
     if (assignedChildIds.length === 0) {
-      Alert.alert("No child selected", "Please select at least one child.");
+      showWarningToast("Please select at least one child.", "No child selected");
       return;
     }
 
@@ -102,7 +106,7 @@ export default function AddTaskScreen() {
 
       await dispatch(getParentTasksThunk()).unwrap();
 
-      Alert.alert("Success", "Task created successfully.");
+      showSuccessToast("Task created successfully.", "Success");
 
       setTaskTitle("");
       setTaskDescription("");
@@ -114,10 +118,11 @@ export default function AddTaskScreen() {
 
       router.back();
     } catch (error: any) {
-      Alert.alert(
-        "Create task failed",
-        typeof error === "string" ? error : "Something went wrong."
+         showErrorToast(
+        typeof error === "string" ? error : "Something went wrong.",
+        "Create task failed"
       );
+
     }
   };
 

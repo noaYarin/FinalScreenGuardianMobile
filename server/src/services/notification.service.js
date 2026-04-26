@@ -36,88 +36,99 @@ function normalizePushData({ notification, childId, type, severity, data }) {
 }
 
 export async function notifyParent({
+  parentId,
+  childId,
+  type,
+  severity,
+  title,
+  description,
+  data,
+}) {
+  const notification = await createNotification({
     parentId,
     childId,
+    targetRole: TargetRole.PARENT,
     type,
     severity,
     title,
-    description,
-    data,
-}) {
-    const notification = await createNotification({
-        parentId,
-        childId,
-        targetRole: TargetRole.PARENT,
-        type,
-        severity,
-        title,
-        description
-    });
+    description
+  });
 
-    try {
-        const io = getIO();
-        if (io && parentId) {
-            io.to(`parent_${parentId}`).emit(NOTIFICATION_CREATED, notification);
-        }
-    } catch (err) {
-        console.error("socket emit failed in notifyParent", err.message);
+  try {
+    const io = getIO();
+    if (io && parentId) {
+      io.to(`parent_${parentId}`).emit(NOTIFICATION_CREATED, notification);
     }
+  } catch (err) {
+    console.error("socket emit failed in notifyParent", err.message);
+  }
 
-    try {
-      await sendNotification(
-        parentId,
-        title,
-        description,
-        normalizePushData({ notification, childId, type, severity, data })
-      );
-    } catch (err) {
-      console.error("push send failed in notifyParent", err.message);
-    }
+  try {
+    await sendNotification(
+      parentId,
+      title,
+      description,
+      normalizePushData({ notification, childId, type, severity, data })
+    );
+  } catch (err) {
+    console.error("push send failed in notifyParent", err.message);
+  }
 
-    return notification;
+  return notification;
 }
 
+// Creates a child notification and emits it to the child socket room with optional extra data.
 export async function notifyChild({
+  parentId,
+  childId,
+  type,
+  severity,
+  title,
+  description,
+  data,
+}) {
+  const notification = await createNotification({
     parentId,
     childId,
+    targetRole: TargetRole.CHILD,
     type,
     severity,
     title,
     description,
-}) {
-    const notification = await createNotification({
-        parentId,
-        childId,
-        targetRole: TargetRole.CHILD,
-        type,
-        severity,
-        title,
-        description
-    });
+  });
 
-    try {
-        const io = getIO();
-        if (io && childId) {
-            io.to(`child_${childId}`).emit(NOTIFICATION_CREATED, notification);
-        }
-    } catch (err) {
-        console.error("socket emit failed in notifyChild", err.message);
+  try {
+    const io = getIO();
+
+    if (io && childId) {
+      const socketNotification = {
+        ...(typeof notification.toObject === "function"
+          ? notification.toObject()
+          : notification),
+        data: data && typeof data === "object" ? data : {},
+      };
+
+      io.to(`child_${childId}`).emit(NOTIFICATION_CREATED, socketNotification);
     }
+  } catch (err) {
+    console.error("socket emit failed in notifyChild", err.message);
+  }
 
-    return notification;
+  return notification;
 }
+
 
 export async function getParentNotifications(parentId, page = 1, limit = 10) {
-    const skip = (page - 1) * limit;
+  const skip = (page - 1) * limit;
 
-    const { notifications, total, unreadCount } = await findNotificationsWithPagination(parentId, skip, limit);
+  const { notifications, total, unreadCount } = await findNotificationsWithPagination(parentId, skip, limit);
 
-    return {
-        notifications,
-        total,
-        pages: Math.ceil(total / limit),
-        unreadCount
-    };
+  return {
+    notifications,
+    total,
+    pages: Math.ceil(total / limit),
+    unreadCount
+  };
 }
 
 export async function markNotificationAsRead(parentId, notificationId) {

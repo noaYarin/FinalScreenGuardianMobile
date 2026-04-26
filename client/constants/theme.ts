@@ -10,6 +10,8 @@ const tintColorLight = '#BDE0FE';
 
 export const APP_COLORS = {
   babyBlue: '#BDE0FE',
+  childBackground: 'rgba(219, 234, 254, 1)',
+  childMenuPrimary: '#375AF6',
   beige: '#EAD2AC',
   primaryBlue: '#3B82F6',
 };

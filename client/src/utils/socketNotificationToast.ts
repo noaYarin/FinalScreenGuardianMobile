@@ -28,6 +28,10 @@ export function getToastTypeFromNotification(data: any): SocketToastType {
   return mapSeverityToToastType(data?.severity);
 }
 
+export function isAchievementUnlockedNotification(data: any) {
+  return String(data?.type ?? "").toUpperCase() === "ACHIEVEMENT_UNLOCKED";
+}
+
 export function showToastFromSocketNotification(data: any) {
   const title = data?.title ? String(data.title) : "New notification";
   const description = data?.description ? String(data.description) : "";

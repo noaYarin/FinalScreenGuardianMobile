@@ -12,7 +12,6 @@ export type AuthFormCardProps = {
   iconName: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
   iconGradientColors: [string, string];
   title: string;
-  subtitle: string;
   children: React.ReactNode;
   error: string | null;
   submitLabel: string;
@@ -27,7 +26,6 @@ export default function AuthFormCard({
   iconName,
   iconGradientColors,
   title,
-  subtitle,
   children,
   error,
   submitLabel,
@@ -61,8 +59,6 @@ export default function AuthFormCard({
         <AppText weight="extraBold" style={styles.title}>
           {title}
         </AppText>
-
-        <AppText style={styles.subtitle}>{subtitle}</AppText>
 
         {children}
 

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authJwt } from "../middlewares/authJwt.js";
-import { requireParent } from "../middlewares/requireParent.js";
+import { requireChild } from "../middlewares/requireChild.js";
+
 import {
   getChildAchievementsDataController,
   unlockAchievementForChildController,
@@ -11,11 +12,10 @@ const router = Router();
 // GET /api/v1/achievements/child/:childId/
 // Get the child's avatar, achievements, and xp points
 router.get(
-  "/child/:childId",
+  "/me",
   authJwt,
-  requireParent,
+  requireChild,
   getChildAchievementsDataController
 );
-
 
 export default router;

@@ -357,6 +357,21 @@ export default function ChildDetailsScreen() {
         }
       >
         <View style={[styles.content, { maxWidth: maxContentWidth }]}>
+          <View style={styles.infoHintRow}>
+            <InfoHint
+              title="How device controls work"
+              lines={[
+                "Manual lock and unlock work only when Accessibility access is enabled on the child’s device",
+                "Manual lock and unlock affect only the manual lock state",
+                "They do not turn the daily limit on or off",
+                "Daily limits can be changed only on the daily limits screen",
+                "Manual lock and daily limits are handled separately",
+                "If the daily limit has already been reached and you press Lock, the device may stay in the daily-limit state until the limit is reset or turned off.\nOnce the daily limit is no longer active, the manual lock can be removed",
+                "If a device is offline, changes will apply when it reconnects",
+              ]}
+            />
+          </View>
+
           <ChildDeviceSelector
             selectedChildId={effectiveChildId}
             onSelectChild={(childId) => {
@@ -375,22 +390,6 @@ export default function ChildDetailsScreen() {
             text={undefined}
             onOpenProfile={handleOpenChildProfile}
           />
-
-
-          <View style={{ marginTop: 10 }}>
-            <InfoHint
-              title="How device controls work"
-              lines={[
-                "Manual lock and unlock work only when Accessibility access is enabled on the child’s device",
-                "Manual lock and unlock affect only the manual lock state",
-                "They do not turn the daily limit on or off",
-                "Daily limits can be changed only on the daily limits screen",
-                "Manual lock and daily limits are handled separately",
-                "If the daily limit has already been reached and you press Lock, the device may stay in the daily-limit state until the limit is reset or turned off.\nOnce the daily limit is no longer active, the manual lock can be removed",
-                "If a device is offline, changes will apply when it reconnects",
-              ]}
-            />
-          </View>
 
           <ChildDetailsDevicesSection
             expanded={isDevicesExpanded}

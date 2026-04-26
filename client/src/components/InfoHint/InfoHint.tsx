@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Pressable, StyleSheet } from "react-native";
+import { Modal, Pressable, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import AppText from "../AppText/AppText";
 import { styles } from "./styles";
@@ -18,48 +18,53 @@ export default function InfoHint({
     return (
         <View style={styles.wrapper}>
             <Pressable
-                onPress={() => setOpen((prev) => !prev)}
+                onPress={() => setOpen(true)}
                 accessibilityRole="button"
-                accessibilityLabel={open ? "Hide information" : "Show information"}
+                accessibilityLabel="Open info"
                 style={({ pressed }) => [
-                    styles.triggerButton,
+                    styles.iconButton,
                     pressed ? styles.iconButtonPressed : null,
                 ]}
             >
                 <MaterialCommunityIcons
-                    name={open ? "information" : "information-outline"}
-                    size={18}
-                    color="#2563EB"
+                    name="lightbulb-on-outline"
+                    size={20}
+                    color="#F59E0B"
                 />
-
-                <AppText weight="bold" style={styles.triggerButtonText}>
-                    Info
-                </AppText>
             </Pressable>
 
-            {open ? (
-                <View style={styles.card}>
-                    <AppText weight="bold" style={styles.title}>
-                        {title}
-                    </AppText>
+            <Modal
+                visible={open}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setOpen(false)}
+            >
+                <Pressable
+                    onPress={() => setOpen(false)}
+                    style={styles.backdrop}
+                >
+                    <Pressable onPress={() => {}} style={styles.modalCard}>
+                        <AppText weight="bold" style={styles.title}>
+                            {title}
+                        </AppText>
 
-                    <View style={styles.titleSeparator} />
+                        <View style={styles.titleSeparator} />
 
+                        <View style={styles.linesWrap}>
+                            {lines.map((line, index) => (
+                                <View key={`${title}-${index}`} style={styles.lineItemLtr}>
+                                    <View style={styles.lineRow}>
+                                        <View style={styles.dot} />
+                                        <AppText style={styles.lineText}>{line}</AppText>
+                                    </View>
 
-                    <View style={styles.linesWrap}>
-                        {lines.map((line, index) => (
-                            <View key={`${title}-${index}`} style={styles.lineItemLtr}>
-                                <View style={styles.lineRow}>
-                                    <View style={styles.dot} />
-                                    <AppText style={styles.lineText}>{line}</AppText>
+                                    {index < lines.length - 1 ? <View style={styles.separator} /> : null}
                                 </View>
-
-                                {index < lines.length - 1 ? <View style={styles.separator} /> : null}
-                            </View>
-                        ))}
-                    </View>
-                </View>
-            ) : null}
+                            ))}
+                        </View>
+                    </Pressable>
+                </Pressable>
+            </Modal>
         </View>
     );
 }

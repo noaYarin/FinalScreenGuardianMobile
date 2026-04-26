@@ -1,5 +1,10 @@
 import React, { useCallback, useEffect, useMemo } from "react";
-import { View, Pressable, ActivityIndicator, ScrollView } from "react-native";
+import {
+  View,
+  Pressable,
+  ActivityIndicator,
+  ScrollView,
+} from "react-native";
 import { router, type Href, useFocusEffect } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -30,8 +35,6 @@ type ChildCard = {
 
 const ICON = {
   user: "account-outline",
-  menu: "menu",
-  bell: "bell-outline",
   lock: "lock-outline",
 } as const;
 
@@ -120,12 +123,6 @@ export default function HomeParentScreen() {
       params: { id: childId, name: childName },
     } as never);
 
-  const onPressNotifications = () => {
-    router.push("/Parent/systemAlerts" as Href);
-  };
-
-  const onPressOpenMenu = () => router.push("/Parent/homeMenu" as Href);
-
   return (
     <ScreenLayout scrollable={false}>
       <View style={styles.container}>
@@ -137,57 +134,23 @@ export default function HomeParentScreen() {
           >
             <View style={styles.header}>
               <View style={styles.headerMenuLeft}>
-                <Pressable
-                  onPress={onPressOpenMenu}
-                  accessibilityRole="button"
-                  accessibilityLabel="Open menu"
-                  style={({ pressed }) => [
-                    styles.headerMenuButton,
-                    pressed ? styles.headerMenuButtonPressed : null,
+                <InfoHint
+                  title="How this screen works"
+                  lines={[
+                    "This screen gives you a quick overview of your children’s screen time and device status",
+                    "Usage Access on child's device is needed to show correct screen-time data",
+                    "Accessibility access on child's device is needed for lock actions to work properly",
+                    "If a device is offline or a required permission is turned off, the latest updates will appear here after it reconnects",
+                    "Open a child’s profile for deleting or editing child details and photo, watch child location, requests and screen time limits",
                   ]}
-                >
-                  <MaterialCommunityIcons
-                    name={ICON.menu}
-                    size={24}
-                    color="#0F172A"
-                  />
-                </Pressable>
+                />
               </View>
 
               <AppText weight="extraBold" style={styles.bigHello}>
                 Hello, {parentName}
               </AppText>
 
-              <View style={styles.headerBellRight}>
-                <Pressable
-                  onPress={onPressNotifications}
-                  accessibilityRole="button"
-                  accessibilityLabel="Open system alerts"
-                  style={({ pressed }) => [
-                    styles.headerMenuButton,
-                    pressed ? styles.headerMenuButtonPressed : null,
-                  ]}
-                >
-                  <View style={styles.bellWrap}>
-                    <MaterialCommunityIcons
-                      name={ICON.bell}
-                      size={24}
-                      color="#0F172A"
-                    />
-
-                    {unreadNotificationsCount > 0 ? (
-                      <View style={styles.bellBadge}>
-                        <AppText
-                          weight="extraBold"
-                          style={styles.bellBadgeText}
-                        >
-                          {unreadNotificationsCount > 99 ? "99+" : String(unreadNotificationsCount)}
-                        </AppText>
-                      </View>
-                    ) : null}
-                  </View>
-                </Pressable>
-              </View>
+              <View style={styles.headerBellRight} />
             </View>
 
             <View style={styles.summaryCard}>
@@ -200,7 +163,7 @@ export default function HomeParentScreen() {
 
                 <View style={styles.summaryTextWrap}>
                   <AppText weight="bold" style={styles.sectionTitle}>
-                    My Kids
+                    My Children
                   </AppText>
 
                   <AppText style={styles.sectionSub}>
@@ -211,19 +174,6 @@ export default function HomeParentScreen() {
                   
                 </View>
               </View>
-            </View>
-
-            <View style={{ width: "100%", marginTop: 10, marginBottom: 6 }}>
-              <InfoHint
-                title="How this screen works"
-                lines={[
-                  "This screen gives you a quick overview of your children’s screen time and device status",
-                  "Usage Access on child's device is needed to show correct screen-time data",
-                  "Accessibility access on child's device is needed for lock actions to work properly",
-                  "If a device is offline or a required permission is turned off, the latest updates will appear here after it reconnects",
-                  "Open a child’s profile for deleting or editing child details and photo, watch child location, requests and screen time limits",
-                ]}
-              />
             </View>
 
             {isLoading ? (

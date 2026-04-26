@@ -1,15 +1,14 @@
 import React from "react";
 import { Stack } from "expo-router";
-
-import AchievementsScreen from "@/src/screens/ChildrenScreens/AchievementsScreen/AchievementsScreen";
+import ChatbotScreen from "@/src/components/Chatbot/ChatbotScreen";
 import { APP_COLORS, COLORS } from "@/constants/theme";
 
-export default function AchievementsRoute() {
+export default function ChildChatbotRoute() {
   return (
     <>
       <Stack.Screen
         options={{
-          title: "Achievements",
+          title: "Chatbot",
           headerTitleAlign: "center",
           headerShadowVisible: false,
           headerStyle: { backgroundColor: APP_COLORS.primaryBlue },
@@ -18,7 +17,8 @@ export default function AchievementsRoute() {
           contentStyle: { backgroundColor: COLORS.light.tint },
         }}
       />
-      <AchievementsScreen />
+      <ChatbotScreen role="CHILD" />
     </>
   );
 }
+

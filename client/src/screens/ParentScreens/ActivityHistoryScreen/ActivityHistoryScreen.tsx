@@ -198,6 +198,25 @@ function formatDate(dateString: string) {
   });
 }
 
+function isToday(dateString?: string | null) {
+  if (!dateString) return false;
+
+  const date = new Date(dateString);
+
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+
+  const now = new Date();
+
+  return (
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  );
+}
+
+
 export default function ActivityHistoryScreen() {
   const dispatch = useDispatch<AppDispatch>();
   const { width } = useWindowDimensions();
@@ -267,15 +286,20 @@ export default function ActivityHistoryScreen() {
     });
   }, [auditLogs, selectedFilter]);
 
-  const todayCount = filteredActivities.length;
+  const todayActivities = useMemo(() => {
+    return auditLogs.filter((item) => isToday(item.createdAt));
+  }, [auditLogs]);
 
-  const lockCount = filteredActivities.filter((item) =>
+  const todayCount = todayActivities.length;
+
+  const lockCount = todayActivities.filter((item) =>
     ["LOCK_DEVICE", "UNLOCK_DEVICE"].includes(item.actionType)
   ).length;
 
-  const extensionCount = filteredActivities.filter((item) =>
+  const extensionCount = todayActivities.filter((item) =>
     ["APPROVE_REQUEST", "REJECT_REQUEST"].includes(item.actionType)
   ).length;
+
 
   const filters: { key: FilterKey; label: string }[] = [
     { key: "all", label: "All" },
@@ -337,7 +361,7 @@ export default function ActivityHistoryScreen() {
 
               <View style={styles.summaryCard}>
                 <AppText weight="medium" style={styles.summaryLabel}>
-                  Locks
+                  Today's locks
                 </AppText>
 
                 <AppText weight="extraBold" style={styles.summaryValue}>
@@ -347,7 +371,7 @@ export default function ActivityHistoryScreen() {
 
               <View style={styles.summaryCard}>
                 <AppText weight="medium" style={styles.summaryLabel}>
-                  Extensions
+                  Today's extensions
                 </AppText>
 
                 <AppText weight="extraBold" style={styles.summaryValue}>

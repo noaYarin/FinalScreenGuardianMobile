@@ -25,6 +25,11 @@ export const styles = StyleSheet.create({
     gap: 10,
   },
 
+  infoBulbRow: {
+    width: "100%",
+    alignSelf: "flex-start",
+  },
+
   heroHeader: {
     flexDirection: "row",
     alignItems: "center",
