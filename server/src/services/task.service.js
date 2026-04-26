@@ -222,8 +222,6 @@ export async function approveTask(parentId, taskId) {
 
   const approvedTask = await approveTaskDal(taskId);
 
-  const approvedTask = await approveTaskDal(taskId);
-
   return {
     task: approvedTask,
     child: updatedChild,
