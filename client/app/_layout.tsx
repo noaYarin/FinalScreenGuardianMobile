@@ -43,10 +43,12 @@ function AppStack() {
   const router = useRouter();
   const segments = useSegments() as string[];
   useAndroidPostNotificationsPermission();
-
   const [achievementPopup, setAchievementPopup] =
     useState<UnlockedAchievementResponse | null>(null);
 
+  const [achievementQueue, setAchievementQueue] = useState<
+    UnlockedAchievementResponse[]
+  >([]);
   const { token, childToken, parentId, activeChildId } = useSelector(
     (state: any) => state.auth
   );
@@ -101,7 +103,7 @@ function AppStack() {
           const achievement = data?.data?.achievement;
 
           if (achievement) {
-            setAchievementPopup(achievement);
+            setAchievementQueue((prev) => [...prev, achievement]);
           }
 
           return;
@@ -116,6 +118,16 @@ function AppStack() {
       if (unsubscribeNotifications) unsubscribeNotifications();
     };
   }, [childToken, activeChildId, parentId, myCurrentDeviceId, dispatch, router]);
+
+  useEffect(() => {
+    if (achievementPopup !== null) return;
+    if (achievementQueue.length === 0) return;
+
+    const [nextAchievement, ...rest] = achievementQueue;
+
+    setAchievementPopup(nextAchievement);
+    setAchievementQueue(rest);
+  }, [achievementPopup, achievementQueue]);
 
   useEffect(() => {
     const isInsideParentScreens = segments.includes("Parent");

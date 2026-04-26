@@ -3,8 +3,6 @@ import {
   View,
   Pressable,
   useWindowDimensions,
-  StyleProp,
-  ViewStyle,
   NativeModules,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
@@ -33,7 +31,7 @@ const styles = rawStyles as any;
 const ICON = {
   points: "star-circle",
   level: "shield-star",
-  coins: "cash",
+  coins: "database",
   time: "clock-outline",
   apps: "apps",
   extend: "clock-plus-outline",
@@ -46,9 +44,11 @@ const ICON = {
   chatbot: "chat-processing-outline",
   help: "help-circle-outline",
   panic: "alert-circle-outline",
-  statsClosed: "chevron-down",
-  statsOpen: "chevron-up",
 } as const;
+
+function getXpRequiredForLevel(level: number) {
+  return 100 + (level - 1) * 50;
+}
 
 export default function HomeScreen() {
   const params = useLocalSearchParams<{ initialName?: string }>();
@@ -58,13 +58,11 @@ export default function HomeScreen() {
   const isPhoneSmall = width < 390;
   const isPhone = width < 430;
   const isTablet = width >= 430 && width < 900;
-  const isLarge = width >= 900;
 
   const avatarSize = isPhone ? 92 : isTablet ? 108 : 118;
   const helloSize = isPhone ? 22 : isTablet ? 26 : 28;
   const timerSize = isPhone ? 34 : isTablet ? 40 : 44;
 
-  const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [screenTime, setScreenTime] = useState({
     remainingMinutes: 0,
     usedTodayMinutes: 0,
@@ -197,8 +195,20 @@ export default function HomeScreen() {
     "Child"
   ).trim();
 
+  const levelValue = Number(activeChildData?.avatar?.level) || 1;
+  const avatarLevel = levelValue;
+  const pointsValue = Number(activeChildData?.avatar?.currentXp) || 0;
 
-  const avatarLevel = activeChildData?.avatar?.level ?? 1;
+  const xpRequiredForCurrentLevel = getXpRequiredForLevel(levelValue);
+  const xpLeftToNextLevel = Math.max(
+    0,
+    xpRequiredForCurrentLevel - pointsValue
+  );
+
+  const xpProgressPercent =
+    xpRequiredForCurrentLevel > 0
+      ? Math.min(100, (pointsValue / xpRequiredForCurrentLevel) * 100)
+      : 0;
 
   const homeAvatarImage = useMemo(
     () =>
@@ -210,17 +220,8 @@ export default function HomeScreen() {
     [activeChildData?.gender, avatarLevel, activeChildData?.avatar?.img]
   );
 
-
-  const pointsValue = activeChildData?.avatar?.currentXp ?? 0;
-  const levelValue = activeChildData?.avatar?.level ?? 1;
   const coinsValue =
     activeChildData?.coins != null ? String(activeChildData.coins) : "0";
-
-  const statPillResponsiveStyle = isLarge
-    ? styles.statPillDesktop
-    : isTablet
-      ? styles.statPillTablet
-      : styles.statPillMobile;
 
   const formatTime = (minutes: number) => {
     const safeMinutes = Math.max(0, Number(minutes) || 0);
@@ -245,16 +246,48 @@ export default function HomeScreen() {
         <View style={styles.headerCard}>
           <View style={styles.headerRow}>
             <View style={styles.avatarWrapRow}>
-              <View
-                style={[styles.avatarWrap, { width: avatarSize, height: avatarSize }]}
-              >
-                <Image
-                  source={homeAvatarImage}
-                  style={styles.avatarPhoto}
-                  contentFit="contain"
-                  transition={160}
-                  accessibilityLabel={`${userName} avatar`}
-                />
+              <View style={[styles.avatarBlock, { width: avatarSize + 34 }]}>
+                <View
+                  style={[
+                    styles.avatarWrap,
+                    { width: avatarSize, height: avatarSize },
+                  ]}
+                >
+                  <Image
+                    source={homeAvatarImage}
+                    style={styles.avatarPhoto}
+                    contentFit="contain"
+                    transition={160}
+                    accessibilityLabel={`${userName} avatar`}
+                  />
+                </View>
+
+                <View style={styles.levelBadge}>
+                  <AppText weight="extraBold" style={styles.levelBadgeText}>
+                    Lv. {levelValue}
+                  </AppText>
+                </View>
+
+                <View style={styles.xpProgressWrapper}>
+                  <View style={styles.xpProgressHeader}>
+                    <AppText weight="bold" style={styles.xpProgressText}>
+                      {pointsValue}/{xpRequiredForCurrentLevel} XP
+                    </AppText>
+
+                    <AppText weight="bold" style={styles.xpProgressText}>
+                      {xpLeftToNextLevel} left
+                    </AppText>
+                  </View>
+
+                  <View style={styles.xpProgressTrack}>
+                    <View
+                      style={[
+                        styles.xpProgressFill,
+                        { width: `${xpProgressPercent}%` },
+                      ]}
+                    />
+                  </View>
+                </View>
               </View>
 
               <View style={styles.headerTextSide}>
@@ -266,56 +299,23 @@ export default function HomeScreen() {
                   {`Hi, ${userName}`}
                 </AppText>
 
-                <View style={styles.headerActionsRow}>
-                  <Pressable
-                    onPress={() => setIsStatsOpen((prev) => !prev)}
-                    style={({ pressed }) => [
-                      styles.statsToggle,
-                      pressed && styles.statsTogglePressed,
-                    ]}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      isStatsOpen
-                        ? "Hide points, level and coins"
-                        : "Show points, level and coins"
-                    }
-                  >
-                    <AppText weight="bold" style={styles.statsToggleText}>
-                      {isStatsOpen ? "Hide stats" : "Show stats"}
-                    </AppText>
+                <View style={styles.coinsSummaryBadge}>
+                  <View style={styles.coinsSummaryTopRow}>
                     <MaterialCommunityIcons
-                      name={isStatsOpen ? ICON.statsOpen : ICON.statsClosed}
+                      name={ICON.coins}
                       size={18}
-                      color="#2563EB"
+                      color="#B45309"
                     />
-                  </Pressable>
+
+                    <AppText weight="extraBold" style={styles.coinsSummaryText}>
+                     {coinsValue} coins
+                    </AppText>
+                  </View>
+
                 </View>
               </View>
             </View>
           </View>
-
-          {isStatsOpen ? (
-            <View style={styles.statsRow}>
-              <StatPill
-                icon={ICON.points}
-                text={`XP: ${pointsValue}`}
-                variant="blue"
-                style={statPillResponsiveStyle}
-              />
-              <StatPill
-                icon={ICON.level}
-                text={`Level ${levelValue}`}
-                variant="beige"
-                style={statPillResponsiveStyle}
-              />
-              <StatPill
-                icon={ICON.coins}
-                text={`Coins: ${coinsValue}`}
-                variant="primary"
-                style={statPillResponsiveStyle}
-              />
-            </View>
-          ) : null}
         </View>
 
         <View style={styles.card}>
@@ -339,7 +339,11 @@ export default function HomeScreen() {
             weight="extraBold"
             style={[
               styles.timerValue,
-              { fontSize: timerSize, writingDirection: "ltr", textAlign: "left" },
+              {
+                fontSize: timerSize,
+                writingDirection: "ltr",
+                textAlign: "left",
+              },
               styles.timerValueCentered,
             ]}
           >
@@ -354,7 +358,10 @@ export default function HomeScreen() {
             </View>
           )}
 
-          <AppText weight="bold" style={[styles.timerSub, styles.timerSubCentered]}>
+          <AppText
+            weight="bold"
+            style={[styles.timerSub, styles.timerSubCentered]}
+          >
             {!screenTime.limitEnabled
               ? "There is no active limit right now"
               : "Your time is almost over"}
@@ -371,22 +378,38 @@ export default function HomeScreen() {
             colorKey="extend"
           />
 
-          <Tile iconName={ICON.shop} label="Shop" colorKey="shop" onPress={() => router.push("/Child/store" as Href)} />
-          <Tile iconName={ICON.tasks} label="Tasks" colorKey="tasks" onPress={() => router.push("/Child/tasks" as Href)} />
+          <Tile
+            iconName={ICON.shop}
+            label="Shop"
+            colorKey="shop"
+            onPress={() => router.push("/Child/store" as Href)}
+          />
+
+          <Tile
+            iconName={ICON.tasks}
+            label="Tasks"
+            colorKey="tasks"
+            onPress={() => router.push("/Child/tasks" as Href)}
+          />
+
           <Tile
             iconName={ICON.achievements}
             label="Achievements"
             colorKey="achievements"
             onPress={() => router.push("/Child/achievements" as Href)}
           />
+
           <Tile iconName={ICON.goals} label="Goals" colorKey="goals" disabled />
+
           <Tile
             iconName={ICON.reports}
             label="Reports"
             colorKey="help"
             disabled
           />
+
           <Tile iconName={ICON.bulb} label="Ideas" colorKey="ideas" disabled />
+
           <Tile iconName={ICON.help} label="Help" colorKey="help" disabled />
         </View>
 
@@ -402,7 +425,6 @@ export default function HomeScreen() {
           accessibilityState={{ disabled: true }}
         >
           <View style={styles.panicContent}>
-
             <View style={styles.panicIconBadge}>
               <MaterialCommunityIcons name={ICON.panic} size={18} color="#fff" />
             </View>
@@ -414,34 +436,6 @@ export default function HomeScreen() {
         </Pressable>
       </View>
     </ScreenLayout>
-  );
-}
-
-function StatPill({
-  icon,
-  text,
-  variant,
-  style,
-}: {
-  icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
-  text: string;
-  variant: "blue" | "beige" | "primary";
-  style?: StyleProp<ViewStyle>;
-}) {
-  const pillStyle =
-    variant === "blue"
-      ? styles.statPillBlue
-      : variant === "beige"
-        ? styles.statPillBeige
-        : styles.statPillPrimary;
-
-  return (
-    <View style={[styles.statPill, pillStyle, style]}>
-      <MaterialCommunityIcons name={icon} size={20} color="#0F172A" />
-      <AppText weight="extraBold" style={styles.statText} numberOfLines={1}>
-        {text}
-      </AppText>
-    </View>
   );
 }
 

@@ -1,5 +1,4 @@
 import { StyleSheet } from "react-native";
-import { APP_COLORS } from "../../../../constants/theme";
 
 export const TILE_COLORS = {
   apps: { bg: "#EAF2FF", badge: "#CFE3FF", icon: "#2F6DEB", border: "#D6E6FF" },
@@ -58,6 +57,79 @@ export const styles = StyleSheet.create({
     direction: "ltr",
   },
 
+  avatarBlock: {
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    flexShrink: 0,
+  },
+
+  levelBadge: {
+    position: "absolute",
+    top: -4,
+    left: 0,
+    minWidth: 42,
+    height: 28,
+    paddingHorizontal: 8,
+    borderRadius: 999,
+    backgroundColor: "#8B5CF6",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 2,
+  },
+
+  levelBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    lineHeight: 14,
+    includeFontPadding: false,
+    textAlign: "center",
+  },
+
+  xpProgressWrapper: {
+    width: "100%",
+    marginTop: 8,
+  },
+
+  xpProgressHeader: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4,
+    direction: "ltr",
+  },
+
+  xpProgressText: {
+    color: "#64748B",
+    fontSize: 11,
+    lineHeight: 13,
+    includeFontPadding: false,
+    textAlign: "left",
+    writingDirection: "ltr",
+  },
+
+  xpProgressTrack: {
+    width: "100%",
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: "#E6EEF9",
+    overflow: "hidden",
+  },
+
+  xpProgressFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: "#60A5FA",
+  },
+
   headerTextSide: {
     flex: 1,
     minWidth: 0,
@@ -109,98 +181,28 @@ export const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
 
-  statsToggle: {
+  headerCoinsBadge: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-    backgroundColor: "#EEF4FF",
-    borderWidth: 1,
-    borderColor: "#D6E6FF",
     alignSelf: "flex-start",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: "#FEF3C7",
+    borderWidth: 1,
+    borderColor: "#FDE68A",
     direction: "ltr",
   },
 
-  // chatbot button moved to Stack header (route)
-
-  statsTogglePressed: {
-    opacity: 0.82,
-  },
-
-  statsToggleText: {
-    color: "#2563EB",
-    fontSize: 14,
-    lineHeight: 18,
+  headerCoinsText: {
+    color: "#92400E",
+    fontSize: 13,
+    lineHeight: 16,
     includeFontPadding: false,
     textAlign: "left",
     writingDirection: "ltr",
-    marginRight: 6,
-  },
-
-  statsRow: {
-    width: "100%",
-    marginTop: 14,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    alignItems: "stretch",
-    rowGap: 10,
-    direction: "ltr",
-  },
-
-  statPill: {
-    minWidth: 0,
-    minHeight: 52,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-    direction: "ltr",
-  },
-
-  statPillDesktop: {
-    width: "32%",
-  },
-
-  statPillTablet: {
-    width: "32%",
-  },
-
-  statPillMobile: {
-    width: "100%",
-  },
-
-  statText: {
-    marginLeft: 8,
-    fontSize: 15,
-    lineHeight: 20,
-    color: "#0F172A",
-    flexShrink: 1,
-    textAlign: "center",
-    includeFontPadding: false,
-    writingDirection: "ltr",
-  },
-
-  statPillBlue: {
-    backgroundColor: "#EAF2FF",
-    borderWidth: 1,
-    borderColor: "#D6E6FF",
-  },
-
-  statPillBeige: {
-    backgroundColor: APP_COLORS.beige,
-    borderWidth: 1,
-    borderColor: "#F6E4C7",
-  },
-
-  statPillPrimary: {
-    backgroundColor: "#E9FFF3",
-    borderWidth: 1,
-    borderColor: "#D7F7E8",
   },
 
   card: {
@@ -425,6 +427,84 @@ export const styles = StyleSheet.create({
   },
 
   panicDisabled: {
-  opacity: 0.45,
+    opacity: 0.45,
+  },
+
+  xpCoinsMiniBadge: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 4,
+  paddingHorizontal: 8,
+  paddingVertical: 3,
+  borderRadius: 999,
+  backgroundColor: "#FEF3C7",
+  borderWidth: 1,
+  borderColor: "#FDE68A",
+  direction: "ltr",
+},
+
+xpCoinsMiniText: {
+  color: "#92400E",
+  fontSize: 11,
+  lineHeight: 13,
+  includeFontPadding: false,
+  textAlign: "left",
+  writingDirection: "ltr",
+},
+
+xpLeftText: {
+  marginTop: 4,
+  color: "#64748B",
+  fontSize: 10,
+  lineHeight: 12,
+  includeFontPadding: false,
+  textAlign: "center",
+  writingDirection: "ltr",
+},
+
+coinsHintText: {
+  marginTop: 5,
+  color: "#64748B",
+  fontSize: 11,
+  lineHeight: 13,
+  includeFontPadding: false,
+  textAlign: "left",
+  writingDirection: "ltr",
+},
+coinsSummaryBadge: {
+  marginTop: 10,
+  alignSelf: "flex-start",
+  paddingHorizontal: 12,
+  paddingVertical: 8,
+  borderRadius: 16,
+  backgroundColor: "#FFF7ED",
+  borderWidth: 1,
+  borderColor: "#FED7AA",
+},
+
+coinsSummaryTopRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 6,
+  direction: "ltr",
+},
+
+coinsSummaryText: {
+  color: "#9A3412",
+  fontSize: 13,
+  lineHeight: 16,
+  includeFontPadding: false,
+  textAlign: "left",
+  writingDirection: "ltr",
+},
+
+coinsSummaryHint: {
+  marginTop: 3,
+  color: "#e9b389",
+  fontSize: 10,
+  lineHeight: 12,
+  includeFontPadding: false,
+  textAlign: "left",
+  writingDirection: "ltr",
 },
 });
