@@ -8,6 +8,7 @@ import {
   deleteRewardById,
 } from "../dal/reward.dal.js";
 import { decrementChildCoinsByParentId } from "../dal/parent.dal.js";
+import { unlockAchievementsForChildService } from "./gamification.service.js";
 
 function badRequest(message) {
   const err = new Error(message);
@@ -132,6 +133,18 @@ export async function redeemReward(childId, rewardId) {
   reward.redeemedAt = new Date();
   await reward.save();
 
+  // Unlocks the first reward redemption achievement without blocking the reward flow.
+  try {
+    await unlockAchievementsForChildService(reward.parentId, childId, [
+      "first_reward_redeemed",
+    ]);
+  } catch (err) {
+    console.error(
+      "unlock first_reward_redeemed failed in redeemReward:",
+      err.message
+    );
+  }
+  
   return {
     reward,
     child: updatedChild,

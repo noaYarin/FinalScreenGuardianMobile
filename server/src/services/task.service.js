@@ -5,13 +5,18 @@ import {
   getTaskById,
   submitTaskDal,
   approveTaskDal,
+  countSubmittedTasksByChildId,
 } from "../dal/task.dal.js";
+
 import {
   getChildrenByParentId,
   incrementChildCoinsByParentId,
 } from "../dal/parent.dal.js";
+
+import { unlockAchievementsForChildService } from "./gamification.service.js";
 import { AppError } from "../utils/appError.js";
 
+// Creates one or more tasks for the selected children after validating parent ownership and task data.
 export async function createTask(parentId, payload) {
   const title = String(payload?.title ?? "").trim();
   const description = String(payload?.description ?? "").trim();
@@ -78,16 +83,46 @@ export async function createTask(parentId, payload) {
   };
 }
 
+// Returns all tasks created by a specific parent.
 export async function getParentTasks(parentId) {
   const tasks = await getTasksByParentId(parentId);
   return { tasks };
 }
 
+// Returns all tasks assigned to a specific child.
 export async function getChildTasks(childId) {
   const tasks = await getTasksByChildId(childId);
   return { tasks };
 }
 
+// Unlocks task-submission achievements. New achievements are sent to the child through the gamification socket notification flow.
+async function unlockTaskSubmissionAchievements({
+  parentId,
+  childId,
+  proofImg,
+}) {
+  const achievementKeys = ["first_task_submitted"];
+
+  const normalizedProofImg =
+    typeof proofImg === "string" ? proofImg.trim() : "";
+
+  const hasProofImage =
+    normalizedProofImg !== "" && normalizedProofImg !== "default.png";
+
+  if (hasProofImage) {
+    achievementKeys.push("first_photo_task");
+  }
+
+  const submittedTasksCount = await countSubmittedTasksByChildId(childId);
+
+  if (submittedTasksCount >= 5) {
+    achievementKeys.push("five_tasks_submitted");
+  }
+
+  await unlockAchievementsForChildService(parentId, childId, achievementKeys);
+}
+
+// Submits a child task and unlocks task-related achievements through the global socket notification flow.
 export async function submitTask(taskId, childId, proofImg) {
   const task = await getTaskById(taskId);
 
@@ -115,9 +150,18 @@ export async function submitTask(taskId, childId, proofImg) {
     });
   }
 
-  return await submitTaskDal(taskId, proofImg);
+  const submittedTask = await submitTaskDal(taskId, proofImg);
+
+  await unlockTaskSubmissionAchievements({
+    parentId: task.parentId,
+    childId,
+    proofImg,
+  });
+
+  return submittedTask;
 }
 
+// Approves a submitted task, adds coins to the child, and returns the updated task and child data.
 export async function approveTask(parentId, taskId) {
   const task = await getTaskById(taskId);
 
@@ -167,6 +211,13 @@ export async function approveTask(parentId, taskId) {
       message: "Child not found",
       statusCode: 404,
     });
+  }
+
+  // Unlocks the 100-coins achievement after a parent approves a task.
+  if (Number(updatedChild.coins ?? 0) >= 100) {
+    await unlockAchievementsForChildService(task.parentId, task.childId, [
+      "saved_100_coins",
+    ]);
   }
 
   const approvedTask = await approveTaskDal(taskId);

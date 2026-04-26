@@ -52,3 +52,12 @@ export async function approveTaskDal(taskId) {
     { new: true }
   );
 }
+
+// Counts how many active tasks the child has already submitted.
+export async function countSubmittedTasksByChildId(childId) {
+  return TaskModel.countDocuments({
+    childId,
+    isActive: true,
+    completedAt: { $ne: null },
+  });
+}

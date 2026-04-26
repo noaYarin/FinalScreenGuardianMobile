@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, Pressable, ScrollView, Alert } from "react-native";
+import { View, Pressable, ScrollView } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
 import * as ImagePicker from "expo-image-picker";
@@ -11,6 +11,12 @@ import {
   getChildTasksThunk,
   submitTaskThunk,
 } from "../../../redux/thunks/tasksThunks";
+import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
+import {
+  showSuccessToast,
+  showErrorToast,
+  showWarningToast,
+} from "@/src/utils/appToast";
 
 const ICON = {
   coin: "cash-multiple",
@@ -65,8 +71,7 @@ export default function TasksScreen() {
       const proofImg =
         typeof task?.proofImg === "string" ? task.proofImg.trim() : "";
 
-      const hasProofImage =
-        proofImg !== "" && proofImg !== "default.png";
+      const hasProofImage = proofImg !== "" && proofImg !== "default.png";
 
       return {
         id: String(task?._id ?? task?.id ?? Math.random()),
@@ -105,11 +110,11 @@ export default function TasksScreen() {
 
       await dispatch(getChildTasksThunk()).unwrap();
 
-      Alert.alert("Success", "Task submitted successfully.");
+      showSuccessToast("Task submitted successfully.", "Success");
     } catch (error: any) {
-      Alert.alert(
-        "Submit failed",
-        typeof error === "string" ? error : "Something went wrong."
+      showErrorToast(
+        typeof error === "string" ? error : "Something went wrong.",
+        "Submit failed"
       );
     } finally {
       setSubmittingTaskId(null);
@@ -124,9 +129,9 @@ export default function TasksScreen() {
         await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (!permissionResult.granted) {
-        Alert.alert(
-          "Permission needed",
-          "Please allow access to your photo library."
+        showWarningToast(
+          "Please allow access to your photo library.",
+          "Permission needed"
         );
         return;
       }
@@ -145,7 +150,7 @@ export default function TasksScreen() {
       const imageUri = asset?.uri ?? "";
 
       if (!imageUri) {
-        Alert.alert("No image selected", "Please choose an image.");
+        showWarningToast("Please choose an image.", "No image selected");
         return;
       }
 
@@ -158,11 +163,11 @@ export default function TasksScreen() {
 
       await dispatch(getChildTasksThunk()).unwrap();
 
-      Alert.alert("Success", "Photo uploaded and task submitted.");
+      showSuccessToast("Photo uploaded and task submitted.", "Success");
     } catch (error: any) {
-      Alert.alert(
-        "Upload failed",
-        typeof error === "string" ? error : "Something went wrong."
+      showErrorToast(
+        typeof error === "string" ? error : "Something went wrong.",
+        "Upload failed"
       );
     } finally {
       setSubmittingTaskId(null);
@@ -216,9 +221,31 @@ export default function TasksScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
           >
+            {filteredTasks.length === 0 ? (
+              <EmptyStateCard
+                icon={
+                  activeTab === "todo"
+                    ? "clipboard-text-outline"
+                    : "check-circle-outline"
+                }
+                title={
+                  activeTab === "todo"
+                    ? "No pending tasks"
+                    : "No completed tasks yet"
+                }
+                subtitle={
+                  activeTab === "todo"
+                    ? "You do not have any tasks waiting right now."
+                    : "Completed tasks will appear here after you submit them."
+                }
+              />
+            ) : null}
+
             {filteredTasks.map((task) => {
               const isSubmitting = submittingTaskId === task.id;
-              const ActionIcon = task.requireProof ? ICON.camera : ICON.checkCircle;
+              const ActionIcon = task.requireProof
+                ? ICON.camera
+                : ICON.checkCircle;
 
               return (
                 <View key={task.id} style={styles.card}>
@@ -260,7 +287,9 @@ export default function TasksScreen() {
 
                       <View>
                         <AppText weight="bold" style={styles.statusTextDone}>
-                          {task.hasProofImage ? "Photo Uploaded" : "Task Submitted"}
+                          {task.hasProofImage
+                            ? "Photo Uploaded"
+                            : "Task Submitted"}
                         </AppText>
 
                         {task.completedAt ? (
@@ -307,8 +336,8 @@ export default function TasksScreen() {
                             {isSubmitting
                               ? "Submitting..."
                               : task.requireProof
-                              ? "Upload Photo"
-                              : "Mark as Done"}
+                                ? "Upload Photo"
+                                : "Mark as Done"}
                           </AppText>
                         </View>
                       </Pressable>

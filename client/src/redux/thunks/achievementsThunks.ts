@@ -4,11 +4,11 @@ import type { AchievementUiItem } from "@/src/api/achievements";
 
 export const fetchChildAchievementsThunk = createAsyncThunk<
   AchievementUiItem[],
-  string,
+  void,
   { rejectValue: string }
->("achievements/fetchChildAchievements", async (childId, thunkAPI) => {
+>("achievements/fetchChildAchievements", async (_, thunkAPI) => {
   try {
-    const response = await achievementsApi.fetchChildAchievements(childId);
+    const response = await achievementsApi.fetchChildAchievements();
 
     if (!Array.isArray(response?.achievements)) {
       return thunkAPI.rejectWithValue("achievements.fetch_failed");

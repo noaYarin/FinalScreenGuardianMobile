@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, Pressable, ScrollView, Alert } from "react-native";
+import { View, Pressable, ScrollView } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { useDispatch, useSelector } from "react-redux";
@@ -12,6 +12,12 @@ import {
   redeemRewardThunk,
 } from "../../../redux/thunks/rewardsThunks";
 import { fetchCurrentChildProfileThunk } from "../../../redux/thunks/childrenThunks";
+import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
+import {
+  showSuccessToast,
+  showWarningToast,
+  showErrorToast,
+} from "@/src/utils/appToast";
 
 const ICON = {
   coin: "coins",
@@ -65,15 +71,15 @@ function resolveRewardIcon(iconValue?: string) {
   const allowedIcons: Array<
     React.ComponentProps<typeof MaterialCommunityIcons>["name"]
   > = [
-    "gift-outline",
-    "clock-outline",
-    "movie-open-outline",
-    "ice-cream",
-    "star-circle",
-    "trophy-outline",
-    "gamepad-variant-outline",
-    "ticket-percent-outline",
-  ];
+      "gift-outline",
+      "clock-outline",
+      "movie-open-outline",
+      "ice-cream",
+      "star-circle",
+      "trophy-outline",
+      "gamepad-variant-outline",
+      "ticket-percent-outline",
+    ];
 
   if (allowedIcons.includes(normalized as any)) {
     return normalized as React.ComponentProps<typeof MaterialCommunityIcons>["name"];
@@ -162,7 +168,10 @@ export default function StoreScreen() {
 
   const handleRedeemReward = async (rewardId: string, rewardCoins: number) => {
     if (coinsBalance < rewardCoins) {
-      Alert.alert("Not enough coins", "You do not have enough coins for this reward.");
+      showWarningToast(
+        "You do not have enough coins for this reward.",
+        "Not enough coins"
+      );
       return;
     }
 
@@ -173,11 +182,11 @@ export default function StoreScreen() {
       await dispatch(fetchCurrentChildProfileThunk()).unwrap();
       await dispatch(getChildRewardsThunk()).unwrap();
 
-      Alert.alert("Success", "Reward redeemed successfully.");
+      showSuccessToast("Reward redeemed successfully.", "Success");
     } catch (error: any) {
-      Alert.alert(
-        "Redeem failed",
-        typeof error === "string" ? error : "Something went wrong."
+      showErrorToast(
+        typeof error === "string" ? error : "Something went wrong.",
+        "Redeem failed"
       );
     } finally {
       setRedeemingRewardId(null);
@@ -239,19 +248,11 @@ export default function StoreScreen() {
                 </AppText>
               </View>
             ) : rewards.length === 0 ? (
-              <View style={styles.emptyState}>
-                <MaterialCommunityIcons
-                  name="gift-outline"
-                  size={30}
-                  color="#94A3B8"
-                />
-                <AppText weight="extraBold" style={styles.emptyStateTitle}>
-                  No rewards yet
-                </AppText>
-                <AppText weight="medium" style={styles.emptyStateText}>
-                  There are no available rewards right now.
-                </AppText>
-              </View>
+              <EmptyStateCard
+                icon="gift-outline"
+                title="No rewards yet"
+                subtitle="There are no available rewards right now. Check again after your parent adds new rewards."
+              />
             ) : (
               rewards.map((item) => {
                 const canRedeem = coinsBalance >= item.coins;

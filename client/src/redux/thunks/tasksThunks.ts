@@ -1,6 +1,9 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import * as tasksApi from "../../api/tasks";
-import type { CreateTaskResponse, GetTasksResponse } from "../../api/tasks";
+import type {
+  CreateTaskResponse,
+  GetTasksResponse,
+} from "../../api/tasks";
 
 export const createTaskThunk = createAsyncThunk<
   CreateTaskResponse,
