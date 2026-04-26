@@ -4,6 +4,7 @@ import {
   Pressable,
   useWindowDimensions,
   NativeModules,
+  Modal,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
@@ -50,6 +51,24 @@ function getXpRequiredForLevel(level: number) {
   return 100 + (level - 1) * 50;
 }
 
+function getAvatarStageFromLevel(level: number) {
+  if (level >= 9) return 5;
+  if (level >= 7) return 4;
+  if (level >= 5) return 3;
+  if (level >= 3) return 2;
+
+  return 1;
+}
+
+function getNextAvatarStageLevel(level: number) {
+  if (level < 3) return 3;
+  if (level < 5) return 5;
+  if (level < 7) return 7;
+  if (level < 9) return 9;
+
+  return null;
+}
+
 export default function HomeScreen() {
   const params = useLocalSearchParams<{ initialName?: string }>();
   const { width } = useWindowDimensions();
@@ -62,6 +81,8 @@ export default function HomeScreen() {
   const avatarSize = isPhone ? 92 : isTablet ? 108 : 118;
   const helloSize = isPhone ? 22 : isTablet ? 26 : 28;
   const timerSize = isPhone ? 34 : isTablet ? 40 : 44;
+
+  const [avatarInfoVisible, setAvatarInfoVisible] = useState(false);
 
   const [screenTime, setScreenTime] = useState({
     remainingMinutes: 0,
@@ -105,7 +126,6 @@ export default function HomeScreen() {
       };
 
       const resolvedDeviceId = deviceId && String(deviceId).trim();
-
       const targetParentId = requestData?.parentId || parentId;
 
       if (targetParentId) {
@@ -210,6 +230,9 @@ export default function HomeScreen() {
       ? Math.min(100, (pointsValue / xpRequiredForCurrentLevel) * 100)
       : 0;
 
+  const avatarStage = getAvatarStageFromLevel(levelValue);
+  const nextAvatarStageLevel = getNextAvatarStageLevel(levelValue);
+
   const homeAvatarImage = useMemo(
     () =>
       getAvatarImage({
@@ -247,11 +270,14 @@ export default function HomeScreen() {
           <View style={styles.headerRow}>
             <View style={styles.avatarWrapRow}>
               <View style={[styles.avatarBlock, { width: avatarSize + 34 }]}>
-                <View
+                <Pressable
+                  onPress={() => setAvatarInfoVisible(true)}
                   style={[
                     styles.avatarWrap,
                     { width: avatarSize, height: avatarSize },
                   ]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open avatar progress explanation"
                 >
                   <Image
                     source={homeAvatarImage}
@@ -260,7 +286,7 @@ export default function HomeScreen() {
                     transition={160}
                     accessibilityLabel={`${userName} avatar`}
                   />
-                </View>
+                </Pressable>
 
                 <View style={styles.levelBadge}>
                   <AppText weight="extraBold" style={styles.levelBadgeText}>
@@ -308,10 +334,9 @@ export default function HomeScreen() {
                     />
 
                     <AppText weight="extraBold" style={styles.coinsSummaryText}>
-                     {coinsValue} coins
+                      {coinsValue} coins
                     </AppText>
                   </View>
-
                 </View>
               </View>
             </View>
@@ -434,8 +459,116 @@ export default function HomeScreen() {
             </AppText>
           </View>
         </Pressable>
+
+        <Modal
+          visible={avatarInfoVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setAvatarInfoVisible(false)}
+        >
+          <Pressable
+            style={styles.avatarModalOverlay}
+            onPress={() => setAvatarInfoVisible(false)}
+          >
+            <Pressable style={styles.avatarInfoCard} onPress={() => { }}>
+              <View style={styles.avatarInfoImageWrap}>
+                <Image
+                  source={homeAvatarImage}
+                  style={styles.avatarInfoImage}
+                  contentFit="contain"
+                  transition={160}
+                />
+              </View>
+
+              <AppText weight="extraBold" style={styles.avatarInfoTitle}>
+                Your avatar grows with you
+              </AppText>
+
+              <AppText weight="bold" style={styles.avatarInfoSubtitle}>
+                Level {levelValue}
+              </AppText>
+
+              <View style={styles.avatarInfoProgressTrack}>
+                <View
+                  style={[
+                    styles.avatarInfoProgressFill,
+                    { width: `${xpProgressPercent}%` },
+                  ]}
+                />
+              </View>
+
+
+              <AppText weight="bold" style={styles.avatarInfoXpText}>
+                {pointsValue} out of {xpRequiredForCurrentLevel} XP collected for level {levelValue + 1}
+              </AppText>
+
+              <AppText weight="bold" style={styles.avatarInfoXpHint}>
+                You’re getting closer with every achievement!
+              </AppText>
+
+              <View style={styles.avatarInfoTextBox}>
+                <AvatarInfoRow
+                  icon="trophy-outline"
+                  text="Check your achievements to earn XP."
+                />
+
+                <AvatarInfoRow
+                  icon="star-four-points-outline"
+                  text="You can unlock achievements for first steps, encouragement, and good habits."
+                />
+
+                <AvatarInfoRow
+                  icon="trending-up"
+                  text="The more XP you collect, the higher your avatar level becomes."
+                />
+
+                <AvatarInfoRow
+                  icon="palette-outline"
+                  text="When your avatar reaches special levels, it gets a new look."
+                />
+              </View>
+
+              <AppText weight="bold" style={styles.avatarInfoDescription}>
+                {nextAvatarStageLevel
+                  ? `Keep going! A new avatar look is waiting at level ${nextAvatarStageLevel}.`
+                  : "Amazing! You unlocked every avatar look."}
+              </AppText>
+
+              <Pressable
+                style={styles.avatarInfoButton}
+                onPress={() => setAvatarInfoVisible(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Close avatar explanation"
+              >
+                <AppText weight="extraBold" style={styles.avatarInfoButtonText}>
+                  Let's go!
+                </AppText>
+              </Pressable>
+            </Pressable>
+          </Pressable>
+        </Modal>
       </View>
     </ScreenLayout>
+  );
+}
+
+function AvatarInfoRow({
+  icon,
+  text,
+}: {
+  icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+  text: string;
+}) {
+  return (
+    <View style={styles.avatarInfoRow}>
+      <View style={styles.avatarInfoRowIcon}>
+        <MaterialCommunityIcons name={icon} size={17} color="#5B7FD6" />
+      </View>
+
+      <AppText weight="bold" style={styles.avatarInfoLine}>
+        {text}
+      </AppText>
+    </View>
   );
 }
 
@@ -471,10 +604,7 @@ function Tile({
       <View style={styles.tileInner}>
         <View style={styles.tileIconZone}>
           <View
-            style={[
-              styles.tileIconWrap,
-              disabled && styles.tileIconDisabled,
-            ]}
+            style={[styles.tileIconWrap, disabled && styles.tileIconDisabled]}
           >
             <MaterialCommunityIcons
               name={iconName}
