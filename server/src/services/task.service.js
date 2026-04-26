@@ -149,6 +149,21 @@ export async function submitTask(taskId, childId, proofImg) {
       statusCode: 400,
     });
   }
+  if (proofImg && typeof proofImg !== "string") {
+  throw new AppError({
+    code: "INVALID_PROOF_IMAGE",
+    message: "Proof image must be a string",
+    statusCode: 400,
+  });
+}
+
+if (proofImg && !proofImg.startsWith("data:image/")) {
+  throw new AppError({
+    code: "INVALID_PROOF_IMAGE",
+    message: "Proof image must be a valid base64 image",
+    statusCode: 400,
+  });
+}
 
   const submittedTask = await submitTaskDal(taskId, proofImg);
 

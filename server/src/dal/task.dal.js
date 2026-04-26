@@ -39,7 +39,7 @@ export async function submitTaskDal(taskId, proofImg) {
     taskId,
     {
       completedAt: new Date(),
-      proofImg: proofImg || "",
+      proofImg: proofImg || "default.png",
     },
     { new: true }
   );
