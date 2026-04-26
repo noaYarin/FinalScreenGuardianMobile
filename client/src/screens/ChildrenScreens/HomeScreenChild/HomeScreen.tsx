@@ -69,6 +69,41 @@ function getNextAvatarStageLevel(level: number) {
   return null;
 }
 
+const AVATAR_STAGE_INFO: Record<
+  number,
+  {
+    title: string;
+    subtitle: string;
+    icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+  }
+> = {
+  1: {
+    title: "Healthy Habits Begin",
+    subtitle: "Starting the journey to balanced screen time!",
+    icon: "star-circle",
+  },
+  2: {
+    title: "Mindful Choices",
+    subtitle: "Making smart choices every day!",
+    icon: "heart-circle",
+  },
+  3: {
+    title: "Time Guardian",
+    subtitle: "Keeping time in balance like a pro!",
+    icon: "timer-sand",
+  },
+  4: {
+    title: "Habit Hero",
+    subtitle: "Building amazing habits and staying on track!",
+    icon: "medal",
+  },
+  5: {
+    title: "Balance Champion",
+    subtitle: "A true champion of healthy screen time!",
+    icon: "crown-circle",
+  },
+};
+
 export default function HomeScreen() {
   const params = useLocalSearchParams<{ initialName?: string }>();
   const { width } = useWindowDimensions();
@@ -232,6 +267,7 @@ export default function HomeScreen() {
 
   const avatarStage = getAvatarStageFromLevel(levelValue);
   const nextAvatarStageLevel = getNextAvatarStageLevel(levelValue);
+  const avatarStageInfo = AVATAR_STAGE_INFO[avatarStage] ?? AVATAR_STAGE_INFO[1];
 
   const homeAvatarImage = useMemo(
     () =>
@@ -480,12 +516,24 @@ export default function HomeScreen() {
                 />
               </View>
 
-              <AppText weight="extraBold" style={styles.avatarInfoTitle}>
-                Your avatar grows with you
-              </AppText>
+              <View style={styles.avatarStageTitleRow}>
+                <MaterialCommunityIcons
+                  name={avatarStageInfo.icon}
+                  size={22}
+                  color="#5B7FD6"
+                />
+
+                <AppText weight="extraBold" style={styles.avatarInfoTitle}>
+                  {avatarStageInfo.title}
+                </AppText>
+              </View>
 
               <AppText weight="bold" style={styles.avatarInfoSubtitle}>
-                Level {levelValue}
+                {avatarStageInfo.subtitle}
+              </AppText>
+
+              <AppText weight="bold" style={styles.avatarInfoLevelText}>
+                Level {levelValue} 
               </AppText>
 
               <View style={styles.avatarInfoProgressTrack}>

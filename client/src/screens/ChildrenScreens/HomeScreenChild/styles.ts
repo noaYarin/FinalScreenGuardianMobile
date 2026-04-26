@@ -643,7 +643,20 @@ export const styles = StyleSheet.create({
     textAlign: "center",
     includeFontPadding: false,
   },
+  avatarStageTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 10,
+  },
 
+  avatarInfoLevelText: {
+    marginTop: 4,
+    fontSize: 13,
+    color: "#64748B",
+    textAlign: "center",
+  },
   avatarInfoLine: {
     flex: 1,
     fontSize: 13.5,
