@@ -275,7 +275,7 @@ export async function incrementChildCoinsByParentId(parentId, childId, amount) {
       },
     },
     {
-      new: false,
+      new: true,
     }
   ).lean();
 
@@ -283,23 +283,9 @@ export async function incrementChildCoinsByParentId(parentId, childId, amount) {
     return null;
   }
 
-  const parentAfterUpdate = await ParentModel.findOne(
-    {
-      _id: parentId,
-      "children._id": childId,
-    },
-    {
-      "children.$": 1,
-    }
-  ).lean();
+  const updatedChild = updatedParent.children.find(
+    (child) => String(child._id) === String(childId)
+  );
 
-  if (
-    !parentAfterUpdate ||
-    !parentAfterUpdate.children ||
-    parentAfterUpdate.children.length === 0
-  ) {
-    return null;
-  }
-
-  return parentAfterUpdate.children[0];
+  return updatedChild ?? null;
 }

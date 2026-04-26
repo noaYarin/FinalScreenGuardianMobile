@@ -142,36 +142,40 @@ export async function submitTask(taskId, childId, proofImg) {
     });
   }
 
-  if (task.requireProof === true && !proofImg) {
+  const normalizedProofImg =
+    typeof proofImg === "string" ? proofImg.trim() : "";
+
+  if (task.requireProof === true && !normalizedProofImg) {
     throw new AppError({
       code: "PROOF_IMAGE_REQUIRED",
       message: "Proof image is required",
       statusCode: 400,
     });
   }
-  if (proofImg && typeof proofImg !== "string") {
-  throw new AppError({
-    code: "INVALID_PROOF_IMAGE",
-    message: "Proof image must be a string",
-    statusCode: 400,
-  });
-}
 
-if (proofImg && !proofImg.startsWith("data:image/")) {
-  throw new AppError({
-    code: "INVALID_PROOF_IMAGE",
-    message: "Proof image must be a valid base64 image",
-    statusCode: 400,
-  });
-}
+  if (
+    normalizedProofImg &&
+    normalizedProofImg !== "default.png" &&
+    !normalizedProofImg.startsWith("data:image/")
+  ) {
+    throw new AppError({
+      code: "INVALID_PROOF_IMAGE",
+      message: "Proof image must be a valid base64 image",
+      statusCode: 400,
+    });
+  }
 
-  const submittedTask = await submitTaskDal(taskId, proofImg);
+  const submittedTask = await submitTaskDal(taskId, normalizedProofImg);
 
-  await unlockTaskSubmissionAchievements({
-    parentId: task.parentId,
-    childId,
-    proofImg,
-  });
+  try {
+    await unlockTaskSubmissionAchievements({
+      parentId: task.parentId,
+      childId: task.childId,
+      proofImg: normalizedProofImg,
+    });
+  } catch (err) {
+    console.error("Failed to unlock task achievements:", err);
+  }
 
   return submittedTask;
 }

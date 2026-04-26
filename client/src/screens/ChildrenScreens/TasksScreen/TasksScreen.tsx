@@ -70,9 +70,8 @@ export default function TasksScreen() {
     return childTasks.map((task: any) => {
       const proofImg =
         typeof task?.proofImg === "string" ? task.proofImg.trim() : "";
-
-      const hasProofImage = proofImg !== "" && proofImg !== "default.png";
-
+const hasProofImage =
+  proofImg.startsWith("data:image/") || proofImg.startsWith("http");
       return {
         id: String(task?._id ?? task?.id ?? Math.random()),
         title: task?.title ?? "Untitled task",
@@ -121,64 +120,68 @@ export default function TasksScreen() {
     }
   };
 
-  const pickImageAndSubmit = async (task: Task) => {
-    try {
-      setSubmittingTaskId(task.id);
+const pickImageAndSubmit = async (task: Task) => {
+  try {
+    setSubmittingTaskId(task.id);
 
-      const permissionResult =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-      if (!permissionResult.granted) {
-        showWarningToast(
-          "Please allow access to your photo library.",
-          "Permission needed"
-        );
-        return;
-      }
-const result = await ImagePicker.launchImageLibraryAsync({
-  mediaTypes: ["images"],
-  allowsEditing: true,
-  quality: 0.5,
-  base64: true,
-});
-      if (result.canceled) {
-        return;
-      }
-
-const asset = result.assets?.[0];
-const base64 = asset?.base64 ?? "";
-const mimeType = asset?.mimeType || "image/jpeg";
-
-if (!base64) {
-  Alert.alert("No image selected", "Please choose an image.");
-  return;
-}
-      if (!imageUri) {
-        showWarningToast("Please choose an image.", "No image selected");
-        return;
-      }
-
-const imageBase64 = `data:${mimeType};base64,${base64}`;
-
-await dispatch(
-  submitTaskThunk({
-    taskId: task.id,
-    proofImg: imageBase64,
-  })
-).unwrap();
-
-      await dispatch(getChildTasksThunk()).unwrap();
-
-      showSuccessToast("Photo uploaded and task submitted.", "Success");
-    } catch (error: any) {
-      showErrorToast(
-        typeof error === "string" ? error : "Something went wrong.",
-        "Upload failed"
+    if (!permissionResult.granted) {
+      showWarningToast(
+        "Please allow access to your photo library.",
+        "Permission needed"
       );
-    } finally {
-      setSubmittingTaskId(null);
+      return;
     }
-  };
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      quality: 0.5,
+      base64: true,
+    });
+
+    if (result.canceled) {
+      return;
+    }
+
+    const asset = result.assets?.[0];
+
+    if (!asset?.base64) {
+      showErrorToast("Image was not converted to base64.", "Upload failed");
+      console.log("IMAGE PICKER ASSET:", asset);
+      return;
+    }
+
+    const proofImg = `data:${asset.mimeType || "image/jpeg"};base64,${
+      asset.base64
+    }`;
+
+    console.log("CHILD PROOF IMG:", {
+      proofImgStart: proofImg.slice(0, 80),
+      proofImgLength: proofImg.length,
+    });
+
+    await dispatch(
+      submitTaskThunk({
+        taskId: task.id,
+        proofImg,
+      })
+    ).unwrap();
+
+    await dispatch(getChildTasksThunk()).unwrap();
+
+    showSuccessToast("Photo uploaded and task submitted.", "Success");
+  } catch (error: any) {
+    showErrorToast(
+      typeof error === "string" ? error : "Something went wrong.",
+      "Upload failed"
+    );
+  } finally {
+    setSubmittingTaskId(null);
+  }
+};
 
   const handleTaskAction = async (task: Task) => {
     if (task.requireProof) {

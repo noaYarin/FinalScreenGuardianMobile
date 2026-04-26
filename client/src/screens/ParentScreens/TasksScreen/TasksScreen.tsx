@@ -5,6 +5,8 @@ import {
   Pressable,
   useWindowDimensions,
   Alert,
+  Image,
+  Modal,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, type Href } from "expo-router";
@@ -37,7 +39,8 @@ type TaskCardItem = {
   recurrenceLabel: string;
   note: string;
   status: TaskStatus;
-  hasProofImage?: boolean;
+  proofImg: string;
+  hasProofImage: boolean;
 };
 
 const FALLBACK_CHILDREN: UiChild[] = [
@@ -94,7 +97,12 @@ export default function TasksScreen() {
 
   const [viewMode, setViewMode] = useState<"all" | "single">("all");
   const [selectedChildId, setSelectedChildId] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"pending" | "notDoneYet">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "notDoneYet">(
+    "pending"
+  );
+  const [selectedProofImage, setSelectedProofImage] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     dispatch(getMyChildrenThunk());
@@ -121,7 +129,7 @@ export default function TasksScreen() {
         typeof task?.proofImg === "string" ? task.proofImg.trim() : "";
 
       const hasProofImage =
-        proofImg !== "" && proofImg !== "default.png";
+        proofImg.startsWith("data:image/") || proofImg.startsWith("http");
 
       let status: TaskStatus = "notDoneYet";
 
@@ -148,6 +156,7 @@ export default function TasksScreen() {
             ? "Completed and approved."
             : "This task is still open and has not been completed yet.",
         status,
+        proofImg,
         hasProofImage,
       };
     });
@@ -221,7 +230,10 @@ export default function TasksScreen() {
                 ]}
               >
                 <MaterialCommunityIcons name="plus" size={18} color="#16A34A" />
-                <AppText weight="extraBold" style={styles.addTaskButtonGreenText}>
+                <AppText
+                  weight="extraBold"
+                  style={styles.addTaskButtonGreenText}
+                >
                   Add Task
                 </AppText>
               </Pressable>
@@ -235,7 +247,11 @@ export default function TasksScreen() {
                   pressed && styles.pressed,
                 ]}
               >
-                <MaterialCommunityIcons name="history" size={18} color="#4C6FFF" />
+                <MaterialCommunityIcons
+                  name="history"
+                  size={18}
+                  color="#4C6FFF"
+                />
                 <AppText weight="extraBold" style={styles.historyButtonText}>
                   History
                 </AppText>
@@ -443,7 +459,15 @@ export default function TasksScreen() {
                       </View>
 
                       {task.hasProofImage ? (
-                        <View style={styles.proofPill}>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`Open proof image for ${task.title}`}
+                          onPress={() => setSelectedProofImage(task.proofImg)}
+                          style={({ pressed }) => [
+                            styles.proofPill,
+                            pressed && styles.pressed,
+                          ]}
+                        >
                           <MaterialCommunityIcons
                             name="image-outline"
                             size={15}
@@ -452,7 +476,7 @@ export default function TasksScreen() {
                           <AppText weight="bold" style={styles.proofPillText}>
                             Proof image
                           </AppText>
-                        </View>
+                        </Pressable>
                       ) : null}
                     </View>
 
@@ -502,6 +526,32 @@ export default function TasksScreen() {
           </View>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={!!selectedProofImage}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedProofImage(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Close proof image"
+            onPress={() => setSelectedProofImage(null)}
+            style={styles.modalCloseButton}
+          >
+            <MaterialCommunityIcons name="close" size={22} color="#FFFFFF" />
+          </Pressable>
+
+          {selectedProofImage ? (
+            <Image
+              source={{ uri: selectedProofImage }}
+              resizeMode="contain"
+              style={styles.modalImage}
+            />
+          ) : null}
+        </View>
+      </Modal>
     </ScreenLayout>
   );
 }
