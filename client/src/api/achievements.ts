@@ -28,8 +28,6 @@ export type ChildAchievementsResponse = {
 };
 
 
-
-
 export async function fetchChildAchievements(): Promise<ChildAchievementsResponse> {
     return api.get<ChildAchievementsResponse>(
         `/api/v1/achievements/me`,
