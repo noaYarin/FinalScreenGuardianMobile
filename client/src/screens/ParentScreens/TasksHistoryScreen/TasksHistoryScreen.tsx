@@ -34,12 +34,6 @@ type HistoryTaskItem = {
   proofImageUrl: string;
 };
 
-const FALLBACK_CHILDREN: UiChild[] = [
-  { id: "child-1", name: "Emma" },
-  { id: "child-2", name: "Noah" },
-  { id: "child-3", name: "Mia" },
-];
-
 function formatCompletedLabel(completedAt: string | null | undefined) {
   if (!completedAt) {
     return "Completed";
@@ -76,7 +70,7 @@ export default function TasksHistoryScreen() {
       }));
     }
 
-    return FALLBACK_CHILDREN;
+    return [];
   }, [reduxChildren]);
 
   const [viewMode, setViewMode] = useState<"all" | "single">("all");

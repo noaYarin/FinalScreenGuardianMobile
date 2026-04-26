@@ -130,31 +130,33 @@ export default function TasksScreen() {
         );
         return;
       }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        allowsEditing: true,
-        quality: 0.8,
-      });
-
+const result = await ImagePicker.launchImageLibraryAsync({
+  mediaTypes: ["images"],
+  allowsEditing: true,
+  quality: 0.5,
+  base64: true,
+});
       if (result.canceled) {
         return;
       }
 
-      const asset = result.assets?.[0];
-      const imageUri = asset?.uri ?? "";
+const asset = result.assets?.[0];
+const base64 = asset?.base64 ?? "";
+const mimeType = asset?.mimeType || "image/jpeg";
 
-      if (!imageUri) {
-        Alert.alert("No image selected", "Please choose an image.");
-        return;
-      }
+if (!base64) {
+  Alert.alert("No image selected", "Please choose an image.");
+  return;
+}
 
-      await dispatch(
-        submitTaskThunk({
-          taskId: task.id,
-          proofImg: imageUri,
-        })
-      ).unwrap();
+const imageBase64 = `data:${mimeType};base64,${base64}`;
+
+await dispatch(
+  submitTaskThunk({
+    taskId: task.id,
+    proofImg: imageBase64,
+  })
+).unwrap();
 
       await dispatch(getChildTasksThunk()).unwrap();
 
