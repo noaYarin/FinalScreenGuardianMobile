@@ -8,6 +8,14 @@ export async function fetchCurrentChildProfile(): Promise<{ child: Child }> {
   });
 }
 
+export async function updateMyInterests(interests: string[]): Promise<{ interests: string[] }> {
+  return api.patch<{ interests: string[] }>(
+    "/api/v1/child/interests",
+    { interests },
+    { requireAuth: true, role: "CHILD" }
+  );
+}
+
 // Update current child profile by id
 export async function updateCurrentChildProfile(childId: string, birthDate: string, gender: string): Promise<{
   child: Child;
