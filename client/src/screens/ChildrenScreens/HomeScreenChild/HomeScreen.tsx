@@ -469,7 +469,12 @@ export default function HomeScreen() {
             disabled
           />
 
-          <Tile iconName={ICON.bulb} label="Ideas" colorKey="ideas" disabled />
+          <Tile
+            iconName={ICON.bulb}
+            label="Ideas"
+            colorKey="ideas"
+            onPress={() => router.push("/Child/ideas" as Href)}
+          />
 
           <Tile iconName={ICON.help} label="Help" colorKey="help" disabled />
         </View>
