@@ -25,6 +25,10 @@ function normalizeNotification(raw: unknown): Notification {
     description: n.description != null ? String(n.description) : "",
     isRead: Boolean(n.isRead),
     createdAt: n.createdAt != null ? String(n.createdAt) : undefined,
+    data:
+      n.data != null && typeof n.data === "object"
+        ? (n.data as Record<string, unknown>)
+        : undefined,
   };
 }
 
@@ -46,7 +50,7 @@ export const fetchParentNotificationsThunk = createAsyncThunk(
   async ({ page = 1, limit = 10 }: { page?: number; limit?: number }, { rejectWithValue }) => {
     try {
       const response = await apiGetParentNotifications(page, limit);
-      const unreadCount = response?.unreadCount??0;
+      const unreadCount = response?.unreadCount ?? 0;
       const rawList = Array.isArray(response?.notifications) ? response.notifications : [];
       const data = rawList
         .map((row) => {

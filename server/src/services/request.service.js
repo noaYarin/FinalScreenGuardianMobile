@@ -185,7 +185,10 @@ export async function decideRequest({ parentId, requestId, decision }) {
                     : "Extension Request Rejected",
                 description: decision === RequestStatus.APPROVED
                     ? "Your parent approved your extension request"
-                    : "Your parent rejected your extension request"
+                    : "Your parent rejected your extension request",
+                data: {
+                    requestedMinutes: Number(updated.requestedMinutes ?? 0),
+                }
             });
         } catch (err) {
             console.error("notifyChild failed in decideRequest:", err.message);

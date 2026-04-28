@@ -74,6 +74,18 @@ function pickIcon(
       return "clock-alert-outline";
     case "SCREEN_TIME_ENDED":
       return "clock-remove-outline";
+    case "TASK_CREATED":
+      return "clipboard-plus-outline";
+    case "TASK_PENDING_APPROVAL":
+      return "clipboard-clock-outline";
+    case "TASK_APPROVED":
+      return "clipboard-check-outline";
+    case "TASK_REJECTED":
+      return "clipboard-remove-outline";
+    case "REWARD_CREATED":
+      return "gift-outline";
+    case "REWARD_REDEEMED":
+      return "gift-open-outline";
     default:
       return toAlertSeverity(severity) === "critical"
         ? "shield-alert-outline"

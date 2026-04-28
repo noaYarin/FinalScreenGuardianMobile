@@ -4,7 +4,6 @@ import {
   ScrollView,
   Pressable,
   useWindowDimensions,
-  Alert,
   Image,
   Modal,
 } from "react-native";
@@ -21,6 +20,10 @@ import {
   approveTaskThunk,
   getParentTasksThunk,
 } from "../../../redux/thunks/tasksThunks";
+import {
+  showSuccessToast,
+  showErrorToast,
+} from "@/src/utils/appToast";
 
 type UiChild = {
   id: string;
@@ -56,7 +59,7 @@ function formatDueLabel(task: any) {
       if (!Number.isNaN(date.getTime())) {
         return date.toLocaleDateString("en-GB");
       }
-    } catch {}
+    } catch { }
   }
 
   if (task?.startDate) {
@@ -65,7 +68,7 @@ function formatDueLabel(task: any) {
       if (!Number.isNaN(date.getTime())) {
         return date.toLocaleDateString("en-GB");
       }
-    } catch {}
+    } catch { }
   }
 
   return "No due date";
@@ -153,8 +156,8 @@ export default function TasksScreen() {
           status === "pending"
             ? "Photo submitted and waiting for parent approval."
             : status === "completed"
-            ? "Completed and approved."
-            : "This task is still open and has not been completed yet.",
+              ? "Completed and approved."
+              : "This task is still open and has not been completed yet.",
         status,
         proofImg,
         hasProofImage,
@@ -193,11 +196,11 @@ export default function TasksScreen() {
     try {
       await dispatch(approveTaskThunk(taskId)).unwrap();
       await dispatch(getParentTasksThunk()).unwrap();
-      Alert.alert("Success", "Task approved successfully.");
+      showSuccessToast("Task approved successfully.", "Success");
     } catch (error: any) {
-      Alert.alert(
-        "Approve failed",
-        typeof error === "string" ? error : "Something went wrong."
+      showErrorToast(
+        typeof error === "string" ? error : "Something went wrong.",
+        "Approve failed"
       );
     }
   };

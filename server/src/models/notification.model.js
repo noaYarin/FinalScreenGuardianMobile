@@ -17,6 +17,10 @@ export const NotificationSchema = new mongoose.Schema(
         isRead: { type: Boolean, default: false },
         parentId: { type: mongoose.Schema.Types.ObjectId, ref: "Parent", required: true },
         childId: { type: mongoose.Schema.Types.ObjectId, required: true },
+        data: {
+            type: mongoose.Schema.Types.Mixed,
+            default: {},
+        },
     }, { timestamps: true }
 );
 
