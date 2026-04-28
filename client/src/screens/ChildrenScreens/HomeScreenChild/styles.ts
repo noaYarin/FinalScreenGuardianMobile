@@ -666,4 +666,57 @@ export const styles = StyleSheet.create({
     writingDirection: "ltr",
     includeFontPadding: false,
   },
+  avatarInfoXpBlock: {
+  width: "100%",
+  marginTop: 12,
+  paddingTop: 28,
+},
+
+avatarInfoXpMarker: {
+  position: "absolute",
+  top: 0,
+  minWidth: 70,
+  paddingHorizontal: 8,
+  paddingVertical: 4,
+  borderRadius: 999,
+  backgroundColor: "#5B7FD6",
+  alignItems: "center",
+  transform: [{ translateX: -35 }],
+  zIndex: 2,
+},
+
+avatarInfoXpMarkerText: {
+  fontSize: 11,
+  color: "#FFFFFF",
+  writingDirection: "ltr",
+  textAlign: "center",
+},
+
+avatarInfoXpRangeRow: {
+  marginTop: 7,
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+},
+
+avatarInfoXpRangeText: {
+  fontSize: 12,
+  color: "#64748B",
+  writingDirection: "ltr",
+},
+
+avatarInfoLevelBadge: {
+  alignSelf: "center",
+  marginTop: -8,
+  marginBottom: 12,
+  paddingHorizontal: 12,
+  paddingVertical: 5,
+  borderRadius: 999,
+  backgroundColor: "#5B7FD6",
+  shadowColor: "#000",
+  shadowOpacity: 0.12,
+  shadowRadius: 8,
+  shadowOffset: { width: 0, height: 3 },
+  elevation: 3,
+},
 });

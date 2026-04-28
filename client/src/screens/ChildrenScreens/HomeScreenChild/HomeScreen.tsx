@@ -265,6 +265,8 @@ export default function HomeScreen() {
       ? Math.min(100, (pointsValue / xpRequiredForCurrentLevel) * 100)
       : 0;
 
+  const xpMarkerPercent = Math.min(Math.max(xpProgressPercent, 8), 92);
+
   const avatarStage = getAvatarStageFromLevel(levelValue);
   const nextAvatarStageLevel = getNextAvatarStageLevel(levelValue);
   const avatarStageInfo = AVATAR_STAGE_INFO[avatarStage] ?? AVATAR_STAGE_INFO[1];
@@ -521,6 +523,13 @@ export default function HomeScreen() {
                 />
               </View>
 
+              <View style={styles.avatarInfoLevelBadge}>
+                <AppText weight="extraBold" style={styles.levelBadgeText}>
+                  Lv. {levelValue}
+                </AppText>
+              </View>
+
+
               <View style={styles.avatarStageTitleRow}>
                 <MaterialCommunityIcons
                   name={avatarStageInfo.icon}
@@ -537,27 +546,37 @@ export default function HomeScreen() {
                 {avatarStageInfo.subtitle}
               </AppText>
 
-              <AppText weight="bold" style={styles.avatarInfoLevelText}>
-                Level {levelValue} 
-              </AppText>
-
-              <View style={styles.avatarInfoProgressTrack}>
+              <View style={styles.avatarInfoXpBlock}>
                 <View
                   style={[
-                    styles.avatarInfoProgressFill,
-                    { width: `${xpProgressPercent}%` },
+                    styles.avatarInfoXpMarker,
+                    { left: `${xpMarkerPercent}%` },
                   ]}
-                />
+                >
+                  <AppText weight="extraBold" style={styles.avatarInfoXpMarkerText}>
+                    {pointsValue}/{xpRequiredForCurrentLevel} XP
+                  </AppText>
+                </View>
+
+                <View style={styles.avatarInfoProgressTrack}>
+                  <View
+                    style={[
+                      styles.avatarInfoProgressFill,
+                      { width: `${xpProgressPercent}%` },
+                    ]}
+                  />
+                </View>
+
+                <View style={styles.avatarInfoXpRangeRow}>
+                  <AppText weight="bold" style={styles.avatarInfoXpRangeText}>
+                    Level {levelValue}
+                  </AppText>
+
+                  <AppText weight="bold" style={styles.avatarInfoXpRangeText}>
+                    Level {levelValue + 1}
+                  </AppText>
+                </View>
               </View>
-
-
-              <AppText weight="bold" style={styles.avatarInfoXpText}>
-                {pointsValue} out of {xpRequiredForCurrentLevel} XP collected for level {levelValue + 1}
-              </AppText>
-
-              <AppText weight="bold" style={styles.avatarInfoXpHint}>
-                You’re getting closer with every achievement!
-              </AppText>
 
               <View style={styles.avatarInfoTextBox}>
                 <AvatarInfoRow
@@ -583,7 +602,7 @@ export default function HomeScreen() {
 
               <AppText weight="bold" style={styles.avatarInfoDescription}>
                 {nextAvatarStageLevel
-                  ? `Keep going! A new avatar look is waiting at level ${nextAvatarStageLevel}.`
+                  ? `Keep going!\n A new avatar look is waiting at level ${nextAvatarStageLevel}.`
                   : "Amazing! You unlocked every avatar look."}
               </AppText>
 
