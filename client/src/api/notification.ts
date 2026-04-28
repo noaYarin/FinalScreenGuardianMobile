@@ -13,8 +13,10 @@ export type Notification = {
   description: string;
   isRead: boolean;
   createdAt?: string;
+  data?: Record<string, unknown>;
+
 };
-  
+
 export type ParentNotificationsPayload = {
   notifications: Notification[];
   pagination: {
@@ -27,11 +29,11 @@ export type ParentNotificationsPayload = {
 };
 
 export async function apiGetParentNotifications(
-  page: number = 1, 
+  page: number = 1,
   limit: number = 10
 ): Promise<ParentNotificationsPayload> {
-  return api.get<ParentNotificationsPayload>(`${URL}/parent?page=${page}&limit=${limit}`, { 
-    requireAuth: true, 
+  return api.get<ParentNotificationsPayload>(`${URL}/parent?page=${page}&limit=${limit}`, {
+    requireAuth: true,
     role: "PARENT"
   });
 }
@@ -63,7 +65,7 @@ export async function apiDeleteParentNotification(
 }
 
 export async function apiRegisterFcmToken(fcmToken: string): Promise<{ success: boolean }> {
-  return api.post<{success: boolean  }>(
+  return api.post<{ success: boolean }>(
     `${URL}/register-token`,
     { fcmToken },
     { requireAuth: true, role: "PARENT" }

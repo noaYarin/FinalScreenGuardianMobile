@@ -51,7 +51,8 @@ export async function notifyParent({
     type,
     severity,
     title,
-    description
+    description,
+    data: data && typeof data === "object" ? data : {},
   });
 
   try {
@@ -95,6 +96,7 @@ export async function notifyChild({
     severity,
     title,
     description,
+    data: data && typeof data === "object" ? data : {},
   });
 
   try {

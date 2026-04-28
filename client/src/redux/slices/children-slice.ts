@@ -62,6 +62,32 @@ const childrenSlice = createSlice({
     clearChildrenList(state) {
       state.childrenList = [];
     },
+    updateChildCoins(
+      state,
+      action: PayloadAction<{ childId?: string | null; coins: number }>
+    ) {
+      const coins = Number(action.payload.coins);
+
+      if (!Number.isFinite(coins)) return;
+
+      const childId = action.payload.childId;
+
+      if (childId) {
+        const child = state.childrenList.find(
+          (c) => String(c._id) === String(childId)
+        );
+
+        if (child) {
+          child.coins = coins;
+        }
+
+        return;
+      }
+
+      if (state.childrenList.length === 1) {
+        state.childrenList[0].coins = coins;
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -158,7 +184,8 @@ const childrenSlice = createSlice({
   },
 });
 
-export const { setChildrenError, clearChildrenError, clearChildrenList } =
+export const { setChildrenError, clearChildrenError, clearChildrenList, updateChildCoins,
+ } =
   childrenSlice.actions;
 
 export default childrenSlice.reducer;

@@ -16,6 +16,10 @@ import {
 import { unlockAchievementsForChildService } from "./gamification.service.js";
 import { AppError } from "../utils/appError.js";
 
+import { NotificationSeverity } from "../constants/severity.js";
+import { NotificationType } from "../constants/notificationType.js";
+import { notifyChild, notifyParent } from "./notification.service.js";
+
 // Creates one or more tasks for the selected children after validating parent ownership and task data.
 export async function createTask(parentId, payload) {
   const title = String(payload?.title ?? "").trim();
@@ -76,6 +80,24 @@ export async function createTask(parentId, payload) {
     isRecurring,
     requireProof,
   });
+
+  for (const task of tasks) {
+    try {
+      await notifyChild({
+        parentId,
+        childId: task.childId,
+        type: NotificationType.TASK_CREATED,
+        severity: NotificationSeverity.INFO,
+        title: "New task",
+        description: `A new task was added: ${task.title}`,
+        data: {
+          taskId: String(task._id),
+        },
+      });
+    } catch (err) {
+      console.error("notifyChild failed in createTask:", err.message);
+    }
+  }
 
   return {
     tasks,
@@ -168,6 +190,23 @@ export async function submitTask(taskId, childId, proofImg) {
   const submittedTask = await submitTaskDal(taskId, normalizedProofImg);
 
   try {
+    await notifyParent({
+      parentId: task.parentId,
+      childId: task.childId,
+      type: NotificationType.TASK_PENDING_APPROVAL,
+      severity: NotificationSeverity.INFO,
+      title: "Task waiting for approval",
+      description: `A task is waiting for your approval: ${task.title}`,
+      data: {
+        taskId: String(task._id),
+        childId: String(task.childId),
+      },
+    });
+  } catch (err) {
+    console.error("notifyParent failed in submitTask:", err.message);
+  }
+
+  try {
     await unlockTaskSubmissionAchievements({
       parentId: task.parentId,
       childId: task.childId,
@@ -216,6 +255,8 @@ export async function approveTask(parentId, taskId) {
     });
   }
 
+  const approvedTask = await approveTaskDal(taskId);
+
   const rewardAmount = Number(task.coinsReward ?? 0);
 
   const updatedChild = await incrementChildCoinsByParentId(
@@ -239,7 +280,23 @@ export async function approveTask(parentId, taskId) {
     ]);
   }
 
-  const approvedTask = await approveTaskDal(taskId);
+  try {
+    await notifyChild({
+      parentId: task.parentId,
+      childId: task.childId,
+      type: NotificationType.TASK_APPROVED,
+      severity: NotificationSeverity.SUCCESS,
+      title: "Task approved",
+      description: `Your task "${task.title}" was approved. You earned ${rewardAmount} coins.`,
+      data: {
+        taskId: String(task._id),
+        addedCoins: rewardAmount,
+        coins: Number(updatedChild.coins ?? 0),
+      },
+    });
+  } catch (err) {
+    console.error("notifyChild failed in approveTask:", err.message);
+  }
 
   return {
     task: approvedTask,

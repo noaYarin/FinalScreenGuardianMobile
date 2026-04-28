@@ -30,16 +30,27 @@ import {
 
 import { logoutChildReducer } from "@/src/redux/slices/auth-slice";
 import { removeChildToken } from "@/src/services/authStorage";
-import { clearChildrenList } from "@/src/redux/slices/children-slice";
+import {
+  clearChildrenList, updateChildCoins,
+} from "@/src/redux/slices/children-slice";
 import { addNotificationFromSocket } from "@/src/redux/slices/notification-slice";
 import { updateChildSummaryFromSocket } from "@/src/redux/slices/parentHome-slice";
 import { bumpPendingRequestsRefreshKey } from "@/src/redux/slices/requests-slice";
 import { useParentFcmTokenSync } from "@/src/hooks/useParentFcmTokenSync";
 import AchievementUnlockedModal from "@/src/components/AchievementUnlockedModal/AchievementUnlockedModal";
 import type { UnlockedAchievementResponse } from "@/src/api/achievements";
+import {
+  getChildTasksThunk,
+  getParentTasksThunk,
+} from "@/src/redux/thunks/tasksThunks";
+import type { AppDispatch } from "@/src/redux/store/types";
+import {
+  getChildRewardsThunk,
+  getParentRewardsThunk,
+} from "@/src/redux/thunks/rewardsThunks";
 
 function AppStack() {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const segments = useSegments() as string[];
   useAndroidPostNotificationsPermission();
@@ -95,10 +106,11 @@ function AppStack() {
         router.replace("/" as Href);
       }
     );
-
     const unsubscribeNotifications = onEvent(
       NOTIFICATION_CREATED,
       (data: any) => {
+        const type = String(data?.type ?? "").toUpperCase();
+
         if (isAchievementUnlockedNotification(data)) {
           const achievement = data?.data?.achievement;
 
@@ -107,6 +119,29 @@ function AppStack() {
           }
 
           return;
+        }
+
+        if (type === "TASK_APPROVED") {
+          const coins = Number(data?.data?.coins);
+
+          if (Number.isFinite(coins)) {
+            dispatch(
+              updateChildCoins({
+                childId: data?.childId,
+                coins,
+              })
+            );
+          }
+
+          dispatch(getChildTasksThunk());
+        }
+
+        if (type === "TASK_CREATED" || type === "TASK_REJECTED") {
+          dispatch(getChildTasksThunk());
+        }
+
+        if (type === "REWARD_CREATED") {
+          dispatch(getChildRewardsThunk());
         }
 
         showToastFromSocketNotification(data);
@@ -150,13 +185,20 @@ function AppStack() {
       const unsubscribeNotifications = onEvent(
         NOTIFICATION_CREATED,
         (data: any) => {
+          const type = String(data?.type ?? "").toUpperCase();
+
           dispatch(addNotificationFromSocket(data));
 
-          const isExtensionRequestCreated =
-            data?.type === "EXTENSION_REQUEST_CREATED";
-
-          if (isExtensionRequestCreated) {
+          if (type === "EXTENSION_REQUEST_CREATED") {
             dispatch(bumpPendingRequestsRefreshKey());
+          }
+
+          if (type === "TASK_PENDING_APPROVAL") {
+            dispatch(getParentTasksThunk());
+          }
+
+          if (type === "REWARD_REDEEMED") {
+            dispatch(getParentRewardsThunk());
           }
 
           showToastFromSocketNotification(data);

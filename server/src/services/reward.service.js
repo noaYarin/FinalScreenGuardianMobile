@@ -9,6 +9,9 @@ import {
 } from "../dal/reward.dal.js";
 import { decrementChildCoinsByParentId } from "../dal/parent.dal.js";
 import { unlockAchievementsForChildService } from "./gamification.service.js";
+import { NotificationSeverity } from "../constants/severity.js";
+import { NotificationType } from "../constants/notificationType.js";
+import { notifyChild, notifyParent } from "./notification.service.js";
 
 function badRequest(message) {
   const err = new Error(message);
@@ -76,6 +79,24 @@ export async function createRewards(parentId, payload) {
 
   const createdRewards = await createManyRewards(docs);
 
+  for (const reward of createdRewards) {
+    try {
+      await notifyChild({
+        parentId,
+        childId: reward.childId,
+        type: NotificationType.REWARD_CREATED,
+        severity: NotificationSeverity.INFO,
+        title: "New reward",
+        description: `A new reward was added: ${reward.title}`,
+        data: {
+          coins: Number(reward.coins ?? 0),
+        },
+      });
+    } catch (err) {
+      console.error("notifyChild failed in createRewards:", err.message);
+    }
+  }
+
   return {
     rewards: createdRewards,
   };
@@ -133,6 +154,19 @@ export async function redeemReward(childId, rewardId) {
   reward.redeemedAt = new Date();
   await reward.save();
 
+  try {
+    await notifyParent({
+      parentId: reward.parentId,
+      childId,
+      type: NotificationType.REWARD_REDEEMED,
+      severity: NotificationSeverity.INFO,
+      title: "Reward redeemed",
+      description: `Your child redeemed a reward: ${reward.title}`,
+    });
+  } catch (err) {
+    console.error("notifyParent failed in redeemReward:", err.message);
+  }
+
   // Unlocks the first reward redemption achievement without blocking the reward flow.
   try {
     await unlockAchievementsForChildService(reward.parentId, childId, [
@@ -144,7 +178,7 @@ export async function redeemReward(childId, rewardId) {
       err.message
     );
   }
-  
+
   return {
     reward,
     child: updatedChild,
