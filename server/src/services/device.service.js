@@ -323,19 +323,30 @@ export async function updateDeviceScreenTime(parentId, deviceId, body) {
 
   const currentScreenTime = device.screenTime || {};
 
-  const patch = {
-    screenTime: {
-      ...currentScreenTime, // keep existing values
-      ...body               // override only fields sent by the client
-    }
+  const nextScreenTime = {
+    ...currentScreenTime,
+    ...body
   };
+
+  const patch = {
+    screenTime: nextScreenTime
+  };
+
+  const nextDailyLimitMinutes = Number(nextScreenTime.dailyLimitMinutes ?? 0);
+  const nextExtraMinutesToday = Number(nextScreenTime.extraMinutesToday ?? 0);
+  const usedTodayMinutes = Number(currentScreenTime.usedTodayMinutes ?? 0);
+
+  const nextRemainingMinutes =
+    nextDailyLimitMinutes + nextExtraMinutesToday - usedTodayMinutes;
 
   if (body.isLimitEnabled === false) {
     patch.screenTime.extraMinutesToday = 0;
     patch.dailyLimitLockActive = false;
     patch.isLocked = device.manualLockEnabled === true;
+  } else if (nextScreenTime.isLimitEnabled === true && nextRemainingMinutes > 0) {
+    patch.dailyLimitLockActive = false;
+    patch.isLocked = device.manualLockEnabled === true;
   }
-
 
   const updatedDevice = await updateDeviceById(deviceId, patch);
 
