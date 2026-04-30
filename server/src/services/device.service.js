@@ -69,6 +69,10 @@ function buildCurrentStatus(device) {
 function buildPolicyPayload(device) {
   return {
     isLocked: device.isLocked ?? false,
+    lockState: {
+      manualLockEnabled: device.manualLockEnabled ?? false,
+      dailyLimitLockActive: device.dailyLimitLockActive ?? false
+    },
     screenTime: {
       isLimitEnabled: device.screenTime?.isLimitEnabled ?? false,
       dailyLimitMinutes: Number(device.screenTime?.dailyLimitMinutes ?? 0),
@@ -181,8 +185,10 @@ export async function lockDevice(parentId, deviceId) {
 
   const device = await validateDeviceAccess({ deviceId, parentId });
 
-  const updatedDevice = await updateDeviceById(deviceId, { isLocked: true });
-
+  const updatedDevice = await updateDeviceById(deviceId, {
+    manualLockEnabled: true,
+    isLocked: true
+  });
   // Push the updated policy to the child device in real time
   pushPolicyUpdate(updatedDevice);
 
@@ -221,8 +227,10 @@ export async function lockDevice(parentId, deviceId) {
 export async function unlockDevice(parentId, deviceId) {
 
   const device = await validateDeviceAccess({ deviceId, parentId });
-  const updatedDevice = await updateDeviceById(deviceId, { isLocked: false });
-
+  const updatedDevice = await updateDeviceById(deviceId, {
+    manualLockEnabled: false,
+    isLocked: device.dailyLimitLockActive === true
+  });
   pushPolicyUpdate(updatedDevice);
 
   pushDeviceStatusUpdate(updatedDevice);
@@ -321,6 +329,13 @@ export async function updateDeviceScreenTime(parentId, deviceId, body) {
       ...body               // override only fields sent by the client
     }
   };
+
+  if (body.isLimitEnabled === false) {
+    patch.screenTime.extraMinutesToday = 0;
+    patch.dailyLimitLockActive = false;
+    patch.isLocked = device.manualLockEnabled === true;
+  }
+
 
   const updatedDevice = await updateDeviceById(deviceId, patch);
 
@@ -766,8 +781,10 @@ export async function updateDeviceUsageByChild({
   }
 
   if (crossedEndedThreshold) {
-    const lockedDevice = await updateDeviceById(deviceId, { isLocked: true });
-
+    const lockedDevice = await updateDeviceById(deviceId, {
+      dailyLimitLockActive: true,
+      isLocked: true
+    });
     pushPolicyUpdate(lockedDevice);
 
     pushDeviceStatusUpdate(lockedDevice);
