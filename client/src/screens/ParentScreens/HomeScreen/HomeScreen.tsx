@@ -138,6 +138,7 @@ export default function HomeParentScreen() {
                   title="How this screen works"
                   lines={[
                     "This screen gives you a quick overview of your children’s screen time and device status",
+                    "On some devices, usage minutes may update in small jumps rather than minute by minute.",
                     "Usage Access on child's device is needed to show correct screen-time data",
                     "Accessibility access on child's device is needed for lock actions to work properly",
                     "If a device is offline or a required permission is turned off, the latest updates will appear here after it reconnects",
@@ -171,7 +172,7 @@ export default function HomeParentScreen() {
                       ? "Refreshing..."
                       : "Daily screen time overview"}
                   </AppText>
-                  
+
                 </View>
               </View>
             </View>
