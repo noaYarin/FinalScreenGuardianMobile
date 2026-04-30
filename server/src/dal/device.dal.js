@@ -102,15 +102,38 @@ export async function releaseDevicePolicyBeforeDelete(deviceId) {
 export async function addExtraMinutesToDevice(deviceId, minutes) {
   assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
 
+  const device = await DeviceModel.findById(deviceId).lean();
+
+  if (!device) {
+    return null;
+  }
+
+  const currentExtraMinutes = Number(device.screenTime?.extraMinutesToday ?? 0);
+  const nextExtraMinutes = currentExtraMinutes + Number(minutes ?? 0);
+
+  const dailyLimitMinutes = Number(device.screenTime?.dailyLimitMinutes ?? 0);
+  const usedTodayMinutes = Number(device.screenTime?.usedTodayMinutes ?? 0);
+
+  const nextRemainingMinutes =
+    dailyLimitMinutes + nextExtraMinutes - usedTodayMinutes;
+
+  const fieldsToSet = {
+    "screenTime.extraMinutesToday": nextExtraMinutes
+  };
+
+  if (device.screenTime?.isLimitEnabled === true && nextRemainingMinutes > 0) {
+    fieldsToSet.dailyLimitLockActive = false;
+    fieldsToSet.isLocked = device.manualLockEnabled === true;
+  }
+
   return DeviceModel.findByIdAndUpdate(
     deviceId,
     {
-      $inc: { "screenTime.extraMinutesToday": minutes }
+      $set: fieldsToSet
     },
     { new: true }
   ).lean();
 }
-
 
 export async function resetDailyScreenTime(deviceId, now) {
   assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
@@ -173,18 +196,30 @@ export async function findDeviceDailyLimitById(deviceId) {
 export async function updateDeviceDailyLimit(deviceId, { isLimitEnabled, dailyLimitMinutes }) {
   assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
 
+  const device = await DeviceModel.findById(deviceId).lean();
+
+  if (!device) {
+    return null;
+  }
+
   const fieldsToSet = {
     "screenTime.isLimitEnabled": isLimitEnabled,
     "screenTime.dailyLimitMinutes": dailyLimitMinutes
   };
 
-  if (isLimitEnabled === false) {
-    const device = await DeviceModel.findById(deviceId).lean();
-    const manualLockEnabled = device?.manualLockEnabled === true;
+  const extraMinutesToday = Number(device.screenTime?.extraMinutesToday ?? 0);
+  const usedTodayMinutes = Number(device.screenTime?.usedTodayMinutes ?? 0);
 
+  const nextRemainingMinutes =
+    Number(dailyLimitMinutes ?? 0) + extraMinutesToday - usedTodayMinutes;
+
+  if (isLimitEnabled === false) {
     fieldsToSet["screenTime.extraMinutesToday"] = 0;
     fieldsToSet.dailyLimitLockActive = false;
-    fieldsToSet.isLocked = manualLockEnabled;
+    fieldsToSet.isLocked = device.manualLockEnabled === true;
+  } else if (isLimitEnabled === true && nextRemainingMinutes > 0) {
+    fieldsToSet.dailyLimitLockActive = false;
+    fieldsToSet.isLocked = device.manualLockEnabled === true;
   }
 
   return DeviceModel.findByIdAndUpdate(
@@ -195,7 +230,6 @@ export async function updateDeviceDailyLimit(deviceId, { isLimitEnabled, dailyLi
     { new: true }
   ).lean();
 }
-
 
 export async function findDeviceStatusById(deviceId) {
   assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
