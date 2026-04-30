@@ -56,6 +56,8 @@ export async function releaseDevicePolicyBeforeDelete(deviceId) {
   if (!device) return null;
 
   device.isLocked = false;
+  device.manualLockEnabled = false;
+  device.dailyLimitLockActive = false;
 
   if (!device.screenTime) {
     device.screenTime = {};
@@ -100,24 +102,56 @@ export async function releaseDevicePolicyBeforeDelete(deviceId) {
 export async function addExtraMinutesToDevice(deviceId, minutes) {
   assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
 
+  const device = await DeviceModel.findById(deviceId).lean();
+
+  if (!device) {
+    return null;
+  }
+
+  const currentExtraMinutes = Number(device.screenTime?.extraMinutesToday ?? 0);
+  const nextExtraMinutes = currentExtraMinutes + Number(minutes ?? 0);
+
+  const dailyLimitMinutes = Number(device.screenTime?.dailyLimitMinutes ?? 0);
+  const usedTodayMinutes = Number(device.screenTime?.usedTodayMinutes ?? 0);
+
+  const nextRemainingMinutes =
+    dailyLimitMinutes + nextExtraMinutes - usedTodayMinutes;
+
+  const fieldsToSet = {
+    "screenTime.extraMinutesToday": nextExtraMinutes
+  };
+
+  if (device.screenTime?.isLimitEnabled === true && nextRemainingMinutes > 0) {
+    fieldsToSet.dailyLimitLockActive = false;
+    fieldsToSet.isLocked = device.manualLockEnabled === true;
+  }
+
   return DeviceModel.findByIdAndUpdate(
     deviceId,
     {
-      $inc: { "screenTime.extraMinutesToday": minutes }
+      $set: fieldsToSet
     },
     { new: true }
   ).lean();
 }
 
-
 export async function resetDailyScreenTime(deviceId, now) {
   assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
+
+  const device = await DeviceModel.findById(deviceId).lean();
+
+  if (!device) {
+    return null;
+  }
+
+  const manualLockEnabled = device.manualLockEnabled === true;
 
   return DeviceModel.findByIdAndUpdate(
     deviceId,
     {
       $set: {
-        isLocked: false,
+        dailyLimitLockActive: false,
+        isLocked: manualLockEnabled,
         "screenTime.usedTodayMinutes": 0,
         "screenTime.extraMinutesToday": 0,
         "screenTime.lastDailyResetAt": now
@@ -126,7 +160,6 @@ export async function resetDailyScreenTime(deviceId, now) {
     { new: true }
   ).lean();
 }
-
 
 export async function updateApplicationBlockStatus(deviceId, packageName, isBlocked) {
   assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
@@ -163,15 +196,30 @@ export async function findDeviceDailyLimitById(deviceId) {
 export async function updateDeviceDailyLimit(deviceId, { isLimitEnabled, dailyLimitMinutes }) {
   assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
 
+  const device = await DeviceModel.findById(deviceId).lean();
+
+  if (!device) {
+    return null;
+  }
+
   const fieldsToSet = {
     "screenTime.isLimitEnabled": isLimitEnabled,
     "screenTime.dailyLimitMinutes": dailyLimitMinutes
   };
 
-  // If the parent turns the daily limit off, clear any approved extra time
-  // so the next time the limit is enabled it starts from a clean state.
+  const extraMinutesToday = Number(device.screenTime?.extraMinutesToday ?? 0);
+  const usedTodayMinutes = Number(device.screenTime?.usedTodayMinutes ?? 0);
+
+  const nextRemainingMinutes =
+    Number(dailyLimitMinutes ?? 0) + extraMinutesToday - usedTodayMinutes;
+
   if (isLimitEnabled === false) {
     fieldsToSet["screenTime.extraMinutesToday"] = 0;
+    fieldsToSet.dailyLimitLockActive = false;
+    fieldsToSet.isLocked = device.manualLockEnabled === true;
+  } else if (isLimitEnabled === true && nextRemainingMinutes > 0) {
+    fieldsToSet.dailyLimitLockActive = false;
+    fieldsToSet.isLocked = device.manualLockEnabled === true;
   }
 
   return DeviceModel.findByIdAndUpdate(
@@ -183,7 +231,6 @@ export async function updateDeviceDailyLimit(deviceId, { isLimitEnabled, dailyLi
   ).lean();
 }
 
-
 export async function findDeviceStatusById(deviceId) {
   assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
 
@@ -193,6 +240,8 @@ export async function findDeviceStatusById(deviceId) {
       parentId: 1,
       childId: 1,
       isLocked: 1,
+      manualLockEnabled: 1,
+      dailyLimitLockActive: 1,
       isActive: 1,
       "screenTime.isLimitEnabled": 1,
       "screenTime.dailyLimitMinutes": 1,

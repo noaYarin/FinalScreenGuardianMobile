@@ -361,13 +361,11 @@ export default function ChildDetailsScreen() {
             <InfoHint
               title="How device controls work"
               lines={[
-                "Manual lock and unlock work only when Accessibility access is enabled on the child’s device",
-                "Manual lock and unlock affect only the manual lock state",
-                "They do not turn the daily limit on or off",
-                "Daily limits can be changed only on the daily limits screen",
-                "Manual lock and daily limits are handled separately",
-                "If the daily limit has already been reached and you press Lock, the device may stay in the daily-limit state until the limit is reset or turned off.\nOnce the daily limit is no longer active, the manual lock can be removed",
-                "If a device is offline, changes will apply when it reconnects",
+                "Lock and unlock work only if Accessibility is enabled on the child’s device.",
+                "Daily screen-time limits are managed separately.",
+                "If the daily limit was reached, manual unlock will not unlock the device.",
+                "To unlock a daily-limit lock, approve extra time, turn off the daily limit, or wait for the next daily reset.",
+                "If the device is offline, changes will apply when it reconnects.",
               ]}
             />
           </View>

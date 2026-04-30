@@ -173,22 +173,32 @@ object DeviceServerSyncHelper {
      *
      * This helps avoid unnecessary PATCH requests on every loop cycle.
      */
-    fun sendUsageIfChanged(context: Context, minDeltaMinutes: Int = 1) {
-        try {
-            val current = PolicyStore.getUsedToday(context)
-            val last = lastSentUsageMinutes
+fun sendUsageIfChanged(context: Context, minDeltaMinutes: Int = 1) {
+    try {
+        val current = PolicyStore.getUsedToday(context)
+        val last = lastSentUsageMinutes
 
-            if (last != null && kotlin.math.abs(current - last) < minDeltaMinutes) {
-                return
-            }
+        val limitEnabled = PolicyStore.isLimitEnabled(context)
+        val remaining = PolicyStore.getRemainingMinutes(context)
 
-            lastSentUsageMinutes = current
-            sendUsage(context)
+        val usageChangedEnough =
+            last == null || kotlin.math.abs(current - last) >= minDeltaMinutes
 
-        } catch (e: Exception) {
-            Log.e(TAG, "sendUsageIfChanged error", e)
+        // Near the daily limit, sync usage more aggressively so warning/lock events are not delayed.
+        val nearLimit =
+            limitEnabled && remaining in 0..5
+
+        if (!usageChangedEnough && !nearLimit) {
+            return
         }
+
+        lastSentUsageMinutes = current
+        sendUsage(context)
+
+    } catch (e: Exception) {
+        Log.e(TAG, "sendUsageIfChanged error", e)
     }
+ }
 
     /**
      * Clears local usage sync cache.

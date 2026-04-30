@@ -117,52 +117,59 @@ class ScreenGuardianAccessibilityService : AccessibilityService() {
      * 4. Evaluating lock state
      * 5. Syncing usage + heartbeat back to server
      */
-    private val lockChecker = object : Runnable {
-        override fun run() {
-            try {
-                // Reconnect socket if needed.
-                // Socket is the preferred real-time path for policy updates.
-                NativeSocketManager.ensureConnected(applicationContext) {
-                    handler.post {
-                        evaluateLock(lastForegroundPackage)
-                    }
+  private val lockChecker = object : Runnable {
+    override fun run() {
+        try {
+            Log.d(TAG, "Periodic check tick")
+
+            // Reconnect socket if needed.
+            // Socket is the preferred real-time path for policy updates.
+            NativeSocketManager.ensureConnected(applicationContext) {
+                handler.post {
+                    evaluateLock(lastForegroundPackage)
                 }
-
-                // Keep HTTP policy sync as fallback in case socket is unavailable
-                DevicePolicySyncHelper.fetchAndSavePolicy(applicationContext) {
-                    try {
-                        // Do not keep recalculating usage while already blocked.
-                        // This prevents unnecessary updates and inflated usage while block screen is active.
-                        val shouldTrackUsage =
-                            !PolicyStore.shouldLockDevice(applicationContext) &&
-                            !BlockScreenActivity.isOpen
-
-                        if (shouldTrackUsage) {
-                            UsageStatsHelper.updateTodayUsage(applicationContext)
-                        }
-
-                        // Re-evaluate lock after latest policy + usage data
-                        evaluateLock(lastForegroundPackage)
-
-                        // Send usage only if it actually changed
-                        DeviceServerSyncHelper.sendUsageIfChanged(applicationContext, 1)
-
-                        // Heartbeat remains periodic
-                        DeviceServerSyncHelper.sendHeartbeat(applicationContext)
-
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error after policy sync", e)
-                    }
-                }
-
-            } catch (e: Exception) {
-                Log.e(TAG, "Error in lockChecker", e)
             }
 
-            // Schedule next fallback execution
-            handler.postDelayed(this, CHECK_INTERVAL_MS)
+            // Run local enforcement every tick, even if policy sync is delayed or fails.
+            try {
+                val shouldTrackUsage =
+                    !PolicyStore.shouldLockDevice(applicationContext) &&
+                    !BlockScreenActivity.isOpen
+
+                if (shouldTrackUsage) {
+                    UsageStatsHelper.updateTodayUsage(applicationContext)
+                }
+
+                evaluateLock(lastForegroundPackage)
+
+                DeviceServerSyncHelper.sendUsageIfChanged(applicationContext, 1)
+                DeviceServerSyncHelper.sendHeartbeat(applicationContext)
+
+            } catch (e: Exception) {
+                Log.e(TAG, "Error in local usage/enforcement cycle", e)
+            }
+
+            // Keep HTTP policy sync as fallback, but do not make usage/enforcement depend on it.
+            DevicePolicySyncHelper.fetchAndSavePolicy(applicationContext) {
+                try {
+                    Log.d(TAG, "Policy sync callback received")
+
+                    // Re-evaluate after latest policy was saved.
+                    evaluateLock(lastForegroundPackage)
+
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error after policy sync", e)
+                }
+            }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in lockChecker", e)
         }
+
+        // Schedule next fallback execution
+        handler.postDelayed(this, CHECK_INTERVAL_MS)
     }
+}
 
     override fun onServiceConnected() {
         super.onServiceConnected()

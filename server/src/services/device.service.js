@@ -69,6 +69,10 @@ function buildCurrentStatus(device) {
 function buildPolicyPayload(device) {
   return {
     isLocked: device.isLocked ?? false,
+    lockState: {
+      manualLockEnabled: device.manualLockEnabled ?? false,
+      dailyLimitLockActive: device.dailyLimitLockActive ?? false
+    },
     screenTime: {
       isLimitEnabled: device.screenTime?.isLimitEnabled ?? false,
       dailyLimitMinutes: Number(device.screenTime?.dailyLimitMinutes ?? 0),
@@ -181,8 +185,10 @@ export async function lockDevice(parentId, deviceId) {
 
   const device = await validateDeviceAccess({ deviceId, parentId });
 
-  const updatedDevice = await updateDeviceById(deviceId, { isLocked: true });
-
+  const updatedDevice = await updateDeviceById(deviceId, {
+    manualLockEnabled: true,
+    isLocked: true
+  });
   // Push the updated policy to the child device in real time
   pushPolicyUpdate(updatedDevice);
 
@@ -221,8 +227,10 @@ export async function lockDevice(parentId, deviceId) {
 export async function unlockDevice(parentId, deviceId) {
 
   const device = await validateDeviceAccess({ deviceId, parentId });
-  const updatedDevice = await updateDeviceById(deviceId, { isLocked: false });
-
+  const updatedDevice = await updateDeviceById(deviceId, {
+    manualLockEnabled: false,
+    isLocked: device.dailyLimitLockActive === true
+  });
   pushPolicyUpdate(updatedDevice);
 
   pushDeviceStatusUpdate(updatedDevice);
@@ -315,12 +323,30 @@ export async function updateDeviceScreenTime(parentId, deviceId, body) {
 
   const currentScreenTime = device.screenTime || {};
 
-  const patch = {
-    screenTime: {
-      ...currentScreenTime, // keep existing values
-      ...body               // override only fields sent by the client
-    }
+  const nextScreenTime = {
+    ...currentScreenTime,
+    ...body
   };
+
+  const patch = {
+    screenTime: nextScreenTime
+  };
+
+  const nextDailyLimitMinutes = Number(nextScreenTime.dailyLimitMinutes ?? 0);
+  const nextExtraMinutesToday = Number(nextScreenTime.extraMinutesToday ?? 0);
+  const usedTodayMinutes = Number(currentScreenTime.usedTodayMinutes ?? 0);
+
+  const nextRemainingMinutes =
+    nextDailyLimitMinutes + nextExtraMinutesToday - usedTodayMinutes;
+
+  if (body.isLimitEnabled === false) {
+    patch.screenTime.extraMinutesToday = 0;
+    patch.dailyLimitLockActive = false;
+    patch.isLocked = device.manualLockEnabled === true;
+  } else if (nextScreenTime.isLimitEnabled === true && nextRemainingMinutes > 0) {
+    patch.dailyLimitLockActive = false;
+    patch.isLocked = device.manualLockEnabled === true;
+  }
 
   const updatedDevice = await updateDeviceById(deviceId, patch);
 
@@ -736,6 +762,16 @@ export async function updateDeviceUsageByChild({
     currentStatus.remainingMinutes <= 0 &&
     !updatedDevice.isLocked;
 
+  let childName = "Your child";
+
+  try {
+    const childList = await getChildrenByParentId(updatedDevice.parentId);
+    const child = childList.find((c) => String(c._id) === String(updatedDevice.childId));
+    childName = child?.name ? String(child.name) : "Your child";
+  } catch (err) {
+    console.error("getChildrenByParentId failed in updateDeviceUsageByChild:", err.message);
+  }
+
   if (crossedEndingThreshold) {
     try {
       await notifyParent({
@@ -744,7 +780,7 @@ export async function updateDeviceUsageByChild({
         type: NotificationType.SCREEN_TIME_ENDING,
         severity: NotificationSeverity.WARNING,
         title: "Screen Time Almost Over",
-        description: `Your child has ${currentStatus.remainingMinutes} minute${currentStatus.remainingMinutes === 1 ? "" : "s"} left`
+        description: `${childName} has ${currentStatus.remainingMinutes} minute${currentStatus.remainingMinutes === 1 ? "" : "s"} left`
       });
     } catch (err) {
       console.error("notifyParent failed in updateDeviceUsageByChild (ending):", err.message);
@@ -766,20 +802,13 @@ export async function updateDeviceUsageByChild({
   }
 
   if (crossedEndedThreshold) {
-    const lockedDevice = await updateDeviceById(deviceId, { isLocked: true });
-
+    const lockedDevice = await updateDeviceById(deviceId, {
+      dailyLimitLockActive: true,
+      isLocked: true
+    });
     pushPolicyUpdate(lockedDevice);
 
     pushDeviceStatusUpdate(lockedDevice);
-
-    let childName = "";
-    try {
-      const childList = await getChildrenByParentId(lockedDevice.parentId);
-      const child = childList.find((c) => String(c._id) === String(lockedDevice.childId));
-      childName = child?.name ? String(child.name) : "Your child";
-    } catch (err) {
-      console.error("getChildrenByParentId failed in updateDeviceUsageByChild", err.message);
-    }
 
     try {
       await notifyParent({

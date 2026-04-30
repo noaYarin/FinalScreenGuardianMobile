@@ -17,6 +17,15 @@ export const DeviceSchema = new mongoose.Schema(
         type: { type: String, enum: Object.values(DeviceType), default: DeviceType.OTHER },
         platform: { type: String, enum: Object.values(DevicePlatform), default: DevicePlatform.OTHER },
         isLocked: { type: Boolean, default: false },
+        manualLockEnabled: {
+            type: Boolean,
+            default: false
+        },
+
+        dailyLimitLockActive: {
+            type: Boolean,
+            default: false
+        },
         isActive: { type: Boolean, default: true },
         code: { type: String, default: "" },
         location: {
