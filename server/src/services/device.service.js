@@ -751,6 +751,16 @@ export async function updateDeviceUsageByChild({
     currentStatus.remainingMinutes <= 0 &&
     !updatedDevice.isLocked;
 
+  let childName = "Your child";
+
+  try {
+    const childList = await getChildrenByParentId(updatedDevice.parentId);
+    const child = childList.find((c) => String(c._id) === String(updatedDevice.childId));
+    childName = child?.name ? String(child.name) : "Your child";
+  } catch (err) {
+    console.error("getChildrenByParentId failed in updateDeviceUsageByChild:", err.message);
+  }
+
   if (crossedEndingThreshold) {
     try {
       await notifyParent({
@@ -759,7 +769,7 @@ export async function updateDeviceUsageByChild({
         type: NotificationType.SCREEN_TIME_ENDING,
         severity: NotificationSeverity.WARNING,
         title: "Screen Time Almost Over",
-        description: `Your child has ${currentStatus.remainingMinutes} minute${currentStatus.remainingMinutes === 1 ? "" : "s"} left`
+        description: `${childName} has ${currentStatus.remainingMinutes} minute${currentStatus.remainingMinutes === 1 ? "" : "s"} left`
       });
     } catch (err) {
       console.error("notifyParent failed in updateDeviceUsageByChild (ending):", err.message);
@@ -788,15 +798,6 @@ export async function updateDeviceUsageByChild({
     pushPolicyUpdate(lockedDevice);
 
     pushDeviceStatusUpdate(lockedDevice);
-
-    let childName = "";
-    try {
-      const childList = await getChildrenByParentId(lockedDevice.parentId);
-      const child = childList.find((c) => String(c._id) === String(lockedDevice.childId));
-      childName = child?.name ? String(child.name) : "Your child";
-    } catch (err) {
-      console.error("getChildrenByParentId failed in updateDeviceUsageByChild", err.message);
-    }
 
     try {
       await notifyParent({
