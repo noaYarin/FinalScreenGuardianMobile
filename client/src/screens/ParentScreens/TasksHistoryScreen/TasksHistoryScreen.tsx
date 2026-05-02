@@ -5,6 +5,7 @@ import {
   Pressable,
   useWindowDimensions,
   Image,
+  Modal,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
@@ -49,6 +50,22 @@ function formatCompletedLabel(completedAt: string | null | undefined) {
   return "Completed";
 }
 
+function getRecurrenceLabel(task: any) {
+  if (!task?.isRegulary) {
+    return "One time";
+  }
+
+  if (task?.recurrenceType === "daily") {
+    return "Daily";
+  }
+
+  if (task?.recurrenceType === "weekly") {
+    return "Weekly";
+  }
+
+  return "Recurring";
+}
+
 export default function TasksHistoryScreen() {
   const dispatch = useDispatch<any>();
   const { width } = useWindowDimensions();
@@ -75,6 +92,9 @@ export default function TasksHistoryScreen() {
 
   const [viewMode, setViewMode] = useState<"all" | "single">("all");
   const [selectedChildId, setSelectedChildId] = useState<string>("");
+  const [selectedProofImage, setSelectedProofImage] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     dispatch(getMyChildrenThunk());
@@ -97,13 +117,14 @@ export default function TasksHistoryScreen() {
       .map((task: any) => {
         const childId = String(task?.childId ?? "");
         const childName =
-          children.find((child) => String(child.id) === childId)?.name ?? "Child";
+          children.find((child) => String(child.id) === childId)?.name ??
+          "Child";
 
         const proofImg =
           typeof task?.proofImg === "string" ? task.proofImg.trim() : "";
 
-const hasProofImage =
-  proofImg.startsWith("data:image/") || proofImg.startsWith("http");
+        const hasProofImage =
+          proofImg.startsWith("data:image/") || proofImg.startsWith("http");
 
         return {
           id: String(task?._id ?? task?.id ?? Math.random()),
@@ -112,7 +133,7 @@ const hasProofImage =
           childName,
           coins: Number(task?.coinsReward ?? 0),
           completedAtLabel: formatCompletedLabel(task?.completedAt),
-          recurrenceLabel: task?.isRegulary ? "Daily / Recurring" : "One time",
+          recurrenceLabel: getRecurrenceLabel(task),
           note: "Task was completed and approved by the parent.",
           hasProofImage,
           proofImageUrl: hasProofImage ? proofImg : "",
@@ -236,6 +257,7 @@ const hasProofImage =
                         <AppText weight="extraBold" style={styles.taskTitle}>
                           {task.title}
                         </AppText>
+
                         <AppText weight="medium" style={styles.taskMeta}>
                           {task.childName} · {task.completedAtLabel}
                         </AppText>
@@ -257,14 +279,6 @@ const hasProofImage =
                       {task.note}
                     </AppText>
 
-                    {task.hasProofImage ? (
-                      <Image
-                        source={{ uri: task.proofImageUrl }}
-                        style={styles.proofImage}
-                        resizeMode="cover"
-                      />
-                    ) : null}
-
                     <View style={styles.taskBottomRow}>
                       <View style={styles.metaPill}>
                         <AppText weight="bold" style={styles.metaPillText}>
@@ -282,6 +296,29 @@ const hasProofImage =
                           Approved
                         </AppText>
                       </View>
+
+                      {task.hasProofImage ? (
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`Open proof image for ${task.title}`}
+                          onPress={() =>
+                            setSelectedProofImage(task.proofImageUrl)
+                          }
+                          style={({ pressed }) => [
+                            styles.proofPill,
+                            pressed && styles.pressed,
+                          ]}
+                        >
+                          <MaterialCommunityIcons
+                            name="image-outline"
+                            size={15}
+                            color="#4C6FFF"
+                          />
+                          <AppText weight="bold" style={styles.proofPillText}>
+                            Proof image
+                          </AppText>
+                        </Pressable>
+                      ) : null}
                     </View>
                   </View>
                 ))
@@ -304,6 +341,32 @@ const hasProofImage =
           </View>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={!!selectedProofImage}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedProofImage(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Close proof image"
+            onPress={() => setSelectedProofImage(null)}
+            style={styles.modalCloseButton}
+          >
+            <MaterialCommunityIcons name="close" size={22} color="#FFFFFF" />
+          </Pressable>
+
+          {selectedProofImage ? (
+            <Image
+              source={{ uri: selectedProofImage }}
+              resizeMode="contain"
+              style={styles.modalImage}
+            />
+          ) : null}
+        </View>
+      </Modal>
     </ScreenLayout>
   );
 }

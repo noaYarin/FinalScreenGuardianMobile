@@ -4,7 +4,34 @@ import {
   getChildTasks,
   submitTask,
   approveTask,
+  rejectTask,
+  deleteTask,
 } from "../services/task.service.js";
+export async function rejectTaskController(req, res, next) {
+  try {
+    const parentId = req.user.parentId;
+    const { taskId } = req.params;
+
+    const data = await rejectTask(parentId, taskId);
+
+    res.json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteTaskController(req, res, next) {
+  try {
+    const parentId = req.user.parentId;
+    const { taskId } = req.params;
+
+    const data = await deleteTask(parentId, taskId);
+
+    res.json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
 
 export async function createTaskController(req, res, next) {
   try {

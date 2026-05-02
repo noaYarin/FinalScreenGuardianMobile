@@ -99,3 +99,30 @@ export const approveTaskThunk = createAsyncThunk<
     }
   }
 );
+
+export const rejectTaskThunk = createAsyncThunk<any, string, { rejectValue: string }>(
+  "tasks/rejectTask",
+  async (taskId, thunkAPI) => {
+    try {
+      return await tasksApi.rejectTask(taskId);
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(
+        typeof error?.message === "string" ? error.message : "Failed to reject task"
+      );
+    }
+  }
+);
+
+export const deleteTaskThunk = createAsyncThunk<any, string, { rejectValue: string }>(
+  "tasks/deleteTask",
+  async (taskId, thunkAPI) => {
+    try {
+      await tasksApi.deleteTask(taskId);
+      return taskId;
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(
+        typeof error?.message === "string" ? error.message : "Failed to delete task"
+      );
+    }
+  }
+);

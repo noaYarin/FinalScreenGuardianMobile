@@ -5,9 +5,13 @@ import {
   getTaskById,
   submitTaskDal,
   approveTaskDal,
+  rejectTaskDal,
+  softDeleteTaskDal,
   countSubmittedTasksByChildId,
+  renewExpiredRecurringTasks,
 } from "../dal/task.dal.js";
-
+import { sendAuditLog } from "./audit.service.js";
+import { AuditActionType } from "../constants/auditActionType.js";
 import {
   getChildrenByParentId,
   incrementChildCoinsByParentId,
@@ -20,15 +24,20 @@ import { NotificationSeverity } from "../constants/severity.js";
 import { NotificationType } from "../constants/notificationType.js";
 import { notifyChild, notifyParent } from "./notification.service.js";
 
-// Creates one or more tasks for the selected children after validating parent ownership and task data.
 export async function createTask(parentId, payload) {
   const title = String(payload?.title ?? "").trim();
   const description = String(payload?.description ?? "").trim();
   const coinsReward = Number(payload?.coinsReward ?? 0);
+
   const assignedChildIds = Array.isArray(payload?.assignedChildIds)
     ? payload.assignedChildIds.map(String)
     : [];
+
   const isRecurring = payload?.isRecurring === true;
+  const recurrenceType = isRecurring
+    ? String(payload?.recurrenceType ?? "daily").trim().toLowerCase()
+    : "none";
+
   const requireProof = payload?.requireProof === true;
 
   if (!title) {
@@ -51,6 +60,14 @@ export async function createTask(parentId, payload) {
     throw new AppError({
       code: "INVALID_COINS_REWARD",
       message: "Coins reward is invalid",
+      statusCode: 400,
+    });
+  }
+
+  if (isRecurring && !["daily", "weekly"].includes(recurrenceType)) {
+    throw new AppError({
+      code: "INVALID_RECURRENCE_TYPE",
+      message: "Recurring task must be daily or weekly",
       statusCode: 400,
     });
   }
@@ -78,9 +95,16 @@ export async function createTask(parentId, payload) {
     coinsReward,
     assignedChildIds,
     isRecurring,
+    recurrenceType,
     requireProof,
   });
-
+for (const task of tasks) {
+  await sendAuditLog({
+    parentId,
+    childId: task.childId,
+    actionType: AuditActionType.TASK_CREATED,
+  });
+}
   for (const task of tasks) {
     try {
       await notifyChild({
@@ -105,19 +129,18 @@ export async function createTask(parentId, payload) {
   };
 }
 
-// Returns all tasks created by a specific parent.
 export async function getParentTasks(parentId) {
+  await renewExpiredRecurringTasks(parentId, "parent");
   const tasks = await getTasksByParentId(parentId);
   return { tasks };
 }
 
-// Returns all tasks assigned to a specific child.
 export async function getChildTasks(childId) {
+  await renewExpiredRecurringTasks(childId, "child");
   const tasks = await getTasksByChildId(childId);
   return { tasks };
 }
 
-// Unlocks task-submission achievements. New achievements are sent to the child through the gamification socket notification flow.
 async function unlockTaskSubmissionAchievements({
   parentId,
   childId,
@@ -144,7 +167,6 @@ async function unlockTaskSubmissionAchievements({
   await unlockAchievementsForChildService(parentId, childId, achievementKeys);
 }
 
-// Submits a child task and unlocks task-related achievements through the global socket notification flow.
 export async function submitTask(taskId, childId, proofImg) {
   const task = await getTaskById(taskId);
 
@@ -219,7 +241,6 @@ export async function submitTask(taskId, childId, proofImg) {
   return submittedTask;
 }
 
-// Approves a submitted task, adds coins to the child, and returns the updated task and child data.
 export async function approveTask(parentId, taskId) {
   const task = await getTaskById(taskId);
 
@@ -256,7 +277,6 @@ export async function approveTask(parentId, taskId) {
   }
 
   const approvedTask = await approveTaskDal(taskId);
-
   const rewardAmount = Number(task.coinsReward ?? 0);
 
   const updatedChild = await incrementChildCoinsByParentId(
@@ -264,7 +284,11 @@ export async function approveTask(parentId, taskId) {
     task.childId,
     rewardAmount
   );
-
+await sendAuditLog({
+  parentId: task.parentId,
+  childId: task.childId,
+  actionType: AuditActionType.TASK_APPROVED,
+});
   if (!updatedChild) {
     throw new AppError({
       code: "CHILD_NOT_FOUND",
@@ -273,7 +297,6 @@ export async function approveTask(parentId, taskId) {
     });
   }
 
-  // Unlocks the 100-coins achievement after a parent approves a task.
   if (Number(updatedChild.coins ?? 0) >= 100) {
     await unlockAchievementsForChildService(task.parentId, task.childId, [
       "saved_100_coins",
@@ -303,4 +326,95 @@ export async function approveTask(parentId, taskId) {
     child: updatedChild,
     addedCoins: rewardAmount,
   };
+}
+
+export async function rejectTask(parentId, taskId) {
+  const task = await getTaskById(taskId);
+
+  if (!task) {
+    throw new AppError({
+      code: "TASK_NOT_FOUND",
+      message: "Task not found",
+      statusCode: 404,
+    });
+  }
+
+  if (String(task.parentId) !== String(parentId)) {
+    throw new AppError({
+      code: "FORBIDDEN_TASK_ACCESS",
+      message: "This task does not belong to this parent",
+      statusCode: 403,
+    });
+  }
+
+  if (!task.completedAt) {
+    throw new AppError({
+      code: "TASK_NOT_SUBMITTED",
+      message: "Only submitted tasks can be rejected",
+      statusCode: 400,
+    });
+  }
+
+  if (task.isApproved) {
+    throw new AppError({
+      code: "TASK_ALREADY_APPROVED",
+      message: "Approved task cannot be rejected",
+      statusCode: 400,
+    });
+  }
+
+  const now = new Date();
+
+  const isExpiredRecurringTask =
+    task.isRegulary === true &&
+    task.endDate &&
+    new Date(task.endDate).getTime() < now.getTime();
+
+  if (isExpiredRecurringTask) {
+    throw new AppError({
+      code: "EXPIRED_RECURRING_TASK_CANNOT_BE_REJECTED",
+      message: "This recurring task period has already ended",
+      statusCode: 400,
+    });
+  }
+
+  const rejectedTask = await rejectTaskDal(taskId);
+
+await sendAuditLog({
+  parentId,
+  childId: task.childId,
+  actionType: AuditActionType.TASK_REJECTED,
+});
+
+return rejectedTask;
+}
+
+export async function deleteTask(parentId, taskId) {
+  const task = await getTaskById(taskId);
+
+  if (!task) {
+    throw new AppError({
+      code: "TASK_NOT_FOUND",
+      message: "Task not found",
+      statusCode: 404,
+    });
+  }
+
+  if (String(task.parentId) !== String(parentId)) {
+    throw new AppError({
+      code: "FORBIDDEN_TASK_ACCESS",
+      message: "This task does not belong to this parent",
+      statusCode: 403,
+    });
+  }
+
+  const deletedTask = await softDeleteTaskDal(taskId);
+
+await sendAuditLog({
+  parentId,
+  childId: task.childId,
+  actionType: AuditActionType.TASK_DELETED,
+});
+
+return deletedTask;
 }

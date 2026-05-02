@@ -17,12 +17,17 @@ import { useDispatch, useSelector } from "react-redux";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import { styles } from "./styles";
-import { createTaskThunk, getParentTasksThunk } from "../../../redux/thunks/tasksThunks";
+import {
+  createTaskThunk,
+  getParentTasksThunk,
+} from "../../../redux/thunks/tasksThunks";
 
 type UiChild = {
   id: string;
   name: string;
 };
+
+type RecurrenceType = "daily" | "weekly";
 
 const FALLBACK_CHILDREN: UiChild[] = [
   { id: "child-1", name: "Emma" },
@@ -30,13 +35,24 @@ const FALLBACK_CHILDREN: UiChild[] = [
   { id: "child-3", name: "Mia" },
 ];
 
-const RECURRENCE_OPTIONS = ["Daily", "Weekly", "Custom"] as const;
+const RECURRENCE_OPTIONS: {
+  label: string;
+  value: RecurrenceType;
+}[] = [
+  { label: "Daily", value: "daily" },
+  { label: "Weekly", value: "weekly" },
+];
 
 export default function AddTaskScreen() {
   const dispatch = useDispatch<any>();
 
-  const reduxChildren = useSelector((state: any) => state?.children?.childrenList ?? []);
-  const isCreating = useSelector((state: any) => state?.tasks?.isCreating ?? false);
+  const reduxChildren = useSelector(
+    (state: any) => state?.children?.childrenList ?? []
+  );
+
+  const isCreating = useSelector(
+    (state: any) => state?.tasks?.isCreating ?? false
+  );
 
   const children: UiChild[] = useMemo(() => {
     if (Array.isArray(reduxChildren) && reduxChildren.length > 0) {
@@ -52,9 +68,9 @@ export default function AddTaskScreen() {
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
   const [coins, setCoins] = useState(25);
-  const [isRecurring, setIsRecurring] = useState(true);
+  const [isRecurring, setIsRecurring] = useState(false);
   const [recurrenceType, setRecurrenceType] =
-    useState<(typeof RECURRENCE_OPTIONS)[number]>("Daily");
+    useState<RecurrenceType>("daily");
   const [assignedChildIds, setAssignedChildIds] = useState<string[]>([]);
   const [requireProof, setRequireProof] = useState(false);
 
@@ -70,6 +86,7 @@ export default function AddTaskScreen() {
         if (prev.length === 1) {
           return prev;
         }
+
         return prev.filter((id) => id !== childId);
       }
 
@@ -91,6 +108,8 @@ export default function AddTaskScreen() {
       return;
     }
 
+    const normalizedRecurrenceType = isRecurring ? recurrenceType : "none";
+
     try {
       await dispatch(
         createTaskThunk({
@@ -98,7 +117,7 @@ export default function AddTaskScreen() {
           description: trimmedDescription,
           coinsReward: coins,
           isRecurring,
-          recurrenceType,
+          recurrenceType: normalizedRecurrenceType,
           assignedChildIds,
           requireProof,
         })
@@ -111,20 +130,25 @@ export default function AddTaskScreen() {
       setTaskTitle("");
       setTaskDescription("");
       setCoins(25);
-      setIsRecurring(true);
-      setRecurrenceType("Daily");
+      setIsRecurring(false);
+      setRecurrenceType("daily");
       setAssignedChildIds(children.length > 0 ? [children[0].id] : []);
       setRequireProof(false);
 
       router.back();
     } catch (error: any) {
-         showErrorToast(
+      showErrorToast(
         typeof error === "string" ? error : "Something went wrong.",
         "Create task failed"
       );
-
     }
   };
+
+  const previewRecurrenceLabel = isRecurring
+    ? recurrenceType === "daily"
+      ? "Daily"
+      : "Weekly"
+    : "One time";
 
   return (
     <ScreenLayout>
@@ -137,6 +161,7 @@ export default function AddTaskScreen() {
             <AppText weight="extraBold" style={styles.title}>
               Create a New Task
             </AppText>
+
             <AppText weight="medium" style={styles.subtitle}>
               Define the task, choose who gets it, and set the reward.
             </AppText>
@@ -147,6 +172,7 @@ export default function AddTaskScreen() {
               <AppText weight="bold" style={styles.label}>
                 Task title
               </AppText>
+
               <TextInput
                 value={taskTitle}
                 onChangeText={setTaskTitle}
@@ -161,6 +187,7 @@ export default function AddTaskScreen() {
               <AppText weight="bold" style={styles.label}>
                 Description
               </AppText>
+
               <TextInput
                 value={taskDescription}
                 onChangeText={setTaskDescription}
@@ -188,7 +215,11 @@ export default function AddTaskScreen() {
                     pressed && styles.pressed,
                   ]}
                 >
-                  <MaterialCommunityIcons name="minus" size={18} color="#243447" />
+                  <MaterialCommunityIcons
+                    name="minus"
+                    size={18}
+                    color="#243447"
+                  />
                 </Pressable>
 
                 <View style={styles.coinsValueBox}>
@@ -197,6 +228,7 @@ export default function AddTaskScreen() {
                     size={20}
                     color="#F59E0B"
                   />
+
                   <AppText weight="extraBold" style={styles.coinsValueText}>
                     {coins} coins
                   </AppText>
@@ -211,7 +243,11 @@ export default function AddTaskScreen() {
                     pressed && styles.pressed,
                   ]}
                 >
-                  <MaterialCommunityIcons name="plus" size={18} color="#243447" />
+                  <MaterialCommunityIcons
+                    name="plus"
+                    size={18}
+                    color="#243447"
+                  />
                 </Pressable>
               </View>
             </View>
@@ -274,14 +310,14 @@ export default function AddTaskScreen() {
 
                 <View style={styles.chipsWrap}>
                   {RECURRENCE_OPTIONS.map((option) => {
-                    const isSelected = recurrenceType === option;
+                    const isSelected = recurrenceType === option.value;
 
                     return (
                       <Pressable
-                        key={option}
+                        key={option.value}
                         accessibilityRole="button"
-                        accessibilityLabel={`Repeat ${option}`}
-                        onPress={() => setRecurrenceType(option)}
+                        accessibilityLabel={`Repeat ${option.label}`}
+                        onPress={() => setRecurrenceType(option.value)}
                         style={({ pressed }) => [
                           styles.chip,
                           isSelected && styles.chipActive,
@@ -295,7 +331,7 @@ export default function AddTaskScreen() {
                             isSelected && styles.chipTextActive,
                           ]}
                         >
-                          {option}
+                          {option.label}
                         </AppText>
                       </Pressable>
                     );
@@ -376,10 +412,15 @@ export default function AddTaskScreen() {
                       ]}
                     >
                       <MaterialCommunityIcons
-                        name={isSelected ? "check-circle" : "account-circle-outline"}
+                        name={
+                          isSelected
+                            ? "check-circle"
+                            : "account-circle-outline"
+                        }
                         size={18}
                         color={isSelected ? "#FFFFFF" : "#315BFF"}
                       />
+
                       <AppText
                         weight={isSelected ? "bold" : "medium"}
                         style={[
@@ -411,6 +452,7 @@ export default function AddTaskScreen() {
                     size={16}
                     color="#F59E0B"
                   />
+
                   <AppText weight="bold" style={styles.previewCoinsText}>
                     {coins}
                   </AppText>
@@ -425,7 +467,7 @@ export default function AddTaskScreen() {
               <View style={styles.previewMetaRow}>
                 <View style={styles.previewMetaPill}>
                   <AppText weight="bold" style={styles.previewMetaText}>
-                    {isRecurring ? recurrenceType : "One time"}
+                    {previewRecurrenceLabel}
                   </AppText>
                 </View>
 
@@ -462,6 +504,7 @@ export default function AddTaskScreen() {
                 size={20}
                 color="#FFFFFF"
               />
+
               <AppText weight="extraBold" style={styles.primaryButtonText}>
                 {isCreating ? "Creating..." : "Create Task"}
               </AppText>

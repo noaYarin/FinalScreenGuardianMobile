@@ -11,7 +11,12 @@ export type AuditActionType =
   | "CHILD_PROFILE_UPDATED"
   | "DEVICE_RENAMED"
   | "DEVICE_DELETED"
-  | "DEVICE_ADDED";
+  | "DEVICE_ADDED"
+  | "TASK_CREATED"
+  | "TASK_APPROVED"
+  | "TASK_REJECTED"
+  | "TASK_DELETED"
+  ;
 
 export type AuditLog = {
   _id: string;

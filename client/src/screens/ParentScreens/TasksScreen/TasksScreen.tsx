@@ -19,6 +19,8 @@ import { getMyChildrenThunk } from "../../../redux/thunks/childrenThunks";
 import {
   approveTaskThunk,
   getParentTasksThunk,
+  rejectTaskThunk,
+  deleteTaskThunk,
 } from "../../../redux/thunks/tasksThunks";
 import {
   showSuccessToast,
@@ -59,7 +61,7 @@ function formatDueLabel(task: any) {
       if (!Number.isNaN(date.getTime())) {
         return date.toLocaleDateString("en-GB");
       }
-    } catch { }
+    } catch {}
   }
 
   if (task?.startDate) {
@@ -68,10 +70,26 @@ function formatDueLabel(task: any) {
       if (!Number.isNaN(date.getTime())) {
         return date.toLocaleDateString("en-GB");
       }
-    } catch { }
+    } catch {}
   }
 
   return "No due date";
+}
+
+function getRecurrenceLabel(task: any) {
+  if (!task?.isRegulary) {
+    return "One time";
+  }
+
+  if (task?.recurrenceType === "daily") {
+    return "Daily";
+  }
+
+  if (task?.recurrenceType === "weekly") {
+    return "Weekly";
+  }
+
+  return "Recurring";
 }
 
 export default function TasksScreen() {
@@ -140,8 +158,6 @@ export default function TasksScreen() {
         status = "pending";
       } else if (task?.completedAt && task?.isApproved) {
         status = "completed";
-      } else {
-        status = "notDoneYet";
       }
 
       return {
@@ -151,7 +167,7 @@ export default function TasksScreen() {
         childName,
         coins: Number(task?.coinsReward ?? 0),
         dueLabel: formatDueLabel(task),
-        recurrenceLabel: task?.isRegulary ? "Daily / Recurring" : "One time",
+        recurrenceLabel: getRecurrenceLabel(task),
         note:
           status === "pending"
             ? "Photo submitted and waiting for parent approval."
@@ -170,21 +186,15 @@ export default function TasksScreen() {
       return mappedTasks;
     }
 
-    return mappedTasks.filter(
-      (task: TaskCardItem) => task.childId === selectedChildId
-    );
+    return mappedTasks.filter((task) => task.childId === selectedChildId);
   }, [mappedTasks, viewMode, selectedChildId]);
 
   const pendingTasks = useMemo(() => {
-    return filteredTasks.filter(
-      (task: TaskCardItem) => task.status === "pending"
-    );
+    return filteredTasks.filter((task) => task.status === "pending");
   }, [filteredTasks]);
 
   const notDoneTasks = useMemo(() => {
-    return filteredTasks.filter(
-      (task: TaskCardItem) => task.status === "notDoneYet"
-    );
+    return filteredTasks.filter((task) => task.status === "notDoneYet");
   }, [filteredTasks]);
 
   const visibleTasks = activeTab === "pending" ? pendingTasks : notDoneTasks;
@@ -201,6 +211,32 @@ export default function TasksScreen() {
       showErrorToast(
         typeof error === "string" ? error : "Something went wrong.",
         "Approve failed"
+      );
+    }
+  };
+
+  const handleRejectTask = async (taskId: string) => {
+    try {
+      await dispatch(rejectTaskThunk(taskId)).unwrap();
+      await dispatch(getParentTasksThunk()).unwrap();
+      showSuccessToast("Task rejected and returned to child.", "Success");
+    } catch (error: any) {
+      showErrorToast(
+        typeof error === "string" ? error : "Something went wrong.",
+        "Reject failed"
+      );
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await dispatch(deleteTaskThunk(taskId)).unwrap();
+      await dispatch(getParentTasksThunk()).unwrap();
+      showSuccessToast("Task deleted successfully.", "Success");
+    } catch (error: any) {
+      showErrorToast(
+        typeof error === "string" ? error : "Something went wrong.",
+        "Delete failed"
       );
     }
   };
@@ -426,7 +462,7 @@ export default function TasksScreen() {
 
             <View style={styles.listContent}>
               {visibleTasks.length > 0 ? (
-                visibleTasks.map((task: TaskCardItem) => (
+                visibleTasks.map((task) => (
                   <View key={task.id} style={styles.taskCard}>
                     <View style={styles.taskTopRow}>
                       <View style={styles.taskMainInfo}>
@@ -483,31 +519,70 @@ export default function TasksScreen() {
                       ) : null}
                     </View>
 
-                    {task.status === "pending" ? (
-                      <View style={styles.taskBottomRow}>
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel={`Approve ${task.title}`}
-                          onPress={() => handleApproveTask(task.id)}
-                          style={({ pressed }) => [
-                            styles.addTaskButtonGreen,
-                            pressed && styles.pressed,
-                          ]}
-                        >
-                          <MaterialCommunityIcons
-                            name="check-circle-outline"
-                            size={18}
-                            color="#16A34A"
-                          />
-                          <AppText
-                            weight="extraBold"
-                            style={styles.addTaskButtonGreenText}
-                          >
-                            Approve
-                          </AppText>
-                        </Pressable>
-                      </View>
-                    ) : null}
+<View style={styles.taskBottomRow}>
+  {task.status === "pending" ? (
+    <>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Approve ${task.title}`}
+        onPress={() => handleApproveTask(task.id)}
+        style={({ pressed }) => [
+          styles.addTaskButtonGreen,
+          pressed && styles.pressed,
+        ]}
+      >
+        <MaterialCommunityIcons
+          name="check-circle-outline"
+          size={18}
+          color="#16A34A"
+        />
+        <AppText weight="extraBold" style={styles.addTaskButtonGreenText}>
+          Approve
+        </AppText>
+      </Pressable>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Reject ${task.title}`}
+        onPress={() => handleRejectTask(task.id)}
+        style={({ pressed }) => [
+          styles.rejectButton,
+          pressed && styles.pressed,
+        ]}
+      >
+        <MaterialCommunityIcons
+          name="close-circle-outline"
+          size={18}
+          color="#DC2626"
+        />
+        <AppText weight="extraBold" style={styles.rejectButtonText}>
+          Reject
+        </AppText>
+      </Pressable>
+    </>
+  ) : null}
+
+  {task.status === "notDoneYet" ? (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Delete ${task.title}`}
+      onPress={() => handleDeleteTask(task.id)}
+      style={({ pressed }) => [
+        styles.deleteButton,
+        pressed && styles.pressed,
+      ]}
+    >
+      <MaterialCommunityIcons
+        name="trash-can-outline"
+        size={18}
+        color="#DC2626"
+      />
+      <AppText weight="extraBold" style={styles.deleteButtonText}>
+        Delete
+      </AppText>
+    </Pressable>
+  ) : null}
+</View>
                   </View>
                 ))
               ) : (

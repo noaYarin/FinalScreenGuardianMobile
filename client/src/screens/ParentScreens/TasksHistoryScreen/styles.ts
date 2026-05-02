@@ -326,4 +326,48 @@ export const styles = StyleSheet.create({
   pressed: {
     opacity: 0.85,
   },
+
+    proofPill: {
+    borderRadius: 999,
+    backgroundColor: "#F7FAFF",
+    borderWidth: 1,
+    borderColor: "#D9E4FF",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+
+  proofPillText: {
+    fontSize: 12,
+    color: "#4C6FFF",
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.78)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 18,
+  },
+
+  modalImage: {
+    width: "100%",
+    height: "78%",
+    borderRadius: 18,
+  },
+
+  modalCloseButton: {
+    position: "absolute",
+    top: 46,
+    right: 18,
+    width: 42,
+    height: 42,
+    borderRadius: 999,
+    backgroundColor: "rgba(15,23,42,0.75)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2,
+  },
 });
