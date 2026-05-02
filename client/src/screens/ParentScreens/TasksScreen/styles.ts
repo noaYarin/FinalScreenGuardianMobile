@@ -414,4 +414,39 @@ modalCloseButton: {
   justifyContent: "center",
   zIndex: 2,
 },
+rejectButton: {
+  minHeight: 46,
+  paddingHorizontal: 18,
+  borderRadius: 16,
+  backgroundColor: "#FEF2F2",
+  borderWidth: 1,
+  borderColor: "#FECACA",
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 8,
+},
+
+rejectButtonText: {
+  fontSize: 14,
+  color: "#DC2626",
+},
+
+deleteButton: {
+  minHeight: 46,
+  paddingHorizontal: 18,
+  borderRadius: 16,
+  backgroundColor: "#FEF2F2",
+  borderWidth: 1,
+  borderColor: "#FECACA",
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 8,
+},
+
+deleteButtonText: {
+  fontSize: 14,
+  color: "#DC2626",
+},
 });

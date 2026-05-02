@@ -8,6 +8,8 @@ import {
   getChildTasksController,
   submitTaskController,
   approveTaskController,
+  rejectTaskController,
+deleteTaskController,
 } from "../controllers/task.controller.js";
 
 const router = express.Router();
@@ -17,5 +19,7 @@ router.get("/parent", authJwt, requireParent, getParentTasksController);
 router.get("/child", authJwt, requireChild, getChildTasksController);
 router.post("/:taskId/submit", authJwt, requireChild, submitTaskController);
 router.post("/:taskId/approve", authJwt, requireParent, approveTaskController);
+router.post("/:taskId/reject", authJwt, requireParent, rejectTaskController);
+router.delete("/:taskId", authJwt, requireParent, deleteTaskController);
 
 export default router;

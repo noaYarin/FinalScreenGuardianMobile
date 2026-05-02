@@ -25,6 +25,10 @@ function normalizeAuditLog(raw: unknown): AuditLog {
     "DEVICE_RENAMED",
     "DEVICE_DELETED",
     "DEVICE_ADDED",
+    "TASK_CREATED",
+    "TASK_APPROVED",
+    "TASK_REJECTED",
+    "TASK_DELETED",
   ];
 
   if (!allowedActionTypes.includes(actionType)) {

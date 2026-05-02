@@ -45,3 +45,17 @@ export async function approveTask(taskId: string) {
     role: "PARENT",
   });
 }
+
+export async function rejectTask(taskId: string) {
+  return api.post(`/api/v1/tasks/${encodeURIComponent(taskId)}/reject`, {}, {
+    requireAuth: true,
+    role: "PARENT",
+  });
+}
+
+export async function deleteTask(taskId: string) {
+  return api.delete(`/api/v1/tasks/${encodeURIComponent(taskId)}`, {
+    requireAuth: true,
+    role: "PARENT",
+  });
+}
