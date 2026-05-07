@@ -29,7 +29,7 @@ export default function ChildHomeRoute() {
           ),
           headerRight: () => (
             <ChildNotificationsHeaderButton
-              onPress={() => showInfoToast("No notifications yet", "Notifications")}
+              onPress={() => router.push("/Child/notifications" as Href)}
             />
           ),
         }}
