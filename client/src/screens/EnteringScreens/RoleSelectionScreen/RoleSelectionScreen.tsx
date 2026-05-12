@@ -1,4 +1,4 @@
-import { useRouter, type Href } from "expo-router";
+import { useRouter } from "expo-router";
 import React from "react";
 import { View } from "react-native";
 
@@ -7,7 +7,6 @@ import AppText from "../../../components/AppText/AppText";
 import { RoleCard } from "../RoleCardScreen/RoleCardScreen";
 import { styles } from "./roleSelection.styles";
 import { COLORS } from "../../../../constants/theme";
-import { TEMP_DEV_OPEN_CHILD_SKIP_BARCODE } from "@/src/config/env";
 
 export const RoleSelectionScreen: React.FC = () => {
   const router = useRouter();
@@ -18,10 +17,6 @@ export const RoleSelectionScreen: React.FC = () => {
 
  
   const handleChildSelect = () => {
-    if (TEMP_DEV_OPEN_CHILD_SKIP_BARCODE) {
-      router.replace("/Child" as Href);
-      return;
-    }
     router.push("/Entering/linkChild" as any);
   };
 
