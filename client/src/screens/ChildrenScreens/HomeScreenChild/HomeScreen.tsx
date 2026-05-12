@@ -5,8 +5,10 @@ import {
   useWindowDimensions,
   NativeModules,
   Modal,
+  ActivityIndicator,
+  AppState,
 } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
 import { Image } from "expo-image";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -22,9 +24,11 @@ import { Child } from "@/src/redux/slices/children-slice";
 import { fetchCurrentChildProfileThunk } from "@/src/redux/thunks/childrenThunks";
 import { updateDeviceLocation } from "@/src/redux/thunks/deviceThunks";
 import type { AppDispatch, RootState } from "@/src/redux/store/types";
+import { selectChildPalette } from "@/src/redux/slices/child-theme-slice";
 import { connectSocket, emitEvent, onEvent } from "@/src/services/socket";
 import { REQUEST_CHILD_LOCATION } from "@/src/constants/socketEvents";
 import { getAvatarImage } from "@/src/utils/avatarImages";
+import { fetchChildPermissionSnapshot } from "@/src/services/childDevicePermissions";
 
 const { DeviceControl } = NativeModules;
 const styles = rawStyles as any;
@@ -44,6 +48,7 @@ const ICON = {
   bulb: "lightbulb-on-outline",
   chatbot: "chat-processing-outline",
   help: "help-circle-outline",
+  settings: "cog-outline",
   panic: "alert-circle-outline",
 } as const;
 
@@ -113,11 +118,29 @@ export default function HomeScreen() {
   const isPhone = width < 430;
   const isTablet = width >= 430 && width < 900;
 
-  const avatarSize = isPhone ? 92 : isTablet ? 108 : 118;
-  const helloSize = isPhone ? 22 : isTablet ? 26 : 28;
-  const timerSize = isPhone ? 34 : isTablet ? 40 : 44;
+  const helloFontStyle = isPhone
+    ? styles.helloPhone
+    : isTablet
+      ? styles.helloTablet
+      : styles.helloLarge;
+  const timerFontStyle = isPhone
+    ? styles.timerValueFontPhone
+    : isTablet
+      ? styles.timerValueFontTablet
+      : styles.timerValueFontLarge;
+  const avatarWrapStyle = isPhone
+    ? styles.avatarWrapPhone
+    : isTablet
+      ? styles.avatarWrapTablet
+      : styles.avatarWrapLarge;
+  const avatarBlockWidthStyle = isPhone
+    ? styles.avatarBlockPhone
+    : isTablet
+      ? styles.avatarBlockTablet
+      : styles.avatarBlockLarge;
 
   const [avatarInfoVisible, setAvatarInfoVisible] = useState(false);
+  const [permGate, setPermGate] = useState<"checking" | "ok" | "missing">("checking");
 
   const [screenTime, setScreenTime] = useState({
     remainingMinutes: 0,
@@ -135,6 +158,18 @@ export default function HomeScreen() {
   );
   const deviceId = useSelector((state: RootState) => state.auth.deviceId);
   const parentId = useSelector((state: RootState) => state.auth.parentId);
+  const childPalette = useSelector(selectChildPalette);
+  const isHomeFocused = useIsFocused();
+
+  const refreshPermissionGate = useCallback(async (showChecking = false) => {
+    if (showChecking) setPermGate("checking");
+    try {
+      const s = await fetchChildPermissionSnapshot();
+      setPermGate(s.allSatisfied ? "ok" : "missing");
+    } catch {
+      setPermGate("missing");
+    }
+  }, []);
 
   const activeChildData = useMemo(() => {
     if (activeChildId == null || String(activeChildId).trim() === "") {
@@ -215,8 +250,16 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       dispatch(fetchCurrentChildProfileThunk());
-    }, [dispatch])
+      void refreshPermissionGate(false);
+    }, [dispatch, refreshPermissionGate])
   );
+
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (next) => {
+      if (next === "active") void refreshPermissionGate(false);
+    });
+    return () => sub.remove();
+  }, [refreshPermissionGate]);
 
   const loadScreenTime = async () => {
     try {
@@ -302,18 +345,18 @@ export default function HomeScreen() {
   const isNoLimit = !screenTime.limitEnabled;
 
   return (
+    <View
+      style={[styles.childHomeRoot, { backgroundColor: childPalette.screenBg }]}
+    >
     <ScreenLayout>
       <View style={[styles.page, isPhoneSmall && styles.pageSmall]}>
         <View style={styles.headerCard}>
           <View style={styles.headerRow}>
             <View style={styles.avatarWrapRow}>
-              <View style={[styles.avatarBlock, { width: avatarSize + 34 }]}>
+              <View style={[styles.avatarBlock, avatarBlockWidthStyle]}>
                 <Pressable
                   onPress={() => setAvatarInfoVisible(true)}
-                  style={[
-                    styles.avatarWrap,
-                    { width: avatarSize, height: avatarSize },
-                  ]}
+                  style={[styles.avatarWrap, avatarWrapStyle]}
                   accessibilityRole="button"
                   accessibilityLabel="Open avatar progress explanation"
                 >
@@ -357,7 +400,7 @@ export default function HomeScreen() {
               <View style={styles.headerTextSide}>
                 <AppText
                   weight="extraBold"
-                  style={[styles.hello, { fontSize: helloSize }]}
+                  style={[styles.hello, helloFontStyle]}
                   numberOfLines={1}
                 >
                   {`Hi, ${userName}`}
@@ -402,11 +445,7 @@ export default function HomeScreen() {
             weight="extraBold"
             style={[
               styles.timerValue,
-              {
-                fontSize: timerSize,
-                writingDirection: "ltr",
-                textAlign: "left",
-              },
+              timerFontStyle,
               styles.timerValueCentered,
             ]}
           >
@@ -478,7 +517,12 @@ export default function HomeScreen() {
             onPress={() => router.push("/Child/ideas" as Href)}
           />
 
-          <Tile iconName={ICON.help} label="Help" colorKey="help" disabled />
+          <Tile
+            iconName={ICON.settings}
+            label="Settings"
+            colorKey="help"
+            onPress={() => router.push("/Child/settings" as Href)}
+          />
         </View>
 
         <Pressable
@@ -613,7 +657,7 @@ export default function HomeScreen() {
                 accessibilityLabel="Close avatar explanation"
               >
                 <AppText weight="extraBold" style={styles.avatarInfoButtonText}>
-                  Let's go!
+                  {"Let's go!"}
                 </AppText>
               </Pressable>
             </Pressable>
@@ -621,6 +665,58 @@ export default function HomeScreen() {
         </Modal>
       </View>
     </ScreenLayout>
+
+    <Modal
+      visible={isHomeFocused && permGate !== "ok"}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={() => {
+        /* Blocking until all permissions are granted */
+      }}
+    >
+      <View style={styles.permissionModalOverlay}>
+        <View
+          style={[
+            styles.permissionModalCard,
+            { borderColor: childPalette.cardBorder },
+          ]}
+        >
+          {permGate === "checking" ? (
+            <>
+              <ActivityIndicator size="large" color={childPalette.accent} />
+              <AppText weight="bold" style={styles.permissionModalBody}>
+                Checking permissions…
+              </AppText>
+            </>
+          ) : (
+            <>
+              <AppText weight="extraBold" style={styles.permissionModalTitle}>
+                Permissions needed
+              </AppText>
+              <AppText weight="bold" style={styles.permissionModalBody}>
+                To use Screen Guardian, turn on every permission in Settings.
+              </AppText>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.permissionModalBtn,
+                  { backgroundColor: childPalette.accent },
+                  pressed && styles.permissionModalBtnPressed,
+                ]}
+                onPress={() => router.push("/Child/settings" as Href)}
+                accessibilityRole="button"
+                accessibilityLabel="Open permissions settings"
+              >
+                <AppText weight="extraBold" style={styles.permissionModalBtnText}>
+                  Open permissions
+                </AppText>
+              </Pressable>
+            </>
+          )}
+        </View>
+      </View>
+    </Modal>
+    </View>
   );
 }
 
