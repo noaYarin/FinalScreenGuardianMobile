@@ -10,6 +10,7 @@ import auditSliceReducer from "../slices/audit-slice";
 import tasksReducer from "../slices/tasks-slice";
 import rewardsReducer from "../slices/rewards-slice";
 import achievementsReducer from "../slices/achievements-slice";
+import childThemeReducer from "../slices/child-theme-slice";
 
 export const store = configureStore({
   reducer: {
@@ -23,6 +24,7 @@ export const store = configureStore({
     tasks: tasksReducer,
     rewards: rewardsReducer,
     achievements: achievementsReducer,
+    childTheme: childThemeReducer,
   },
 });
 
