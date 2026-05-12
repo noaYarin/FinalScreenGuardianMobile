@@ -10,10 +10,10 @@ function hueFromStoredString(raw: string | null): number | null {
   return null;
 }
 
-type ChildThemeSlicePick = { childTheme: { storageEpoch: number } };
+type ChildThemeSlicePick = { childTheme: { hue: number } };
 
 export type ChildThemeHydrateResult = {
-  epochAtStart: number;
+  stale: boolean;
   stored: number | null;
 };
 
@@ -22,14 +22,15 @@ export const hydrateChildTheme = createAsyncThunk<
   void,
   { state: ChildThemeSlicePick }
 >("childTheme/hydrate", async (_, { getState }) => {
-  const epochAtStart = getState().childTheme.storageEpoch;
-
+  const hueBeforeRead = getState().childTheme.hue;
+  let stored: number | null = null;
   try {
-    const stored = hueFromStoredString(await AsyncStorage.getItem(KEY_HUE));
-    return { epochAtStart, stored };
+    stored = hueFromStoredString(await AsyncStorage.getItem(KEY_HUE));
   } catch {
-    return { epochAtStart, stored: null };
+    stored = null;
   }
+  const stale = getState().childTheme.hue !== hueBeforeRead;
+  return { stored, stale };
 });
 
 export const setChildThemeHueAndPersist = createAsyncThunk<number, number>(
