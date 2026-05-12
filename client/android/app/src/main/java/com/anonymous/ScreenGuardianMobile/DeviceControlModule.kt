@@ -34,6 +34,15 @@ package com.screenguardianmobile
  * - It is critical for syncing between server policy and native enforcement logic.
  */
 
+import android.Manifest
+import android.content.ComponentName
+import android.content.Intent
+import android.location.LocationManager
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import androidx.core.content.ContextCompat
+import android.content.pm.PackageManager
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
@@ -141,6 +150,125 @@ class DeviceControlModule(
             promise.resolve(result)
         } catch (e: Exception) {
             promise.reject("GET_REMAINING_TIME_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
+    fun getAndroidPermissionStates(promise: Promise) {
+        try {
+            val ctx = reactApplicationContext
+            val usageAccess = UsageStatsHelper.hasUsageAccess(ctx)
+            val accessibility = ScreenGuardianAccessibilityService.isServiceEnabled(ctx)
+
+        // Check for Notification permissions (required for Android 13 / API 33 and above)
+            val notifications = if (Build.VERSION.SDK_INT >= 33) {
+                ContextCompat.checkSelfPermission(
+                    ctx,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            } else {
+                true
+            }
+
+        // Get the Location Manager to check if GPS or Network providers are enabled
+            val lm = ctx.getSystemService(android.content.Context.LOCATION_SERVICE) as LocationManager
+            val locationProvidersOn =
+                lm.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                    lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+
+            val fineGranted = ContextCompat.checkSelfPermission(
+                ctx,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+            val coarseGranted = ContextCompat.checkSelfPermission(
+                ctx,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+            val location = locationProvidersOn && (fineGranted || coarseGranted)
+
+        // Create a map to send the results back to the React Native side
+            val map = Arguments.createMap().apply {
+                putBoolean("usageAccess", usageAccess)
+                putBoolean("accessibility", accessibility)
+                putBoolean("notifications", notifications)
+                putBoolean("location", location)
+            }
+
+            promise.resolve(map)
+        } catch (e: Exception) {
+            promise.reject("GET_ANDROID_PERMISSION_STATES_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
+    fun openAndroidUsageAccessSettings(promise: Promise) {
+        try {
+            val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            reactApplicationContext.startActivity(intent)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("OPEN_USAGE_ACCESS_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
+    fun openAndroidAccessibilitySettings(promise: Promise) {
+        try {
+            val ctx = reactApplicationContext
+            val serviceComponent = ComponentName(
+                ctx.packageName,
+                ScreenGuardianAccessibilityService::class.java.name
+            )
+            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                putExtra("component_name", serviceComponent)
+                if (Build.VERSION.SDK_INT >= 34) {
+                    putExtra(Intent.EXTRA_COMPONENT_NAME, serviceComponent)
+                }
+            }
+            ctx.startActivity(intent)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("OPEN_ACCESSIBILITY_SETTINGS_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
+    fun openAndroidAppNotificationSettings(promise: Promise) {
+        try {
+            val ctx = reactApplicationContext
+            val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                    putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName)
+                    putExtra("android.provider.extra.APP_PACKAGE", ctx.packageName)
+                }
+            } else {
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", ctx.packageName, null)
+                }
+            }.apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+
+            ctx.startActivity(intent)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("OPEN_NOTIFICATION_SETTINGS_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
+    fun openAndroidLocationSettings(promise: Promise) {
+        try {
+            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            reactApplicationContext.startActivity(intent)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("OPEN_LOCATION_SETTINGS_ERROR", e.message, e)
         }
     }
 }
