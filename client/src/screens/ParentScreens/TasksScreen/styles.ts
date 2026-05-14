@@ -449,4 +449,22 @@ deleteButtonText: {
   fontSize: 14,
   color: "#DC2626",
 },
+
+recurringButton: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 6,
+  backgroundColor: "#F3E8FF",
+  borderWidth: 1,
+  borderColor: "#DDD6FE",
+  borderRadius: 16,
+  paddingHorizontal: 14,
+  paddingVertical: 10,
+},
+
+recurringButtonText: {
+  fontSize: 14,
+  color: "#7C3AED",
+},
 });

@@ -48,12 +48,6 @@ type TaskCardItem = {
   hasProofImage: boolean;
 };
 
-const FALLBACK_CHILDREN: UiChild[] = [
-  { id: "child-1", name: "Emma" },
-  { id: "child-2", name: "Noah" },
-  { id: "child-3", name: "Mia" },
-];
-
 function formatDueLabel(task: any) {
   if (task?.endDate) {
     try {
@@ -106,14 +100,14 @@ export default function TasksScreen() {
   );
 
   const children: UiChild[] = useMemo(() => {
-    if (Array.isArray(reduxChildren) && reduxChildren.length > 0) {
-      return reduxChildren.map((child: any) => ({
-        id: String(child._id ?? child.id),
-        name: child.name ?? child.fullName ?? "Child",
-      }));
+    if (!Array.isArray(reduxChildren)) {
+      return [];
     }
 
-    return FALLBACK_CHILDREN;
+    return reduxChildren.map((child: any) => ({
+      id: String(child._id ?? child.id),
+      name: child.name ?? child.fullName ?? "Child",
+    }));
   }, [reduxChildren]);
 
   const [viewMode, setViewMode] = useState<"all" | "single">("all");
@@ -161,7 +155,7 @@ export default function TasksScreen() {
       }
 
       return {
-        id: String(task?._id ?? task?.id ?? Math.random()),
+        id: String(task?._id ?? task?.id ?? ""),
         title: task?.title ?? "Untitled task",
         childId,
         childName,
@@ -293,6 +287,25 @@ export default function TasksScreen() {
                 />
                 <AppText weight="extraBold" style={styles.historyButtonText}>
                   History
+                </AppText>
+              </Pressable>
+
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Open recurring tasks"
+                onPress={() => router.push("/Parent/recurringTasks" as Href)}
+                style={({ pressed }) => [
+                  styles.recurringButton,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name="repeat"
+                  size={18}
+                  color="#7C3AED"
+                />
+                <AppText weight="extraBold" style={styles.recurringButtonText}>
+                  Recurring
                 </AppText>
               </Pressable>
             </View>
@@ -519,70 +532,79 @@ export default function TasksScreen() {
                       ) : null}
                     </View>
 
-<View style={styles.taskBottomRow}>
-  {task.status === "pending" ? (
-    <>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Approve ${task.title}`}
-        onPress={() => handleApproveTask(task.id)}
-        style={({ pressed }) => [
-          styles.addTaskButtonGreen,
-          pressed && styles.pressed,
-        ]}
-      >
-        <MaterialCommunityIcons
-          name="check-circle-outline"
-          size={18}
-          color="#16A34A"
-        />
-        <AppText weight="extraBold" style={styles.addTaskButtonGreenText}>
-          Approve
-        </AppText>
-      </Pressable>
+                    <View style={styles.taskBottomRow}>
+                      {task.status === "pending" ? (
+                        <>
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={`Approve ${task.title}`}
+                            onPress={() => handleApproveTask(task.id)}
+                            style={({ pressed }) => [
+                              styles.addTaskButtonGreen,
+                              pressed && styles.pressed,
+                            ]}
+                          >
+                            <MaterialCommunityIcons
+                              name="check-circle-outline"
+                              size={18}
+                              color="#16A34A"
+                            />
+                            <AppText
+                              weight="extraBold"
+                              style={styles.addTaskButtonGreenText}
+                            >
+                              Approve
+                            </AppText>
+                          </Pressable>
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Reject ${task.title}`}
-        onPress={() => handleRejectTask(task.id)}
-        style={({ pressed }) => [
-          styles.rejectButton,
-          pressed && styles.pressed,
-        ]}
-      >
-        <MaterialCommunityIcons
-          name="close-circle-outline"
-          size={18}
-          color="#DC2626"
-        />
-        <AppText weight="extraBold" style={styles.rejectButtonText}>
-          Reject
-        </AppText>
-      </Pressable>
-    </>
-  ) : null}
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={`Reject ${task.title}`}
+                            onPress={() => handleRejectTask(task.id)}
+                            style={({ pressed }) => [
+                              styles.rejectButton,
+                              pressed && styles.pressed,
+                            ]}
+                          >
+                            <MaterialCommunityIcons
+                              name="close-circle-outline"
+                              size={18}
+                              color="#DC2626"
+                            />
+                            <AppText
+                              weight="extraBold"
+                              style={styles.rejectButtonText}
+                            >
+                              Reject
+                            </AppText>
+                          </Pressable>
+                        </>
+                      ) : null}
 
-  {task.status === "notDoneYet" ? (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Delete ${task.title}`}
-      onPress={() => handleDeleteTask(task.id)}
-      style={({ pressed }) => [
-        styles.deleteButton,
-        pressed && styles.pressed,
-      ]}
-    >
-      <MaterialCommunityIcons
-        name="trash-can-outline"
-        size={18}
-        color="#DC2626"
-      />
-      <AppText weight="extraBold" style={styles.deleteButtonText}>
-        Delete
-      </AppText>
-    </Pressable>
-  ) : null}
-</View>
+                      {task.status === "notDoneYet" ? (
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`Delete ${task.title}`}
+                          onPress={() => handleDeleteTask(task.id)}
+                          style={({ pressed }) => [
+                            styles.deleteButton,
+                            pressed && styles.pressed,
+                          ]}
+                        >
+                          <MaterialCommunityIcons
+                            name="trash-can-outline"
+                            size={18}
+                            color="#DC2626"
+                          />
+                          <AppText
+                            weight="extraBold"
+                            style={styles.deleteButtonText}
+                          >
+                            Delete
+                          </AppText>
+                        </Pressable>
+                      ) : null}
+                    </View>
                   </View>
                 ))
               ) : (
