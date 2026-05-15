@@ -119,6 +119,7 @@ function AppStack() {
     const unsubscribeNotifications = onEvent(
       NOTIFICATION_CREATED,
       (data: any) => {
+        dispatch(addNotificationFromSocket(data));
         const type = String(data?.type ?? "").toUpperCase();
 
         if (isAchievementUnlockedNotification(data)) {
