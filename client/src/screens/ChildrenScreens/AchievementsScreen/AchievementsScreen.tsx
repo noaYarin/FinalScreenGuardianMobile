@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { View, Pressable, useWindowDimensions } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
@@ -8,7 +8,6 @@ import type { AppDispatch, RootState } from "@/src/redux/store/types";
 import type { Child } from "@/src/redux/slices/children-slice";
 import type { AchievementUiItem } from "@/src/api/achievements";
 import { fetchChildAchievementsThunk } from "@/src/redux/thunks/achievementsThunks";
-import { fetchCurrentChildProfileThunk } from "@/src/redux/thunks/childrenThunks";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
@@ -16,17 +15,62 @@ import { styles } from "./styles";
 import { getAchievementIconByKey } from "@/src/utils/achievementIcons";
 import { getLockedAchievementHint } from "@/src/utils/achievementText";
 
+type AchievementFilter = "all" | "unlocked" | "locked";
+
 type AchievementCard = {
   id: string;
   key: string;
   title: string;
   subtitle: string;
-  progressText: string;
   rewardText: string;
   icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
   tone: "gold" | "light";
   unlocked: boolean;
+  unlockedAtLabel?: string;
 };
+
+const FILTERS: { id: AchievementFilter; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "unlocked", label: "Unlocked" },
+  { id: "locked", label: "Locked" },
+];
+
+function getUnlockedAtLabel(unlockedAt?: string | null) {
+  if (!unlockedAt) return undefined;
+
+  const unlockedDate = new Date(unlockedAt);
+  const unlockedTime = unlockedDate.getTime();
+
+  if (Number.isNaN(unlockedTime)) return undefined;
+
+  const diffMs = Date.now() - unlockedTime;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 1) return "Unlocked today";
+  if (diffDays === 1) return "Unlocked yesterday";
+  if (diffDays < 7) return `Unlocked ${diffDays} days ago`;
+
+  return `Unlocked on ${unlockedDate.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })}`;
+}
+
+function sortAchievements(a: AchievementUiItem, b: AchievementUiItem) {
+  if (a.unlocked !== b.unlocked) {
+    return a.unlocked ? -1 : 1;
+  }
+
+  if (a.unlocked && b.unlocked) {
+    const aTime = a.unlockedAt ? new Date(a.unlockedAt).getTime() : 0;
+    const bTime = b.unlockedAt ? new Date(b.unlockedAt).getTime() : 0;
+
+    return bTime - aTime;
+  }
+
+  return 0;
+}
 
 function mapAchievementToCard(achievement: AchievementUiItem): AchievementCard {
   const isUnlocked = Boolean(achievement.unlocked);
@@ -36,17 +80,21 @@ function mapAchievementToCard(achievement: AchievementUiItem): AchievementCard {
     key: achievement.key,
     title: achievement.title,
     subtitle: achievement.description,
-    progressText: "Unlocked",
     rewardText: `+${achievement.xpReward ?? 0} XP`,
     icon: getAchievementIconByKey(achievement.key),
     tone: isUnlocked ? "gold" : "light",
     unlocked: isUnlocked,
+    unlockedAtLabel: isUnlocked
+      ? getUnlockedAtLabel(achievement.unlockedAt)
+      : undefined,
   };
 }
 
 export default function AchievementsScreen() {
   const { width } = useWindowDimensions();
   const dispatch = useDispatch<AppDispatch>();
+  const [selectedFilter, setSelectedFilter] =
+    useState<AchievementFilter>("all");
 
   const activeChildId = useSelector(
     (state: RootState) => state.auth.activeChildId
@@ -78,7 +126,6 @@ export default function AchievementsScreen() {
     useCallback(() => {
       if (!activeChildId) return;
 
-      dispatch(fetchCurrentChildProfileThunk());
       dispatch(fetchChildAchievementsThunk());
     }, [dispatch, activeChildId])
   );
@@ -96,11 +143,19 @@ export default function AchievementsScreen() {
   ).length;
 
   const totalGoals = achievementsFromRedux.length;
+  const lockedGoals = Math.max(0, totalGoals - completedGoals);
 
-  const achievements = useMemo(
-    () => achievementsFromRedux.map(mapAchievementToCard),
-    [achievementsFromRedux]
-  );
+  const achievements = useMemo(() => {
+    return [...achievementsFromRedux]
+      .sort(sortAchievements)
+      .filter((achievement) => {
+        if (selectedFilter === "unlocked") return achievement.unlocked;
+        if (selectedFilter === "locked") return !achievement.unlocked;
+
+        return true;
+      })
+      .map(mapAchievementToCard);
+  }, [achievementsFromRedux, selectedFilter]);
 
   return (
     <ScreenLayout>
@@ -129,7 +184,7 @@ export default function AchievementsScreen() {
             </AppText>
 
             <AppText weight="medium" style={styles.heroSubtitle}>
-              Keep reaching goals and unlock new rewards
+              Keep reaching goals and unlock new rewards!
             </AppText>
           </View>
 
@@ -172,6 +227,57 @@ export default function AchievementsScreen() {
           </View>
         </View>
 
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 8,
+            marginTop: 14,
+            marginBottom: 14,
+          }}
+        >
+          {FILTERS.map((filter) => {
+            const isSelected = selectedFilter === filter.id;
+
+            const count =
+              filter.id === "unlocked"
+                ? completedGoals
+                : filter.id === "locked"
+                  ? lockedGoals
+                  : totalGoals;
+
+            return (
+              <Pressable
+                key={filter.id}
+                onPress={() => setSelectedFilter(filter.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`Show ${filter.label} achievements`}
+                style={{
+                  flex: 1,
+                  minHeight: 38,
+                  borderRadius: 999,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  paddingHorizontal: 10,
+                  backgroundColor: isSelected ? "#2563EB" : "#FFFFFF",
+                  borderWidth: 1,
+                  borderColor: isSelected ? "#2563EB" : "#DCE7F5",
+                }}
+              >
+                <AppText
+                  weight="bold"
+                  style={{
+                    fontSize: 12,
+                    color: isSelected ? "#FFFFFF" : "#475569",
+                  }}
+                  numberOfLines={1}
+                >
+                  {filter.label} ({count})
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </View>
+
         {isLoading ? (
           <AppText style={styles.heroSubtitle}>Loading achievements...</AppText>
         ) : null}
@@ -183,8 +289,14 @@ export default function AchievementsScreen() {
         {!isLoading && !error && achievements.length === 0 ? (
           <EmptyStateCard
             icon="trophy-outline"
-            title="No achievements yet"
-            subtitle="Achievements will appear here after the catalog is loaded."
+            title="No achievements here yet"
+            subtitle={
+              selectedFilter === "unlocked"
+                ? "Unlocked achievements will appear here."
+                : selectedFilter === "locked"
+                  ? "Locked achievements will appear here."
+                  : "Achievements will appear here after the catalog is loaded."
+            }
           />
         ) : null}
 
@@ -193,13 +305,15 @@ export default function AchievementsScreen() {
             {achievements.map((item) => {
               const isUnlocked = item.unlocked;
               const isGold = item.tone === "gold";
+              const isNewUnlock = item.unlockedAtLabel === "Unlocked today";
 
               return (
                 <Pressable
                   key={item.id}
                   accessibilityRole="button"
-                  accessibilityLabel={`${item.title} ${isUnlocked ? "unlocked" : "locked"
-                    }`}
+                  accessibilityLabel={`${item.title} ${
+                    isUnlocked ? "unlocked" : "locked"
+                  }`}
                   style={({ pressed }) => [
                     styles.achievementCard,
                     isUnlocked
@@ -207,9 +321,10 @@ export default function AchievementsScreen() {
                         ? styles.achievementCardGold
                         : styles.achievementCardLight
                       : styles.achievementCardLocked,
+                    isNewUnlock && styles.achievementCardNewToday,
                     pressed && styles.achievementCardPressed,
                   ]}
-                  onPress={() => { }}
+                  onPress={() => {}}
                 >
                   <View style={styles.achievementInner}>
                     <View
@@ -254,7 +369,7 @@ export default function AchievementsScreen() {
                             <MaterialCommunityIcons
                               name="check"
                               size={14}
-                              color="#FFFFFF"
+                              color="#0F8A5F"
                             />
                             <AppText
                               weight="bold"
@@ -313,6 +428,21 @@ export default function AchievementsScreen() {
                             {item.rewardText}
                           </AppText>
                         </View>
+
+                        {item.unlockedAtLabel ? (
+                          <AppText
+                            weight={isNewUnlock ? "extraBold" : "medium"}
+                            style={[
+                              styles.unlockedAtText,
+                              isNewUnlock && styles.unlockedAtTextNewToday,
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {isNewUnlock
+                              ? "New! Unlocked today"
+                              : item.unlockedAtLabel}
+                          </AppText>
+                        ) : null}
                       </View>
                     </View>
                   </View>

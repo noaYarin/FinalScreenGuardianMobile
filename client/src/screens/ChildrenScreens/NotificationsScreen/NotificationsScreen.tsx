@@ -1,10 +1,24 @@
-import React, { useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Pressable, ScrollView, View, useWindowDimensions } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useFocusEffect } from "expo-router";
+import { useDispatch, useSelector } from "react-redux";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import { styles } from "./styles";
+import type { AppDispatch, RootState } from "@/src/redux/store/types";
+import type { Notification } from "@/src/api/notification";
+import {
+  fetchChildNotificationsThunk,
+  markAllChildNotificationsReadThunk,
+} from "@/src/redux/thunks/notificationThunks";
 
 type NotificationType = "all" | "time" | "reward" | "task";
 
@@ -25,58 +39,169 @@ const FILTERS: { id: NotificationType; label: string }[] = [
   { id: "task", label: "Tasks" },
 ];
 
-const STATIC_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: "1",
-    type: "time",
-    title: "Screen time reminder",
-    message: "You have 15 minutes left today. Great job staying balanced.",
-    timeLabel: "Now",
-    icon: "timer-sand",
-    isNew: true,
-  },
-  {
-    id: "2",
-    type: "reward",
-    title: "Coins added",
-    message: "You earned 20 familyCoins for completing a task.",
-    timeLabel: "10 min ago",
-    icon: "star-circle",
-    isNew: true,
-  },
-  {
-    id: "3",
-    type: "task",
-    title: "Task approved",
-    message: "Your parent approved your completed task.",
-    timeLabel: "Today",
-    icon: "check-circle-outline",
-    isNew: false,
-  },
-  {
-    id: "4",
-    type: "time",
-    title: "Healthy break idea",
-    message: "Take a short break, drink water, or stretch for a few minutes.",
-    timeLabel: "Yesterday",
-    icon: "heart-outline",
-    isNew: false,
-  },
-];
+function mapNotificationType(type: string): Exclude<NotificationType, "all"> {
+  const normalized = String(type).toUpperCase();
+
+  if (
+    normalized.includes("SCREEN_TIME") ||
+    normalized.includes("DEVICE_LOCKED") ||
+    normalized.includes("DEVICE_UNLOCKED") ||
+    normalized.includes("EXTENSION_REQUEST")
+  ) {
+    return "time";
+  }
+
+  if (
+    normalized.includes("REWARD") ||
+    normalized.includes("COIN") ||
+    normalized.includes("ACHIEVEMENT")
+  ) {
+    return "reward";
+  }
+
+  if (normalized.includes("TASK")) {
+    return "task";
+  }
+
+  return "time";
+}
+
+function getNotificationIcon(
+  type: string
+): keyof typeof MaterialCommunityIcons.glyphMap {
+  const normalized = String(type).toUpperCase();
+
+  if (normalized.includes("TASK_APPROVED")) return "check-circle-outline";
+  if (normalized.includes("TASK")) return "clipboard-check-outline";
+  if (normalized.includes("ACHIEVEMENT")) return "trophy";
+  if (normalized.includes("REWARD") || normalized.includes("COIN")) {
+    return "star-circle";
+  }
+  if (normalized.includes("LOCK")) return "lock-outline";
+  if (normalized.includes("EXTENSION")) return "clock-plus-outline";
+  if (normalized.includes("SCREEN_TIME")) return "timer-sand";
+
+  return "bell-ring-outline";
+}
+
+function getTimeLabel(createdAt?: string) {
+  if (!createdAt) return "Just now";
+
+  const createdDate = new Date(createdAt);
+  const createdTime = createdDate.getTime();
+
+  if (Number.isNaN(createdTime)) return "Just now";
+
+  const diffMs = Date.now() - createdTime;
+  const diffMinutes = Math.floor(diffMs / 60000);
+
+  if (diffMinutes < 1) return "Just now";
+
+  if (diffMinutes < 60) {
+    return diffMinutes === 1 ? "1 min ago" : `${diffMinutes} min ago`;
+  }
+
+  const diffHours = Math.floor(diffMinutes / 60);
+
+  if (diffHours < 24) {
+    return diffHours === 1 ? "1 hour ago" : `${diffHours} hours ago`;
+  }
+
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffDays === 1) return "Yesterday";
+
+  if (diffDays < 7) {
+    return `${diffDays} days ago`;
+  }
+
+  return createdDate.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+function mapNotificationToItem(notification: Notification): NotificationItem {
+  return {
+    id: String(notification._id),
+    type: mapNotificationType(notification.type),
+    title: notification.title || "New notification",
+    message: notification.description || "",
+    timeLabel: getTimeLabel(notification.createdAt),
+    icon: getNotificationIcon(notification.type),
+    isNew: !notification.isRead,
+  };
+}
 
 export default function NotificationsScreen() {
+  const dispatch = useDispatch<AppDispatch>();
+
   const { width } = useWindowDimensions();
   const [selectedFilter, setSelectedFilter] = useState<NotificationType>("all");
 
   const isTablet = width >= 700;
 
+  const activeChildId = useSelector(
+    (state: RootState) => state.auth.activeChildId
+  );
+
+  const notifications = useSelector(
+    (state: RootState) => state.notifications.items
+  );
+
+  const hasUnreadChildNotifications = useMemo(() => {
+    if (!activeChildId) return false;
+
+    return notifications.some(
+      (notification) =>
+        notification.targetRole === "CHILD" &&
+        String(notification.childId) === String(activeChildId) &&
+        !notification.isRead
+    );
+  }, [activeChildId, notifications]);
+
+  const hasUnreadChildNotificationsRef = useRef(false);
+
+  useEffect(() => {
+    hasUnreadChildNotificationsRef.current = hasUnreadChildNotifications;
+  }, [hasUnreadChildNotifications]);
+
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(fetchChildNotificationsThunk({ page: 1, limit: 30 }));
+
+      return () => {
+        if (!hasUnreadChildNotificationsRef.current) return;
+
+        dispatch(markAllChildNotificationsReadThunk());
+        hasUnreadChildNotificationsRef.current = false;
+      };
+    }, [dispatch])
+  );
+
+  const childNotifications = useMemo(() => {
+    return notifications
+      .filter((notification) => {
+        const isChildNotification = notification.targetRole === "CHILD";
+
+        const belongsToCurrentChild =
+          !notification.childId ||
+          !activeChildId ||
+          String(notification.childId) === String(activeChildId);
+
+        return isChildNotification && belongsToCurrentChild;
+      })
+      .map(mapNotificationToItem);
+  }, [notifications, activeChildId]);
+
   const filteredNotifications = useMemo(() => {
     if (selectedFilter === "all") {
-      return STATIC_NOTIFICATIONS;
+      return childNotifications;
     }
 
-    return STATIC_NOTIFICATIONS.filter((item) => item.type === selectedFilter);
-  }, [selectedFilter]);
+    return childNotifications.filter((item) => item.type === selectedFilter);
+  }, [selectedFilter, childNotifications]);
 
   return (
     <ScreenLayout>
@@ -135,46 +260,72 @@ export default function NotificationsScreen() {
           </View>
 
           <View style={styles.list}>
-            {filteredNotifications.map((item) => (
-              <Pressable
-                key={item.id}
-                accessibilityRole="button"
-                accessibilityLabel={`${item.title}. ${item.message}`}
-                style={styles.notificationCard}
-              >
+            {filteredNotifications.length === 0 ? (
+              <View style={styles.notificationCard}>
                 <View style={styles.notificationIconWrap}>
                   <MaterialCommunityIcons
-                    name={item.icon}
+                    name="bell-sleep-outline"
                     size={26}
                     color="#2563EB"
                   />
                 </View>
 
                 <View style={styles.notificationContent}>
-                  <View style={styles.notificationHeader}>
-                    <AppText weight="extraBold" style={styles.notificationTitle}>
-                      {item.title}
-                    </AppText>
-
-                    {item.isNew && (
-                      <View style={styles.newBadge}>
-                        <AppText weight="bold" style={styles.newBadgeText}>
-                          New
-                        </AppText>
-                      </View>
-                    )}
-                  </View>
+                  <AppText weight="extraBold" style={styles.notificationTitle}>
+                    No notifications yet
+                  </AppText>
 
                   <AppText weight="medium" style={styles.notificationMessage}>
-                    {item.message}
-                  </AppText>
-
-                  <AppText weight="medium" style={styles.timeLabel}>
-                    {item.timeLabel}
+                    New updates about tasks, rewards, and screen time will
+                    appear here.
                   </AppText>
                 </View>
-              </Pressable>
-            ))}
+              </View>
+            ) : (
+              filteredNotifications.map((item) => (
+                <Pressable
+                  key={item.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${item.title}. ${item.message}`}
+                  style={styles.notificationCard}
+                >
+                  <View style={styles.notificationIconWrap}>
+                    <MaterialCommunityIcons
+                      name={item.icon}
+                      size={26}
+                      color="#2563EB"
+                    />
+                  </View>
+
+                  <View style={styles.notificationContent}>
+                    <View style={styles.notificationHeader}>
+                      <AppText
+                        weight="extraBold"
+                        style={styles.notificationTitle}
+                      >
+                        {item.title}
+                      </AppText>
+
+                      {item.isNew && (
+                        <View style={styles.newBadge}>
+                          <AppText weight="bold" style={styles.newBadgeText}>
+                            New
+                          </AppText>
+                        </View>
+                      )}
+                    </View>
+
+                    <AppText weight="medium" style={styles.notificationMessage}>
+                      {item.message}
+                    </AppText>
+
+                    <AppText weight="medium" style={styles.timeLabel}>
+                      {item.timeLabel}
+                    </AppText>
+                  </View>
+                </Pressable>
+              ))
+            )}
           </View>
         </View>
       </ScrollView>

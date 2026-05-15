@@ -4,6 +4,8 @@ import {
   apiMarkAllParentNotificationsRead,
   apiMarkParentNotificationRead,
   apiDeleteParentNotification,
+  apiGetChildNotifications,
+  apiMarkAllChildNotificationsRead,
   type Notification
 } from "@/src/api/notification";
 
@@ -116,3 +118,57 @@ export const deleteParentNotificationThunk = createAsyncThunk<
   }
 });
 
+export const fetchChildNotificationsThunk = createAsyncThunk(
+  "notifications/fetchChild",
+  async (
+    { page = 1, limit = 10 }: { page?: number; limit?: number },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await apiGetChildNotifications(page, limit);
+      const unreadCount = response?.unreadCount ?? 0;
+      const rawList = Array.isArray(response?.notifications)
+        ? response.notifications
+        : [];
+
+      const data = rawList
+        .map((row) => {
+          try {
+            return normalizeNotification(row);
+          } catch {
+            return null;
+          }
+        })
+        .filter((n): n is Notification => n != null);
+
+      const pagination = normalizePagination(response?.pagination, {
+        page,
+        limit,
+      });
+
+      return { data, pagination, unreadCount };
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error && typeof error.message === "string"
+          ? error.message
+          : "Failed to fetch child notifications";
+
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const markAllChildNotificationsReadThunk = createAsyncThunk<
+  { success: boolean },
+  void,
+  { rejectValue: string }
+>("notifications/markAllChildRead", async (_, thunkAPI) => {
+  try {
+    return await apiMarkAllChildNotificationsRead();
+  } catch (error) {
+    const message =
+      (error as Error)?.message ?? "notifications.mark_all_read_failed";
+
+    return thunkAPI.rejectWithValue(message);
+  }
+});

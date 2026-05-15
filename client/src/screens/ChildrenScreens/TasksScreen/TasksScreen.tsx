@@ -19,7 +19,7 @@ import {
 } from "@/src/utils/appToast";
 
 const ICON = {
-  coin: "cash-multiple",
+  coin: "circle-multiple",
   check: "check",
   checkCircle: "check-circle-outline",
   camera: "camera-outline",
@@ -70,8 +70,8 @@ export default function TasksScreen() {
     return childTasks.map((task: any) => {
       const proofImg =
         typeof task?.proofImg === "string" ? task.proofImg.trim() : "";
-const hasProofImage =
-  proofImg.startsWith("data:image/") || proofImg.startsWith("http");
+      const hasProofImage =
+        proofImg.startsWith("data:image/") || proofImg.startsWith("http");
       return {
         id: String(task?._id ?? task?.id ?? Math.random()),
         title: task?.title ?? "Untitled task",
@@ -120,68 +120,67 @@ const hasProofImage =
     }
   };
 
-const pickImageAndSubmit = async (task: Task) => {
-  try {
-    setSubmittingTaskId(task.id);
+  const pickImageAndSubmit = async (task: Task) => {
+    try {
+      setSubmittingTaskId(task.id);
 
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (!permissionResult.granted) {
-      showWarningToast(
-        "Please allow access to your photo library.",
-        "Permission needed"
+      if (!permissionResult.granted) {
+        showWarningToast(
+          "Please allow access to your photo library.",
+          "Permission needed"
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        quality: 0.5,
+        base64: true,
+      });
+
+      if (result.canceled) {
+        return;
+      }
+
+      const asset = result.assets?.[0];
+
+      if (!asset?.base64) {
+        showErrorToast("Image was not converted to base64.", "Upload failed");
+        console.log("IMAGE PICKER ASSET:", asset);
+        return;
+      }
+
+      const proofImg = `data:${asset.mimeType || "image/jpeg"};base64,${asset.base64
+        }`;
+
+      console.log("CHILD PROOF IMG:", {
+        proofImgStart: proofImg.slice(0, 80),
+        proofImgLength: proofImg.length,
+      });
+
+      await dispatch(
+        submitTaskThunk({
+          taskId: task.id,
+          proofImg,
+        })
+      ).unwrap();
+
+      await dispatch(getChildTasksThunk()).unwrap();
+
+      showSuccessToast("Photo uploaded and task submitted.", "Success");
+    } catch (error: any) {
+      showErrorToast(
+        typeof error === "string" ? error : "Something went wrong.",
+        "Upload failed"
       );
-      return;
+    } finally {
+      setSubmittingTaskId(null);
     }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      quality: 0.5,
-      base64: true,
-    });
-
-    if (result.canceled) {
-      return;
-    }
-
-    const asset = result.assets?.[0];
-
-    if (!asset?.base64) {
-      showErrorToast("Image was not converted to base64.", "Upload failed");
-      console.log("IMAGE PICKER ASSET:", asset);
-      return;
-    }
-
-    const proofImg = `data:${asset.mimeType || "image/jpeg"};base64,${
-      asset.base64
-    }`;
-
-    console.log("CHILD PROOF IMG:", {
-      proofImgStart: proofImg.slice(0, 80),
-      proofImgLength: proofImg.length,
-    });
-
-    await dispatch(
-      submitTaskThunk({
-        taskId: task.id,
-        proofImg,
-      })
-    ).unwrap();
-
-    await dispatch(getChildTasksThunk()).unwrap();
-
-    showSuccessToast("Photo uploaded and task submitted.", "Success");
-  } catch (error: any) {
-    showErrorToast(
-      typeof error === "string" ? error : "Something went wrong.",
-      "Upload failed"
-    );
-  } finally {
-    setSubmittingTaskId(null);
-  }
-};
+  };
 
   const handleTaskAction = async (task: Task) => {
     if (task.requireProof) {
@@ -271,7 +270,7 @@ const pickImageAndSubmit = async (task: Task) => {
                       <MaterialCommunityIcons
                         name={ICON.coin}
                         size={18}
-                        color="#B46B00"
+                        color="#F59E0B"
                       />
                       <AppText weight="extraBold" style={styles.coinsText}>
                         {task.coins}
@@ -362,7 +361,7 @@ const pickImageAndSubmit = async (task: Task) => {
                   <MaterialCommunityIcons
                     name={ICON.coin}
                     size={18}
-                    color="#B46B00"
+                    color="#F59E0B"
                   />
                 </View>
 

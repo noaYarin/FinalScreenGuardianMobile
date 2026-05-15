@@ -4,6 +4,8 @@ import {
   readAllNotifications,
   deleteParentNotification,
   registerParentFcmToken,
+  getChildNotifications,
+  readAllChildNotifications,
 } from "../services/notification.service.js";
 
 // Return notifications for the logged-in parent
@@ -11,13 +13,13 @@ export async function getParentNotificationsController(req, res, next) {
   try {
     const parentId = req.user.parentId;
     const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;  
+    const limit = Number(req.query.limit) || 10;
     const { notifications, total, pages, unreadCount } = await getParentNotifications(parentId, page, limit);
 
-    
-    res.status(200).json({ 
+
+    res.status(200).json({
       ok: true,
-      data: { 
+      data: {
         notifications,
         pagination: {
           total,
@@ -26,9 +28,9 @@ export async function getParentNotificationsController(req, res, next) {
           limit
         },
         unreadCount
-      } 
-    }); 
-   } catch (err) {
+      }
+    });
+  } catch (err) {
     next(err);
   }
 }
@@ -64,6 +66,48 @@ export async function deleteParentNotificationController(req, res, next) {
     const parentId = req.user.parentId;
     const { notificationId } = req.params;
     const data = await deleteParentNotification(parentId, notificationId);
+    res.status(200).json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getChildNotificationsController(req, res, next) {
+  try {
+    const parentId = req.user.parentId;
+    const childId = req.user.childId;
+
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
+    const { notifications, total, pages, unreadCount } =
+      await getChildNotifications(parentId, childId, page, limit);
+
+    res.status(200).json({
+      ok: true,
+      data: {
+        notifications,
+        pagination: {
+          total,
+          page,
+          pages,
+          limit,
+        },
+        unreadCount,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function readAllChildNotificationsController(req, res, next) {
+  try {
+    const parentId = req.user.parentId;
+    const childId = req.user.childId;
+
+    const data = await readAllChildNotifications(parentId, childId);
+
     res.status(200).json({ ok: true, data });
   } catch (err) {
     next(err);

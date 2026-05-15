@@ -5,6 +5,8 @@ import {
   markAllParentNotificationsReadThunk,
   markParentNotificationReadThunk,
   deleteParentNotificationThunk,
+  fetchChildNotificationsThunk,
+  markAllChildNotificationsReadThunk,
 } from "@/src/redux/thunks/notificationThunks";
 
 type NotificationsState = {
@@ -47,19 +49,71 @@ function upsertById(state: NotificationsState, notification: Notification) {
   }
 }
 
+function setPagination(
+  state: NotificationsState,
+  pagination?: {
+    total: number;
+    page: number;
+    pages: number;
+    limit: number;
+  }
+) {
+  if (!pagination) return;
+
+  state.pagination = {
+    total: Math.max(0, Number(pagination.total) || 0),
+    page: Math.max(1, Number(pagination.page) || 1),
+    pages: Math.max(1, Number(pagination.pages) || 1),
+    limit: Math.max(1, Number(pagination.limit) || 10),
+  };
+}
+
+function mergeFetchedNotifications(
+  state: NotificationsState,
+  data: Notification[],
+  pagination?: {
+    total: number;
+    page: number;
+    pages: number;
+    limit: number;
+  }
+) {
+  setPagination(state, pagination);
+
+  if (state.pagination.page === 1) {
+    state.items = data;
+    return;
+  }
+
+  const existingIds = new Set(state.items.map((i) => String(i._id)));
+
+  state.items.push(...data.filter((n) => !existingIds.has(String(n._id))));
+}
+
+function recalculateUnreadCount(state: NotificationsState) {
+  state.unreadCount = state.items.filter((n) => n && !n.isRead).length;
+}
+
 const notificationsSlice = createSlice({
   name: "notifications",
   initialState,
   reducers: {
     addNotificationFromSocket(state, action: PayloadAction<Notification>) {
       const n = action.payload;
-      upsertById(state, n);
-      state.pagination.total += 1;
 
-      if (!n.isRead) {
-        state.unreadCount += 1;
+      const alreadyExists = state.items.some(
+        (item) => String(item?._id) === String(n._id)
+      );
+
+      upsertById(state, n);
+
+      if (!alreadyExists) {
+        state.pagination.total += 1;
       }
+
+      recalculateUnreadCount(state);
     },
+
     clearNotifications: () => initialState,
   },
   extraReducers: (builder) => {
@@ -68,65 +122,82 @@ const notificationsSlice = createSlice({
         state.status = "loading";
         state.error = null;
       })
+
       .addCase(fetchParentNotificationsThunk.fulfilled, (state, { payload }) => {
         state.status = "succeeded";
         if (!payload) return;
 
         const { data = [], pagination, unreadCount = 0 } = payload;
+
+        mergeFetchedNotifications(state, data, pagination);
         state.unreadCount = unreadCount;
-
-        if (pagination) {
-          state.pagination = {
-            total: Math.max(0, Number(pagination.total) || 0),
-            page: Math.max(1, Number(pagination.page) || 1),
-            pages: Math.max(1, Number(pagination.pages) || 1),
-            limit: Math.max(1, Number(pagination.limit) || 10),
-          };
-        }
-
-        if (state.pagination.page === 1) {
-          state.items = data;
-        } else {
-          const existingIds = new Set(state.items.map((i) => String(i._id)));
-          state.items.push(...data.filter((n) => !existingIds.has(String(n._id))));
-        }
       })
+
       .addCase(fetchParentNotificationsThunk.rejected, (state, action) => {
         state.status = "failed";
         state.error =
           (action.payload as string) ?? "Could not load notifications.";
       })
+
+      .addCase(fetchChildNotificationsThunk.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+
+      .addCase(fetchChildNotificationsThunk.fulfilled, (state, { payload }) => {
+        state.status = "succeeded";
+        if (!payload) return;
+
+        const { data = [], pagination, unreadCount = 0 } = payload;
+
+        mergeFetchedNotifications(state, data, pagination);
+        state.unreadCount = unreadCount;
+      })
+
+      .addCase(fetchChildNotificationsThunk.rejected, (state, action) => {
+        state.status = "failed";
+        state.error =
+          (action.payload as string) ??
+          "Could not load child notifications.";
+      })
+
       .addCase(markParentNotificationReadThunk.fulfilled, (state, { payload }) => {
         if (!payload) return;
 
-        const target = state.items.find(
-          (n) => String(n._id) === String(payload._id)
-        );
-
-        if (target && !target.isRead) {
-          state.unreadCount = Math.max(0, state.unreadCount - 1);
-        }
-
         upsertById(state, payload);
+        recalculateUnreadCount(state);
       })
+
       .addCase(markAllParentNotificationsReadThunk.fulfilled, (state) => {
         state.items.forEach((n) => {
-          if (n) n.isRead = true;
+          if (n?.targetRole === "PARENT") {
+            n.isRead = true;
+          }
         });
-        state.unreadCount = 0;
+
+        recalculateUnreadCount(state);
       })
+
+      .addCase(markAllChildNotificationsReadThunk.fulfilled, (state) => {
+        state.items.forEach((n) => {
+          if (n?.targetRole === "CHILD") {
+            n.isRead = true;
+          }
+        });
+
+        recalculateUnreadCount(state);
+      })
+
       .addCase(deleteParentNotificationThunk.fulfilled, (state, { payload }) => {
         const id = String(payload.notificationId);
         const target = state.items.find((n) => String(n?._id) === id);
 
-        if (target) {
-          if (!target.isRead) {
-            state.unreadCount = Math.max(0, state.unreadCount - 1);
-          }
+        if (!target) return;
 
-          state.items = state.items.filter((n) => String(n?._id) !== id);
-          state.pagination.total = Math.max(0, state.pagination.total - 1);
-        }
+        state.items = state.items.filter((n) => String(n?._id) !== id);
+        state.pagination.total = Math.max(0, state.pagination.total - 1);
+
+        recalculateUnreadCount(state);
       });
   },
 });

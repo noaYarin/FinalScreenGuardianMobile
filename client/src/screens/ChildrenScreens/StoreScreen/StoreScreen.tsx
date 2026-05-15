@@ -20,7 +20,7 @@ import {
 } from "@/src/utils/appToast";
 
 const ICON = {
-  coin: "coins",
+  coin: "circle-multiple",
   fallback: "gift-outline",
 } as const;
 
@@ -216,7 +216,7 @@ export default function StoreScreen() {
 
             <View style={styles.balanceCard}>
               <View style={styles.balanceBadge}>
-                <FontAwesome5 name={ICON.coin} size={24} color="#2F6DEB" />
+                <MaterialCommunityIcons name={ICON.coin} size={28} color="#F59E0B" />
               </View>
 
               <View style={styles.balanceTextWrap}>

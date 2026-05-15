@@ -62,3 +62,45 @@ export async function deleteNotificationByIdForParent(parentId, notificationId) 
     targetRole: TargetRole.PARENT
   }).lean();
 }
+
+export async function findChildNotificationsWithPagination(
+  parentId,
+  childId,
+  skip,
+  limit
+) {
+  assertValidObjectId(parentId, CommonErrors.INVALID_PARENT_ID);
+  assertValidObjectId(childId, CommonErrors.INVALID_CHILD_ID);
+
+  const query = {
+    parentId,
+    childId,
+    targetRole: TargetRole.CHILD,
+  };
+
+  const [notifications, total, unreadCount] = await Promise.all([
+    NotificationModel.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    NotificationModel.countDocuments(query),
+    NotificationModel.countDocuments({ ...query, isRead: false }),
+  ]);
+
+  return { notifications, total, unreadCount };
+}
+
+export async function markAllChildNotificationsAsRead(parentId, childId) {
+  assertValidObjectId(parentId, CommonErrors.INVALID_PARENT_ID);
+  assertValidObjectId(childId, CommonErrors.INVALID_CHILD_ID);
+
+  return NotificationModel.updateMany(
+    {
+      parentId,
+      childId,
+      targetRole: TargetRole.CHILD,
+      isRead: false,
+    },
+    { $set: { isRead: true } }
+  );
+}

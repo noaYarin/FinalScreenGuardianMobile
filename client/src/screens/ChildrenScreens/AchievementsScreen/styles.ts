@@ -257,7 +257,7 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#10D98B",
+    backgroundColor: "#C9F5DE",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 999,
@@ -266,7 +266,7 @@ export const styles = StyleSheet.create({
   },
 
   completedBadgeText: {
-    color: "#FFFFFF",
+    color: "#0F8A5F",
     fontSize: 12,
   },
 
@@ -286,15 +286,12 @@ export const styles = StyleSheet.create({
   },
 
   achievementBottomArea: {
-    minHeight: 34,
-    position: "relative",
-    justifyContent: "center",
+    alignItems: "flex-start",
+    justifyContent: "flex-start",
   },
 
   rewardPill: {
-    position: "absolute",
-    top: 0,
-    left: 0,
+    alignSelf: "flex-start",
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -353,5 +350,27 @@ export const styles = StyleSheet.create({
 
   centerText: {
     textAlign: "center",
+  },
+  
+  unlockedAtText: {
+    marginTop: 8,
+    fontSize: 12,
+    lineHeight: 16,
+    color: "#64748B",
+  },
+
+  unlockedAtTextNewToday: {
+    color: "#8A6500",
+  },
+
+  achievementCardNewToday: {
+    borderWidth: 2,
+    borderColor: "#FACC15",
+    borderStyle: "dashed",
+    shadowColor: "#FACC15",
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
 });
