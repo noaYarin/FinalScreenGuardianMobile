@@ -169,6 +169,8 @@ export default function NotificationsScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      if (!activeChildId) return;
+
       dispatch(fetchChildNotificationsThunk({ page: 1, limit: 30 }));
 
       return () => {
@@ -177,9 +179,9 @@ export default function NotificationsScreen() {
         dispatch(markAllChildNotificationsReadThunk());
         hasUnreadChildNotificationsRef.current = false;
       };
-    }, [dispatch])
+    }, [dispatch, activeChildId])
   );
-
+  
   const childNotifications = useMemo(() => {
     return notifications
       .filter((notification) => {
