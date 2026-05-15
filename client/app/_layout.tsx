@@ -4,11 +4,9 @@ import { Href, Stack, useRouter, useSegments } from "expo-router";
 import { Provider as ReduxProvider, useDispatch, useSelector } from "react-redux";
 import { showInfoToast } from "@/src/utils/appToast";
 import { RootSiblingParent } from "react-native-root-siblings";
-import { registerFcmNotificationTapHandlers } from "@/src/notifications/fcmNavigation";
-import { shouldBlockDefaultRedirect } from "@/src/notifications/fcmNavigation";
+import { registerFcmNotificationTapHandlers, shouldBlockDefaultRedirect } from "@/src/notifications/fcmNavigation";
 import { useAndroidPostNotificationsPermission } from "@/src/hooks/useAndroidPostNotificationsPermission";
 
-import store from "../src/redux/store";
 import { COLORS } from "@/constants/theme";
 import Initializer from "../src/components/Initializer";
 import {
@@ -43,11 +41,16 @@ import {
   getChildTasksThunk,
   getParentTasksThunk,
 } from "@/src/redux/thunks/tasksThunks";
-import type { AppDispatch } from "@/src/redux/store/types";
+import type { AppDispatch, RootState } from "@/src/redux/store/types";
+import {
+  hydrateChildTheme,
+  selectChildPalette,
+} from "@/src/redux/slices/child-theme-slice";
 import {
   getChildRewardsThunk,
   getParentRewardsThunk,
 } from "@/src/redux/thunks/rewardsThunks";
+import store from "../src/redux/store";
 
 function AppStack() {
   const dispatch = useDispatch<AppDispatch>();
@@ -61,11 +64,18 @@ function AppStack() {
     UnlockedAchievementResponse[]
   >([]);
   const { token, childToken, parentId, activeChildId } = useSelector(
-    (state: any) => state.auth
+    (state: RootState) => state.auth
   );
 
+  useEffect(() => {
+    if (!childToken) return;
+    void dispatch(hydrateChildTheme());
+  }, [childToken, dispatch]);
+
   useParentFcmTokenSync(token, parentId);
-  const myCurrentDeviceId = useSelector((state: any) => state.auth.deviceId);
+  const myCurrentDeviceId = useSelector((state: RootState) => state.auth.deviceId);
+  const childPalette = useSelector(selectChildPalette);
+  const onChildSegment = segments[0] === "Child";
 
   useEffect(() => {
     const unsubscribe = registerFcmNotificationTapHandlers(router);
@@ -235,12 +245,27 @@ function AppStack() {
     <>
       <Stack
         screenOptions={{
-          contentStyle: { backgroundColor: COLORS.light.background },
-          headerStyle: { backgroundColor: COLORS.light.tint },
+          contentStyle: {
+            backgroundColor: onChildSegment
+              ? childPalette.screenBg
+              : COLORS.light.background,
+          },
+          headerStyle: {
+            backgroundColor: onChildSegment
+              ? childPalette.headerBg
+              : COLORS.light.tint,
+          },
           headerTitleAlign: "center",
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="Child"
+          options={{
+            headerShown: false,
+            title: "",
+          }}
+        />
         <Stack.Screen
           name="Parent"
           options={{

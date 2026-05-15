@@ -719,4 +719,71 @@ avatarInfoLevelBadge: {
   shadowOffset: { width: 0, height: 3 },
   elevation: 3,
 },
+
+  childHomeRoot: {
+    flex: 1,
+  },
+
+  helloPhone: { fontSize: 22 },
+  helloTablet: { fontSize: 26 },
+  helloLarge: { fontSize: 28 },
+
+  timerValueFontPhone: { fontSize: 34 },
+  timerValueFontTablet: { fontSize: 40 },
+  timerValueFontLarge: { fontSize: 44 },
+
+  avatarWrapPhone: { width: 92, height: 92 },
+  avatarWrapTablet: { width: 108, height: 108 },
+  avatarWrapLarge: { width: 118, height: 118 },
+
+  avatarBlockPhone: { width: 126 },
+  avatarBlockTablet: { width: 142 },
+  avatarBlockLarge: { width: 152 },
+
+  permissionModalBtnText: {
+    color: "#FFFFFF",
+    fontSize: 17,
+    textAlign: "center",
+  },
+
+  permissionModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.55)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 22,
+    paddingVertical: 28,
+  },
+  permissionModalCard: {
+    width: "100%",
+    maxWidth: 400,
+    alignSelf: "center",
+    borderRadius: 28,
+    paddingVertical: 22,
+    paddingHorizontal: 20,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 2,
+    gap: 12,
+  },
+  permissionModalTitle: {
+    fontSize: 22,
+    lineHeight: 28,
+    color: "#0F172A",
+    textAlign: "center",
+  },
+  permissionModalBody: {
+    fontSize: 16,
+    lineHeight: 23,
+    color: "#475569",
+    textAlign: "center",
+  },
+  permissionModalBtn: {
+    marginTop: 6,
+    minHeight: 54,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  permissionModalBtnPressed: { opacity: 0.92 },
 });
