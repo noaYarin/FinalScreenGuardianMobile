@@ -4,6 +4,8 @@ import {
   markNotificationAsReadById,
   markAllNotificationsAsRead,
   deleteNotificationByIdForParent,
+  findChildNotificationsWithPagination,
+  markAllChildNotificationsAsRead,
 } from "../dal/notification.dal.js";
 import { TargetRole } from "../constants/role.js";
 import { AppError } from "../utils/appError.js";
@@ -150,6 +152,33 @@ export async function deleteParentNotification(parentId, notificationId) {
   }
   return { success: true };
 }
+
+
+export async function getChildNotifications(
+  parentId,
+  childId,
+  page = 1,
+  limit = 10
+) {
+  const skip = (page - 1) * limit;
+
+  const { notifications, total, unreadCount } =
+    await findChildNotificationsWithPagination(parentId, childId, skip, limit);
+
+  return {
+    notifications,
+    total,
+    pages: Math.ceil(total / limit),
+    unreadCount,
+  };
+}
+
+export async function readAllChildNotifications(parentId, childId) {
+  await markAllChildNotificationsAsRead(parentId, childId);
+
+  return { success: true };
+}
+
 
 export async function registerParentFcmToken(parentId, fcmToken) {
   const updated = await ParentModel.findByIdAndUpdate(parentId, { fcmToken }, { new: false });

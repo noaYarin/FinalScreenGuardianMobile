@@ -1,13 +1,24 @@
-import React, { useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Pressable, ScrollView, View, useWindowDimensions } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useSelector } from "react-redux";
+import { useFocusEffect } from "expo-router";
+import { useDispatch, useSelector } from "react-redux";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import { styles } from "./styles";
-import type { RootState } from "@/src/redux/store/types";
+import type { AppDispatch, RootState } from "@/src/redux/store/types";
 import type { Notification } from "@/src/api/notification";
+import {
+  fetchChildNotificationsThunk,
+  markAllChildNotificationsReadThunk,
+} from "@/src/redux/thunks/notificationThunks";
 
 type NotificationType = "all" | "time" | "reward" | "task";
 
@@ -124,6 +135,8 @@ function mapNotificationToItem(notification: Notification): NotificationItem {
 }
 
 export default function NotificationsScreen() {
+  const dispatch = useDispatch<AppDispatch>();
+
   const { width } = useWindowDimensions();
   const [selectedFilter, setSelectedFilter] = useState<NotificationType>("all");
 
@@ -135,6 +148,36 @@ export default function NotificationsScreen() {
 
   const notifications = useSelector(
     (state: RootState) => state.notifications.items
+  );
+
+  const hasUnreadChildNotifications = useMemo(() => {
+    if (!activeChildId) return false;
+
+    return notifications.some(
+      (notification) =>
+        notification.targetRole === "CHILD" &&
+        String(notification.childId) === String(activeChildId) &&
+        !notification.isRead
+    );
+  }, [activeChildId, notifications]);
+
+  const hasUnreadChildNotificationsRef = useRef(false);
+
+  useEffect(() => {
+    hasUnreadChildNotificationsRef.current = hasUnreadChildNotifications;
+  }, [hasUnreadChildNotifications]);
+
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(fetchChildNotificationsThunk({ page: 1, limit: 30 }));
+
+      return () => {
+        if (!hasUnreadChildNotificationsRef.current) return;
+
+        dispatch(markAllChildNotificationsReadThunk());
+        hasUnreadChildNotificationsRef.current = false;
+      };
+    }, [dispatch])
   );
 
   const childNotifications = useMemo(() => {

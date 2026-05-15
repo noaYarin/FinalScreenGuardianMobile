@@ -129,7 +129,7 @@ export default function AchievementsScreen() {
             </AppText>
 
             <AppText weight="medium" style={styles.heroSubtitle}>
-              Keep reaching goals and unlock new rewards
+              Keep reaching goals and unlock new rewards!
             </AppText>
           </View>
 

@@ -14,10 +14,9 @@ export type Notification = {
   isRead: boolean;
   createdAt?: string;
   data?: Record<string, unknown>;
-
 };
 
-export type ParentNotificationsPayload = {
+export type NotificationsPayload = {
   notifications: Notification[];
   pagination: {
     total: number;
@@ -28,6 +27,9 @@ export type ParentNotificationsPayload = {
   unreadCount: number;
 };
 
+export type ParentNotificationsPayload = NotificationsPayload;
+export type ChildNotificationsPayload = NotificationsPayload;
+
 export async function apiGetParentNotifications(
   page: number = 1,
   limit: number = 10
@@ -36,6 +38,19 @@ export async function apiGetParentNotifications(
     requireAuth: true,
     role: "PARENT"
   });
+}
+
+export async function apiGetChildNotifications(
+  page: number = 1,
+  limit: number = 10
+): Promise<ChildNotificationsPayload> {
+  return api.get<ChildNotificationsPayload>(
+    `${URL}/child?page=${page}&limit=${limit}`,
+    {
+      requireAuth: true,
+      role: "CHILD",
+    }
+  );
 }
 
 export async function apiMarkParentNotificationRead(notificationId: string): Promise<Notification> {
@@ -51,6 +66,16 @@ export async function apiMarkAllParentNotificationsRead(): Promise<{ success: bo
     role: "PARENT"
   });
 }
+
+export async function apiMarkAllChildNotificationsRead(): Promise<{
+  success: boolean;
+}> {
+  return api.patch<{ success: boolean }>(`${URL}/child/read-all`, null, {
+    requireAuth: true,
+    role: "CHILD",
+  });
+}
+
 
 export async function apiDeleteParentNotification(
   notificationId: string
