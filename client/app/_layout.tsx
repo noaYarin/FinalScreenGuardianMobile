@@ -51,6 +51,8 @@ import {
   getParentRewardsThunk,
 } from "@/src/redux/thunks/rewardsThunks";
 import store from "../src/redux/store";
+import { fetchChildAchievementsThunk } from "@/src/redux/thunks/achievementsThunks";
+import { fetchCurrentChildProfileThunk } from "@/src/redux/thunks/childrenThunks";
 
 function AppStack() {
   const dispatch = useDispatch<AppDispatch>();
@@ -128,6 +130,9 @@ function AppStack() {
           if (achievement) {
             setAchievementQueue((prev) => [...prev, achievement]);
           }
+
+          dispatch(fetchChildAchievementsThunk());
+          dispatch(fetchCurrentChildProfileThunk());
 
           return;
         }
