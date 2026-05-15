@@ -74,23 +74,41 @@ function getNotificationIcon(
 }
 
 function getTimeLabel(createdAt?: string) {
-  if (!createdAt) return "Now";
+  if (!createdAt) return "Just now";
 
-  const createdTime = new Date(createdAt).getTime();
+  const createdDate = new Date(createdAt);
+  const createdTime = createdDate.getTime();
 
-  if (Number.isNaN(createdTime)) return "Now";
+  if (Number.isNaN(createdTime)) return "Just now";
 
   const diffMs = Date.now() - createdTime;
   const diffMinutes = Math.floor(diffMs / 60000);
 
-  if (diffMinutes < 1) return "Now";
-  if (diffMinutes < 60) return `${diffMinutes} min ago`;
+  if (diffMinutes < 1) return "Just now";
+
+  if (diffMinutes < 60) {
+    return diffMinutes === 1 ? "1 min ago" : `${diffMinutes} min ago`;
+  }
 
   const diffHours = Math.floor(diffMinutes / 60);
 
-  if (diffHours < 24) return `${diffHours} hours ago`;
+  if (diffHours < 24) {
+    return diffHours === 1 ? "1 hour ago" : `${diffHours} hours ago`;
+  }
 
-  return "Earlier";
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffDays === 1) return "Yesterday";
+
+  if (diffDays < 7) {
+    return `${diffDays} days ago`;
+  }
+
+  return createdDate.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
 
 function mapNotificationToItem(notification: Notification): NotificationItem {
