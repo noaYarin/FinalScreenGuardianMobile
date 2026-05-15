@@ -1,14 +1,17 @@
 import type { Href, Router } from "expo-router";
-import messaging, {
-  FirebaseMessagingTypes,
+import type { RemoteMessage } from "@react-native-firebase/messaging";
+import {
+  getInitialNotification,
+  getMessaging,
+  onNotificationOpenedApp,
 } from "@react-native-firebase/messaging";
 import { InteractionManager } from "react-native";
- 
+
 type NavigateFromMessageOptions = {
   router: Router;
-  remoteMessage: FirebaseMessagingTypes.RemoteMessage;
+  remoteMessage: RemoteMessage;
 };
- 
+
 let blockDefaultRedirectUntilMs = 0;
 
 export function shouldBlockDefaultRedirect(): boolean {
@@ -20,11 +23,11 @@ function markFcmNavigationInProgress() {
 }
 
 function getHrefFromRemoteMessage(
-  remoteMessage: FirebaseMessagingTypes.RemoteMessage
+  remoteMessage: RemoteMessage
 ): Href | null {
   return "/Parent/systemAlerts" as Href;
 }
- 
+
 function navigateFromRemoteMessage({ router, remoteMessage }: NavigateFromMessageOptions) {
   const href = getHrefFromRemoteMessage(remoteMessage);
   if (href) {
@@ -34,15 +37,16 @@ function navigateFromRemoteMessage({ router, remoteMessage }: NavigateFromMessag
     });
   }
 }
- 
+
 export function registerFcmNotificationTapHandlers(router: Router) {
-  const unsubscribe = messaging().onNotificationOpenedApp((remoteMessage) => {
+  const messaging = getMessaging();
+
+  const unsubscribe = onNotificationOpenedApp(messaging, (remoteMessage) => {
     if (!remoteMessage) return;
     navigateFromRemoteMessage({ router, remoteMessage });
   });
- 
-  messaging()
-    .getInitialNotification()
+
+  getInitialNotification(messaging)
     .then((remoteMessage) => {
       if (!remoteMessage) return;
       setTimeout(() => {
@@ -52,7 +56,6 @@ export function registerFcmNotificationTapHandlers(router: Router) {
     .catch((e) => {
       console.warn("getInitialNotification error", e);
     });
- 
+
   return unsubscribe;
 }
-

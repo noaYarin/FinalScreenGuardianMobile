@@ -1,7 +1,12 @@
 import { useEffect } from "react";
-import { Platform } from "react-native";
 import "@react-native-firebase/app";
-import messaging from "@react-native-firebase/messaging";
+import {
+  getMessaging,
+  getToken,
+  onTokenRefresh,
+  registerDeviceForRemoteMessages,
+  requestPermission,
+} from "@react-native-firebase/messaging";
 import { apiRegisterFcmToken } from "../api/notification";
 import { API_BASE_URL } from "../config/env";
 
@@ -20,7 +25,6 @@ export function useParentFcmTokenSync(parentAuthToken: string | null, parentId: 
     };
 
     const run = async () => {
-
       if (!API_BASE_URL) {
         console.warn(
           "EXPO_PUBLIC_API_URL is not set; skipping FCM token registration to backend."
@@ -30,39 +34,42 @@ export function useParentFcmTokenSync(parentAuthToken: string | null, parentId: 
 
       if (!parentAuthToken || !parentId) return;
 
-      if (typeof messaging !== "function") {
-        console.warn("Firebase Messaging native module is not available yet; skipping FCM bootstrap.");
+      let messaging;
+      try {
+        messaging = getMessaging();
+      } catch (e) {
+        console.warn("Firebase Messaging native module is not available yet; skipping FCM bootstrap.", e);
         return;
       }
 
       try {
-        await messaging().requestPermission();
+        await requestPermission(messaging);
       } catch (e) {
-        console.warn("messaging().requestPermission failed", e);
+        console.warn("requestPermission failed", e);
       }
 
       try {
-        await messaging().registerDeviceForRemoteMessages();
+        await registerDeviceForRemoteMessages(messaging);
       } catch (e) {
-        console.warn("messaging().registerDeviceForRemoteMessages failed", e);
+        console.warn("registerDeviceForRemoteMessages failed", e);
       }
 
       let fcmToken: string;
       try {
-        fcmToken = await messaging().getToken();
+        fcmToken = await getToken(messaging);
       } catch (e) {
-        console.warn("messaging().getToken failed", e);
+        console.warn("getToken failed", e);
         return;
       }
       if (cancelled) return;
       await syncToken(fcmToken);
 
       try {
-        unsubscribeTokenRefresh = messaging().onTokenRefresh(async (newToken) => {
+        unsubscribeTokenRefresh = onTokenRefresh(messaging, async (newToken) => {
           await syncToken(newToken);
         });
       } catch (e) {
-        console.warn("messaging().onTokenRefresh failed", e);
+        console.warn("onTokenRefresh failed", e);
       }
     };
 
