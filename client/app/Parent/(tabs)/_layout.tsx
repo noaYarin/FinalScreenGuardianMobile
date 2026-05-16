@@ -14,7 +14,7 @@ const TAB_LABELS: Record<string, string> = {
   home: "Home",
   children: "Children",
   limits: "Limits",
-  extensionRequests: "Requests",
+  reports: "Reports",
   settings: "Settings",
 };
 
@@ -108,12 +108,12 @@ export default function ParentTabsLayout() {
       />
 
       <Tabs.Screen
-        name="extensionRequests"
+        name="reports"
         options={{
-          tabBarLabel: "Requests",
+          tabBarLabel: "Reports",
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
-              name="clock-check-outline"
+              name="chart-bar"
               size={size}
               color={color}
             />

@@ -22,7 +22,13 @@ export const MENU_ITEMS: HomeMenuItem[] = [
     icon: "history",
     route: "/Parent/activityHistory" as Href,
   },
-    {
+  {
+    key: "extensionRequests",
+    labelKey: "extensionRequests",
+    icon: "clock-check-outline",
+    route: "/Parent/extensionRequests" as Href,
+  },
+  {
     key: "tasks",
     labelKey: "tasks",
     icon: "format-list-checkbox",
