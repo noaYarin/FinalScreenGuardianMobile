@@ -24,5 +24,29 @@ export const styles = StyleSheet.create({
   pressed: {
     opacity: 0.85,
   },
+  iconWrap: {
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  badge: {
+    position: "absolute",
+    top: -8,
+    right: -10,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    paddingHorizontal: 4,
+    backgroundColor: "#EF4444",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  badgeText: {
+    color: "#FFFFFF",
+    fontSize: 9,
+    lineHeight: 11,
+  },
 });
 

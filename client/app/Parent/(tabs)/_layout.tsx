@@ -19,14 +19,21 @@ const TAB_LABELS: Record<string, string> = {
 };
 
 export default function ParentTabsLayout() {
-  const unreadNotificationsCount = useSelector(
-    (state: RootState) => state.notifications?.unreadCount ?? 0
-  );
+  const unreadNotificationsCount = useSelector((state: RootState) => {
+    const parentId = state.auth.parentId;
+
+    return state.notifications.items.filter(
+      (notification) =>
+        notification.targetRole === "PARENT" &&
+        String(notification.parentId) === String(parentId) &&
+        !notification.isRead
+    ).length;
+  });
 
   return (
     <Tabs
-        screenOptions={({ route }) => {
-          return {
+      screenOptions={({ route }) => {
+        return {
           sceneContainerStyle: {
             backgroundColor: COLORS.light.background,
           },
@@ -62,9 +69,9 @@ export default function ParentTabsLayout() {
               unreadCount={unreadNotificationsCount}
             />
           ),
-          };
-        }}
-      >
+        };
+      }}
+    >
       <Tabs.Screen
         name="children"
         options={{

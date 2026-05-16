@@ -105,11 +105,27 @@ const FILTERS: AlertFilter[] = ["all", "unread", "critical"];
 export default function SystemAlertsScreen() {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { items, pagination, status, unreadCount } = useSelector(
+  const { items, pagination, status } = useSelector(
     (state: RootState) => state.notifications
   );
 
-  const notifications = Array.isArray(items) ? items : [];
+  const parentId = useSelector((state: RootState) => state.auth.parentId);
+
+  const notifications = useMemo(() => {
+    const list = Array.isArray(items) ? items : [];
+
+    return list.filter(
+      (notification) =>
+        notification.targetRole === "PARENT" &&
+        String(notification.parentId) === String(parentId)
+    );
+  }, [items, parentId]);
+
+  const unreadCount = useMemo(() => {
+    return notifications.filter((notification) => !notification.isRead).length;
+  }, [notifications]);
+
+
 
   const [selectedFilter, setSelectedFilter] = useState<AlertFilter>("all");
   const [isFetchingMore, setIsFetchingMore] = useState(false);

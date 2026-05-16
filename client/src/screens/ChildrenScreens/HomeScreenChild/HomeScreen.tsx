@@ -36,7 +36,7 @@ const styles = rawStyles as any;
 const ICON = {
   points: "star-circle",
   level: "shield-star",
-  coins: "database",
+  coins: "circle-multiple",
   time: "clock-outline",
   apps: "apps",
   extend: "clock-plus-outline",
@@ -51,6 +51,32 @@ const ICON = {
   settings: "cog-outline",
   panic: "alert-circle-outline",
 } as const;
+
+
+/**
+ * Gamification rules for the child avatar.
+ *
+ * Levels:
+ * - The child can keep leveling up; there is no hard max level in the client.
+ * - The XP required for the current level grows by 50 XP each level.
+ * - Formula:
+ *   Level 1 -> 100 XP
+ *   Level 2 -> 150 XP
+ *   Level 3 -> 200 XP
+ *   XP required = 100 + (level - 1) * 50
+ *
+ * Avatar stages:
+ * - There are 5 visual avatar stages.
+ * - Stage 1: Levels 1-2
+ * - Stage 2: Levels 3-4
+ * - Stage 3: Levels 5-6
+ * - Stage 4: Levels 7-8
+ * - Stage 5: Level 9 and above
+ *
+ * Next avatar look:
+ * - The next visual avatar stage is unlocked at levels 3, 5, 7, and 9.
+ * - After level 9, the avatar already uses the final stage.
+ */
 
 function getXpRequiredForLevel(level: number) {
   return 100 + (level - 1) * 50;
@@ -83,13 +109,13 @@ const AVATAR_STAGE_INFO: Record<
   }
 > = {
   1: {
-    title: "Healthy Habits Begin",
+    title: "Time Explorer",
     subtitle: "Starting the journey to balanced screen time!",
     icon: "star-circle",
   },
   2: {
-    title: "Mindful Choices",
-    subtitle: "Making smart choices every day!",
+    title: "Choice Maker",
+    subtitle: "Making mindful choices and building good habits!",
     icon: "heart-circle",
   },
   3: {
@@ -109,6 +135,56 @@ const AVATAR_STAGE_INFO: Record<
   },
 };
 
+const AVATAR_INFO_SLIDES: {
+  icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+  title: string;
+  description: string;
+  bgColor: string;
+  borderColor: string;
+  iconBgColor: string;
+  iconColor: string;
+}[] = [
+    {
+      icon: "trophy-outline",
+      title: "Achievements",
+      description:
+        "Check your achievements to earn XP and celebrate your progress.",
+      bgColor: "#FFF7ED",
+      borderColor: "#FED7AA",
+      iconBgColor: "#FFE8C2",
+      iconColor: "#B45309",
+    },
+    {
+      icon: "star-circle",
+      title: "XP",
+      description:
+        "XP helps your avatar level up as you complete goals and unlock achievements.",
+      bgColor: "#EEF4FF",
+      borderColor: "#CFE3FF",
+      iconBgColor: "#DBEAFE",
+      iconColor: "#2563EB",
+    },
+    {
+      icon: "trending-up",
+      title: "Levels",
+      description:
+        "The more XP you collect, the higher your avatar level becomes.",
+      bgColor: "#F3EDFF",
+      borderColor: "#E0D2FF",
+      iconBgColor: "#E9D5FF",
+      iconColor: "#6D28D9",
+    },
+    {
+      icon: "palette-outline",
+      title: "Avatar stages",
+      description: "At special levels, your avatar grows and gets a new look.",
+      bgColor: "#EEFFF4",
+      borderColor: "#CFF7DD",
+      iconBgColor: "#DCFCE7",
+      iconColor: "#16A34A",
+    },
+  ];
+
 export default function HomeScreen() {
   const params = useLocalSearchParams<{ initialName?: string }>();
   const { width } = useWindowDimensions();
@@ -123,16 +199,19 @@ export default function HomeScreen() {
     : isTablet
       ? styles.helloTablet
       : styles.helloLarge;
+
   const timerFontStyle = isPhone
     ? styles.timerValueFontPhone
     : isTablet
       ? styles.timerValueFontTablet
       : styles.timerValueFontLarge;
+
   const avatarWrapStyle = isPhone
     ? styles.avatarWrapPhone
     : isTablet
       ? styles.avatarWrapTablet
       : styles.avatarWrapLarge;
+
   const avatarBlockWidthStyle = isPhone
     ? styles.avatarBlockPhone
     : isTablet
@@ -140,7 +219,10 @@ export default function HomeScreen() {
       : styles.avatarBlockLarge;
 
   const [avatarInfoVisible, setAvatarInfoVisible] = useState(false);
-  const [permGate, setPermGate] = useState<"checking" | "ok" | "missing">("checking");
+  const [avatarInfoIndex, setAvatarInfoIndex] = useState(0);
+  const [permGate, setPermGate] = useState<"checking" | "ok" | "missing">(
+    "checking"
+  );
 
   const [screenTime, setScreenTime] = useState({
     remainingMinutes: 0,
@@ -163,9 +245,10 @@ export default function HomeScreen() {
 
   const refreshPermissionGate = useCallback(async (showChecking = false) => {
     if (showChecking) setPermGate("checking");
+
     try {
-      const s = await fetchChildPermissionSnapshot();
-      setPermGate(s.allSatisfied ? "ok" : "missing");
+      const snapshot = await fetchChildPermissionSnapshot();
+      setPermGate(snapshot.allSatisfied ? "ok" : "missing");
     } catch {
       setPermGate("missing");
     }
@@ -177,7 +260,8 @@ export default function HomeScreen() {
     }
 
     const list = Array.isArray(childrenList) ? childrenList : [];
-    return list.find((c: Child) => String(c._id) === String(activeChildId));
+
+    return list.find((child: Child) => String(child._id) === String(activeChildId));
   }, [childrenList, activeChildId]);
 
   const handleSyncLocation = async (requestData?: any) => {
@@ -258,6 +342,7 @@ export default function HomeScreen() {
     const sub = AppState.addEventListener("change", (next) => {
       if (next === "active") void refreshPermissionGate(false);
     });
+
     return () => sub.remove();
   }, [refreshPermissionGate]);
 
@@ -313,6 +398,19 @@ export default function HomeScreen() {
   const avatarStage = getAvatarStageFromLevel(levelValue);
   const nextAvatarStageLevel = getNextAvatarStageLevel(levelValue);
   const avatarStageInfo = AVATAR_STAGE_INFO[avatarStage] ?? AVATAR_STAGE_INFO[1];
+  const currentAvatarInfoSlide = AVATAR_INFO_SLIDES[avatarInfoIndex];
+
+  const goToPreviousAvatarInfo = () => {
+    setAvatarInfoIndex((prev) =>
+      prev === 0 ? AVATAR_INFO_SLIDES.length - 1 : prev - 1
+    );
+  };
+
+  const goToNextAvatarInfo = () => {
+    setAvatarInfoIndex((prev) =>
+      prev === AVATAR_INFO_SLIDES.length - 1 ? 0 : prev + 1
+    );
+  };
 
   const homeAvatarImage = useMemo(
     () =>
@@ -342,400 +440,436 @@ export default function HomeScreen() {
     screenTime.limitEnabled && total > 0
       ? Math.min((screenTime.usedTodayMinutes / total) * 100, 100)
       : 0;
+
   const isNoLimit = !screenTime.limitEnabled;
 
   return (
-    <View
-      style={[styles.childHomeRoot, { backgroundColor: childPalette.screenBg }]}
-    >
-    <ScreenLayout>
-      <View style={[styles.page, isPhoneSmall && styles.pageSmall]}>
-        <View style={styles.headerCard}>
-          <View style={styles.headerRow}>
-            <View style={styles.avatarWrapRow}>
-              <View style={[styles.avatarBlock, avatarBlockWidthStyle]}>
-                <Pressable
-                  onPress={() => setAvatarInfoVisible(true)}
-                  style={[styles.avatarWrap, avatarWrapStyle]}
-                  accessibilityRole="button"
-                  accessibilityLabel="Open avatar progress explanation"
-                >
+    <View style={[styles.childHomeRoot, { backgroundColor: childPalette.screenBg }]}>
+      <ScreenLayout>
+        <View style={[styles.page, isPhoneSmall && styles.pageSmall]}>
+          <View style={styles.headerCard}>
+            <View style={styles.headerRow}>
+              <View style={styles.avatarWrapRow}>
+                <View style={[styles.avatarBlock, avatarBlockWidthStyle]}>
+                  <Pressable
+                    onPress={() => {
+                      setAvatarInfoIndex(0);
+                      setAvatarInfoVisible(true);
+                    }}
+                    style={[styles.avatarWrap, avatarWrapStyle]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Open avatar progress explanation"
+                  >
+                    <Image
+                      source={homeAvatarImage}
+                      style={styles.avatarPhoto}
+                      contentFit="contain"
+                      transition={160}
+                      accessibilityLabel={`${userName} avatar`}
+                    />
+                  </Pressable>
+
+                  <View style={styles.levelBadge}>
+                    <AppText weight="extraBold" style={styles.levelBadgeText}>
+                      Lv. {levelValue}
+                    </AppText>
+                  </View>
+
+                  <View style={styles.xpProgressWrapper}>
+                    <View style={styles.xpProgressHeader}>
+                      <AppText weight="bold" style={styles.xpProgressText}>
+                        {pointsValue}/{xpRequiredForCurrentLevel} XP
+                      </AppText>
+
+                      <AppText weight="bold" style={styles.xpProgressText}>
+                        {xpLeftToNextLevel} left
+                      </AppText>
+                    </View>
+
+                    <View style={styles.xpProgressTrack}>
+                      <View
+                        style={[
+                          styles.xpProgressFill,
+                          { width: `${xpProgressPercent}%` },
+                        ]}
+                      />
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.headerTextSide}>
+                  <AppText
+                    weight="extraBold"
+                    style={[styles.hello, helloFontStyle]}
+                    numberOfLines={1}
+                  >
+                    {`Hi, ${userName}`}
+                  </AppText>
+
+                  <View style={styles.coinsSummaryBadge}>
+                    <View style={styles.coinsSummaryTopRow}>
+                      <MaterialCommunityIcons
+                        name={ICON.coins}
+                        size={18}
+                        color="#F59E0B"
+                      />
+
+                      <AppText weight="extraBold" style={styles.coinsSummaryText}>
+                        {coinsValue} coins
+                      </AppText>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.card}>
+            <View style={styles.cardTitleRowCentered}>
+              <View style={[styles.cardTitleLeft, styles.cardTitleLeftCentered]}>
+                <View style={styles.iconBadge}>
+                  <MaterialCommunityIcons
+                    name={ICON.time}
+                    size={18}
+                    color="#0F172A"
+                  />
+                </View>
+
+                <AppText weight="extraBold" style={styles.cardTitle}>
+                  Time left
+                </AppText>
+              </View>
+            </View>
+
+            <AppText
+              weight="extraBold"
+              style={[
+                styles.timerValue,
+                timerFontStyle,
+                styles.timerValueCentered,
+              ]}
+            >
+              {!screenTime.limitEnabled
+                ? "No limit"
+                : formatTime(screenTime.remainingMinutes)}
+            </AppText>
+
+            {isNoLimit ? null : (
+              <View style={styles.progressTrack}>
+                <View style={[styles.progressFill, { width: `${percent}%` }]} />
+              </View>
+            )}
+
+            <AppText
+              weight="bold"
+              style={[styles.timerSub, styles.timerSubCentered]}
+            >
+              {!screenTime.limitEnabled
+                ? "There is no active limit right now"
+                : "Your time is almost over"}
+            </AppText>
+          </View>
+
+          <View style={styles.grid}>
+            <Tile iconName={ICON.apps} label="Apps" colorKey="apps" disabled />
+
+            <Tile
+              iconName={ICON.extend}
+              label="Request"
+              onPress={() => router.push("/Child/extendTime" as Href)}
+              colorKey="extend"
+            />
+
+            <Tile
+              iconName={ICON.shop}
+              label="Shop"
+              colorKey="shop"
+              onPress={() => router.push("/Child/store" as Href)}
+            />
+
+            <Tile
+              iconName={ICON.tasks}
+              label="Tasks"
+              colorKey="tasks"
+              onPress={() => router.push("/Child/tasks" as Href)}
+            />
+
+            <Tile
+              iconName={ICON.achievements}
+              label="Achievements"
+              colorKey="achievements"
+              onPress={() => router.push("/Child/achievements" as Href)}
+            />
+
+            <Tile iconName={ICON.goals} label="Goals" colorKey="goals" disabled />
+
+            <Tile
+              iconName={ICON.reports}
+              label="Reports"
+              colorKey="help"
+              disabled
+            />
+
+            <Tile
+              iconName={ICON.bulb}
+              label="Ideas"
+              colorKey="ideas"
+              onPress={() => router.push("/Child/ideas" as Href)}
+            />
+
+            <Tile
+              iconName={ICON.settings}
+              label="Settings"
+              colorKey="help"
+              onPress={() => router.push("/Child/settings" as Href)}
+            />
+          </View>
+
+          <Pressable
+            disabled
+            style={({ pressed }) => [
+              styles.panicBtn,
+              styles.panicDisabled,
+              pressed && styles.panicPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="SOS disabled"
+            accessibilityState={{ disabled: true }}
+          >
+            <View style={styles.panicContent}>
+              <View style={styles.panicIconBadge}>
+                <MaterialCommunityIcons name={ICON.panic} size={18} color="#fff" />
+              </View>
+
+              <AppText weight="extraBold" style={styles.panicText}>
+                SOS
+              </AppText>
+            </View>
+          </Pressable>
+
+          <Modal
+            visible={avatarInfoVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setAvatarInfoVisible(false)}
+          >
+            <Pressable
+              style={styles.avatarModalOverlay}
+              onPress={() => setAvatarInfoVisible(false)}
+            >
+              <Pressable style={styles.avatarInfoCard} onPress={() => { }}>
+                <View style={styles.avatarInfoImageWrap}>
                   <Image
                     source={homeAvatarImage}
-                    style={styles.avatarPhoto}
+                    style={styles.avatarInfoImage}
                     contentFit="contain"
                     transition={160}
-                    accessibilityLabel={`${userName} avatar`}
                   />
-                </Pressable>
+                </View>
 
-                <View style={styles.levelBadge}>
+                <View style={styles.avatarInfoLevelBadge}>
                   <AppText weight="extraBold" style={styles.levelBadgeText}>
                     Lv. {levelValue}
                   </AppText>
                 </View>
 
-                <View style={styles.xpProgressWrapper}>
-                  <View style={styles.xpProgressHeader}>
-                    <AppText weight="bold" style={styles.xpProgressText}>
-                      {pointsValue}/{xpRequiredForCurrentLevel} XP
-                    </AppText>
+                <View style={styles.avatarStageTitleRow}>
+                  <MaterialCommunityIcons
+                    name={avatarStageInfo.icon}
+                    size={22}
+                    color="#5B7FD6"
+                  />
 
-                    <AppText weight="bold" style={styles.xpProgressText}>
-                      {xpLeftToNextLevel} left
+                  <AppText weight="extraBold" style={styles.avatarInfoTitle}>
+                    {avatarStageInfo.title}
+                  </AppText>
+                </View>
+
+                <AppText weight="bold" style={styles.avatarInfoSubtitle}>
+                  {avatarStageInfo.subtitle}
+                </AppText>
+
+                <View style={styles.avatarInfoXpBlock}>
+                  <View
+                    style={[
+                      styles.avatarInfoXpMarker,
+                      { left: `${xpMarkerPercent}%` },
+                    ]}
+                  >
+                    <AppText
+                      weight="extraBold"
+                      style={styles.avatarInfoXpMarkerText}
+                    >
+                      {pointsValue}/{xpRequiredForCurrentLevel} XP
                     </AppText>
                   </View>
 
-                  <View style={styles.xpProgressTrack}>
+                  <View style={styles.avatarInfoProgressTrack}>
                     <View
                       style={[
-                        styles.xpProgressFill,
+                        styles.avatarInfoProgressFill,
                         { width: `${xpProgressPercent}%` },
                       ]}
                     />
                   </View>
-                </View>
-              </View>
 
-              <View style={styles.headerTextSide}>
-                <AppText
-                  weight="extraBold"
-                  style={[styles.hello, helloFontStyle]}
-                  numberOfLines={1}
-                >
-                  {`Hi, ${userName}`}
-                </AppText>
+                  <View style={styles.avatarInfoXpRangeRow}>
+                    <AppText weight="bold" style={styles.avatarInfoXpRangeText}>
+                      Level {levelValue}
+                    </AppText>
 
-                <View style={styles.coinsSummaryBadge}>
-                  <View style={styles.coinsSummaryTopRow}>
-                    <MaterialCommunityIcons
-                      name={ICON.coins}
-                      size={18}
-                      color="#B45309"
-                    />
-
-                    <AppText weight="extraBold" style={styles.coinsSummaryText}>
-                      {coinsValue} coins
+                    <AppText weight="bold" style={styles.avatarInfoXpRangeText}>
+                      Level {levelValue + 1}
                     </AppText>
                   </View>
                 </View>
-              </View>
-            </View>
-          </View>
-        </View>
 
-        <View style={styles.card}>
-          <View style={styles.cardTitleRowCentered}>
-            <View style={[styles.cardTitleLeft, styles.cardTitleLeftCentered]}>
-              <View style={styles.iconBadge}>
-                <MaterialCommunityIcons
-                  name={ICON.time}
-                  size={18}
-                  color="#0F172A"
-                />
-              </View>
-
-              <AppText weight="extraBold" style={styles.cardTitle}>
-                Time left
-              </AppText>
-            </View>
-          </View>
-
-          <AppText
-            weight="extraBold"
-            style={[
-              styles.timerValue,
-              timerFontStyle,
-              styles.timerValueCentered,
-            ]}
-          >
-            {!screenTime.limitEnabled
-              ? "No limit"
-              : formatTime(screenTime.remainingMinutes)}
-          </AppText>
-
-          {isNoLimit ? null : (
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${percent}%` }]} />
-            </View>
-          )}
-
-          <AppText
-            weight="bold"
-            style={[styles.timerSub, styles.timerSubCentered]}
-          >
-            {!screenTime.limitEnabled
-              ? "There is no active limit right now"
-              : "Your time is almost over"}
-          </AppText>
-        </View>
-
-        <View style={styles.grid}>
-          <Tile iconName={ICON.apps} label="Apps" colorKey="apps" disabled />
-
-          <Tile
-            iconName={ICON.extend}
-            label="Request"
-            onPress={() => router.push("/Child/extendTime" as Href)}
-            colorKey="extend"
-          />
-
-          <Tile
-            iconName={ICON.shop}
-            label="Shop"
-            colorKey="shop"
-            onPress={() => router.push("/Child/store" as Href)}
-          />
-
-          <Tile
-            iconName={ICON.tasks}
-            label="Tasks"
-            colorKey="tasks"
-            onPress={() => router.push("/Child/tasks" as Href)}
-          />
-
-          <Tile
-            iconName={ICON.achievements}
-            label="Achievements"
-            colorKey="achievements"
-            onPress={() => router.push("/Child/achievements" as Href)}
-          />
-
-          <Tile iconName={ICON.goals} label="Goals" colorKey="goals" disabled />
-
-          <Tile
-            iconName={ICON.reports}
-            label="Reports"
-            colorKey="help"
-            disabled
-          />
-
-          <Tile
-            iconName={ICON.bulb}
-            label="Ideas"
-            colorKey="ideas"
-            onPress={() => router.push("/Child/ideas" as Href)}
-          />
-
-          <Tile
-            iconName={ICON.settings}
-            label="Settings"
-            colorKey="help"
-            onPress={() => router.push("/Child/settings" as Href)}
-          />
-        </View>
-
-        <Pressable
-          disabled
-          style={({ pressed }) => [
-            styles.panicBtn,
-            styles.panicDisabled,
-            pressed && styles.panicPressed,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="SOS disabled"
-          accessibilityState={{ disabled: true }}
-        >
-          <View style={styles.panicContent}>
-            <View style={styles.panicIconBadge}>
-              <MaterialCommunityIcons name={ICON.panic} size={18} color="#fff" />
-            </View>
-
-            <AppText weight="extraBold" style={styles.panicText}>
-              SOS
-            </AppText>
-          </View>
-        </Pressable>
-
-        <Modal
-          visible={avatarInfoVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setAvatarInfoVisible(false)}
-        >
-          <Pressable
-            style={styles.avatarModalOverlay}
-            onPress={() => setAvatarInfoVisible(false)}
-          >
-            <Pressable style={styles.avatarInfoCard} onPress={() => { }}>
-              <View style={styles.avatarInfoImageWrap}>
-                <Image
-                  source={homeAvatarImage}
-                  style={styles.avatarInfoImage}
-                  contentFit="contain"
-                  transition={160}
-                />
-              </View>
-
-              <View style={styles.avatarInfoLevelBadge}>
-                <AppText weight="extraBold" style={styles.levelBadgeText}>
-                  Lv. {levelValue}
-                </AppText>
-              </View>
-
-
-              <View style={styles.avatarStageTitleRow}>
-                <MaterialCommunityIcons
-                  name={avatarStageInfo.icon}
-                  size={22}
-                  color="#5B7FD6"
-                />
-
-                <AppText weight="extraBold" style={styles.avatarInfoTitle}>
-                  {avatarStageInfo.title}
-                </AppText>
-              </View>
-
-              <AppText weight="bold" style={styles.avatarInfoSubtitle}>
-                {avatarStageInfo.subtitle}
-              </AppText>
-
-              <View style={styles.avatarInfoXpBlock}>
                 <View
                   style={[
-                    styles.avatarInfoXpMarker,
-                    { left: `${xpMarkerPercent}%` },
+                    styles.avatarInfoSlideCard,
+                    {
+                      backgroundColor: currentAvatarInfoSlide.bgColor,
+                      borderColor: currentAvatarInfoSlide.borderColor,
+                    },
                   ]}
                 >
-                  <AppText weight="extraBold" style={styles.avatarInfoXpMarkerText}>
-                    {pointsValue}/{xpRequiredForCurrentLevel} XP
-                  </AppText>
-                </View>
-
-                <View style={styles.avatarInfoProgressTrack}>
                   <View
                     style={[
-                      styles.avatarInfoProgressFill,
-                      { width: `${xpProgressPercent}%` },
+                      styles.avatarInfoSlideIconWrap,
+                      {
+                        backgroundColor: currentAvatarInfoSlide.iconBgColor,
+                        borderColor: currentAvatarInfoSlide.borderColor,
+                      },
                     ]}
-                  />
-                </View>
+                  >
+                    <MaterialCommunityIcons
+                      name={currentAvatarInfoSlide.icon}
+                      size={34}
+                      color={currentAvatarInfoSlide.iconColor}
+                    />
+                  </View>
 
-                <View style={styles.avatarInfoXpRangeRow}>
-                  <AppText weight="bold" style={styles.avatarInfoXpRangeText}>
-                    Level {levelValue}
+                  <AppText weight="extraBold" style={styles.avatarInfoSlideTitle}>
+                    {currentAvatarInfoSlide.title}
                   </AppText>
 
-                  <AppText weight="bold" style={styles.avatarInfoXpRangeText}>
-                    Level {levelValue + 1}
+                  <AppText weight="medium" style={styles.avatarInfoSlideDescription}>
+                    {currentAvatarInfoSlide.description}
                   </AppText>
                 </View>
-              </View>
 
-              <View style={styles.avatarInfoTextBox}>
-                <AvatarInfoRow
-                  icon="trophy-outline"
-                  text="Check your achievements to earn XP."
-                />
+                <View style={styles.avatarInfoControlsRow}>
+                  <Pressable
+                    onPress={goToPreviousAvatarInfo}
+                    accessibilityRole="button"
+                    accessibilityLabel="Previous avatar information"
+                    style={({ pressed }) => [
+                      styles.avatarInfoArrowButton,
+                      pressed && styles.avatarInfoArrowPressed,
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name="chevron-left"
+                      size={26}
+                      color="#2563EB"
+                    />
+                  </Pressable>
 
-                <AvatarInfoRow
-                  icon="star-four-points-outline"
-                  text="You can unlock achievements for first steps, encouragement, and good habits."
-                />
+                  <AppText weight="bold" style={styles.avatarInfoStepText}>
+                    {avatarInfoIndex + 1} / {AVATAR_INFO_SLIDES.length}
+                  </AppText>
 
-                <AvatarInfoRow
-                  icon="trending-up"
-                  text="The more XP you collect, the higher your avatar level becomes."
-                />
+                  <Pressable
+                    onPress={goToNextAvatarInfo}
+                    accessibilityRole="button"
+                    accessibilityLabel="Next avatar information"
+                    style={({ pressed }) => [
+                      styles.avatarInfoArrowButton,
+                      pressed && styles.avatarInfoArrowPressed,
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name="chevron-right"
+                      size={26}
+                      color="#2563EB"
+                    />
+                  </Pressable>
+                </View>
 
-                <AvatarInfoRow
-                  icon="palette-outline"
-                  text="When your avatar reaches special levels, it gets a new look."
-                />
-              </View>
-
-              <AppText weight="bold" style={styles.avatarInfoDescription}>
-                {nextAvatarStageLevel
-                  ? `Keep going!\n A new avatar look is waiting at level ${nextAvatarStageLevel}.`
-                  : "Amazing! You unlocked every avatar look."}
-              </AppText>
-
-              <Pressable
-                style={styles.avatarInfoButton}
-                onPress={() => setAvatarInfoVisible(false)}
-                accessibilityRole="button"
-                accessibilityLabel="Close avatar explanation"
-              >
-                <AppText weight="extraBold" style={styles.avatarInfoButtonText}>
-                  {"Let's go!"}
+                <AppText weight="bold" style={styles.avatarInfoDescription}>
+                  {nextAvatarStageLevel
+                    ? `Keep going!\nA new avatar look and title are waiting for you at level ${nextAvatarStageLevel}.`
+                    : "Amazing! You unlocked every avatar look."}
                 </AppText>
+
+                <Pressable
+                  style={styles.avatarInfoButton}
+                  onPress={() => setAvatarInfoVisible(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close avatar explanation"
+                >
+                  <AppText weight="extraBold" style={styles.avatarInfoButtonText}>
+                    {"Let's go!"}
+                  </AppText>
+                </Pressable>
               </Pressable>
             </Pressable>
-          </Pressable>
-        </Modal>
-      </View>
-    </ScreenLayout>
-
-    <Modal
-      visible={isHomeFocused && permGate !== "ok"}
-      transparent
-      animationType="fade"
-      statusBarTranslucent
-      onRequestClose={() => {
-        /* Blocking until all permissions are granted */
-      }}
-    >
-      <View style={styles.permissionModalOverlay}>
-        <View
-          style={[
-            styles.permissionModalCard,
-            { borderColor: childPalette.cardBorder },
-          ]}
-        >
-          {permGate === "checking" ? (
-            <>
-              <ActivityIndicator size="large" color={childPalette.accent} />
-              <AppText weight="bold" style={styles.permissionModalBody}>
-                Checking permissions…
-              </AppText>
-            </>
-          ) : (
-            <>
-              <AppText weight="extraBold" style={styles.permissionModalTitle}>
-                Permissions needed
-              </AppText>
-              <AppText weight="bold" style={styles.permissionModalBody}>
-                To use Screen Guardian, turn on every permission in Settings.
-              </AppText>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.permissionModalBtn,
-                  { backgroundColor: childPalette.accent },
-                  pressed && styles.permissionModalBtnPressed,
-                ]}
-                onPress={() => router.push("/Child/settings" as Href)}
-                accessibilityRole="button"
-                accessibilityLabel="Open permissions settings"
-              >
-                <AppText weight="extraBold" style={styles.permissionModalBtnText}>
-                  Open permissions
-                </AppText>
-              </Pressable>
-            </>
-          )}
+          </Modal>
         </View>
-      </View>
-    </Modal>
-    </View>
-  );
-}
+      </ScreenLayout>
 
-function AvatarInfoRow({
-  icon,
-  text,
-}: {
-  icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
-  text: string;
-}) {
-  return (
-    <View style={styles.avatarInfoRow}>
-      <View style={styles.avatarInfoRowIcon}>
-        <MaterialCommunityIcons name={icon} size={17} color="#5B7FD6" />
-      </View>
+      <Modal
+        visible={isHomeFocused && permGate !== "ok"}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => {
+          /* Blocking until all permissions are granted */
+        }}
+      >
+        <View style={styles.permissionModalOverlay}>
+          <View
+            style={[
+              styles.permissionModalCard,
+              { borderColor: childPalette.cardBorder },
+            ]}
+          >
+            {permGate === "checking" ? (
+              <>
+                <ActivityIndicator size="large" color={childPalette.accent} />
+                <AppText weight="bold" style={styles.permissionModalBody}>
+                  Checking permissions…
+                </AppText>
+              </>
+            ) : (
+              <>
+                <AppText weight="extraBold" style={styles.permissionModalTitle}>
+                  Permissions needed
+                </AppText>
 
-      <AppText weight="bold" style={styles.avatarInfoLine}>
-        {text}
-      </AppText>
+                <AppText weight="bold" style={styles.permissionModalBody}>
+                  To use Screen Guardian, turn on every permission in Settings.
+                </AppText>
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.permissionModalBtn,
+                    { backgroundColor: childPalette.accent },
+                    pressed && styles.permissionModalBtnPressed,
+                  ]}
+                  onPress={() => router.push("/Child/settings" as Href)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open permissions settings"
+                >
+                  <AppText weight="extraBold" style={styles.permissionModalBtnText}>
+                    Open permissions
+                  </AppText>
+                </Pressable>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -771,9 +905,7 @@ function Tile({
     >
       <View style={styles.tileInner}>
         <View style={styles.tileIconZone}>
-          <View
-            style={[styles.tileIconWrap, disabled && styles.tileIconDisabled]}
-          >
+          <View style={[styles.tileIconWrap, disabled && styles.tileIconDisabled]}>
             <MaterialCommunityIcons
               name={iconName}
               size={26}

@@ -667,58 +667,58 @@ export const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   avatarInfoXpBlock: {
-  width: "100%",
-  marginTop: 12,
-  paddingTop: 28,
-},
+    width: "100%",
+    marginTop: 12,
+    paddingTop: 28,
+  },
 
-avatarInfoXpMarker: {
-  position: "absolute",
-  top: 0,
-  minWidth: 70,
-  paddingHorizontal: 8,
-  paddingVertical: 4,
-  borderRadius: 999,
-  backgroundColor: "#5B7FD6",
-  alignItems: "center",
-  transform: [{ translateX: -35 }],
-  zIndex: 2,
-},
+  avatarInfoXpMarker: {
+    position: "absolute",
+    top: 0,
+    minWidth: 70,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: "#5B7FD6",
+    alignItems: "center",
+    transform: [{ translateX: -35 }],
+    zIndex: 2,
+  },
 
-avatarInfoXpMarkerText: {
-  fontSize: 11,
-  color: "#FFFFFF",
-  writingDirection: "ltr",
-  textAlign: "center",
-},
+  avatarInfoXpMarkerText: {
+    fontSize: 11,
+    color: "#FFFFFF",
+    writingDirection: "ltr",
+    textAlign: "center",
+  },
 
-avatarInfoXpRangeRow: {
-  marginTop: 7,
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-},
+  avatarInfoXpRangeRow: {
+    marginTop: 7,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
 
-avatarInfoXpRangeText: {
-  fontSize: 12,
-  color: "#64748B",
-  writingDirection: "ltr",
-},
+  avatarInfoXpRangeText: {
+    fontSize: 12,
+    color: "#64748B",
+    writingDirection: "ltr",
+  },
 
-avatarInfoLevelBadge: {
-  alignSelf: "center",
-  marginTop: -8,
-  marginBottom: 12,
-  paddingHorizontal: 12,
-  paddingVertical: 5,
-  borderRadius: 999,
-  backgroundColor: "#5B7FD6",
-  shadowColor: "#000",
-  shadowOpacity: 0.12,
-  shadowRadius: 8,
-  shadowOffset: { width: 0, height: 3 },
-  elevation: 3,
-},
+  avatarInfoLevelBadge: {
+    alignSelf: "center",
+    marginTop: -8,
+    marginBottom: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: "#5B7FD6",
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
+  },
 
   childHomeRoot: {
     flex: 1,
@@ -786,4 +786,77 @@ avatarInfoLevelBadge: {
     paddingHorizontal: 20,
   },
   permissionModalBtnPressed: { opacity: 0.92 },
+
+  avatarInfoSlideCard: {
+    width: "100%",
+    borderRadius: 22,
+    backgroundColor: "#F7FAFF",
+    borderWidth: 1,
+    borderColor: "#D6E6FF",
+    padding: 18,
+    alignItems: "center",
+    marginTop: 18,
+    marginBottom: 16,
+  },
+
+  avatarInfoSlideIconWrap: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: "#EAF2FF",
+    borderWidth: 1,
+    borderColor: "#CFE3FF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+
+  avatarInfoSlideTitle: {
+    fontSize: 18,
+    color: "#0F172A",
+    textAlign: "center",
+    includeFontPadding: false,
+  },
+
+  avatarInfoSlideDescription: {
+    marginTop: 8,
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#64748B",
+    textAlign: "center",
+    includeFontPadding: false,
+  },
+
+  avatarInfoControlsRow: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 14,
+    marginBottom: 14,
+  },
+
+  avatarInfoArrowButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#EEF4FF",
+    borderWidth: 1,
+    borderColor: "#D6E6FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  avatarInfoArrowPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.97 }],
+  },
+
+  avatarInfoStepText: {
+    minWidth: 44,
+    fontSize: 13,
+    color: "#64748B",
+    textAlign: "center",
+    includeFontPadding: false,
+  },
 });
