@@ -24,6 +24,7 @@ import { getChildrenByParentId } from "../dal/parent.dal.js";
 import { getIO, emitPolicyUpdated, emitDeviceStatusUpdated } from "../socketHandler.js";
 import { FORCE_CHILD_LOGOUT } from "../constants/socketEvents.js";
 import { formatJerusalemOffsetIsoNow } from "../utils/time.js";
+import { LimitMode } from "../constants/limitMode.js";
 
 function assertDailyLimitMinutes(value) {
   const n = Number(value);
@@ -44,6 +45,22 @@ function isSameDay(date1, date2) {
   );
 }
 
+// If an old device has limits enabled but no limitMode yet, it falls back to DAILY.
+function getEffectiveLimitMode(screenTime) {
+  if (screenTime?.isLimitEnabled !== true) {
+    return LimitMode.NONE;
+  }
+
+  if (
+    screenTime.limitMode &&
+    screenTime.limitMode !== LimitMode.NONE
+  ) {
+    return screenTime.limitMode;
+  }
+
+  return LimitMode.DAILY;
+}
+
 
 // Builds a lightweight current status object for the device based on daily screen-time data
 function buildCurrentStatus(device) {
@@ -56,6 +73,7 @@ function buildCurrentStatus(device) {
 
   return {
     isLimitEnabled: device.screenTime?.isLimitEnabled ?? false,
+    limitMode: getEffectiveLimitMode(device.screenTime),
     dailyLimitMinutes,
     extraMinutesToday,
     usedTodayMinutes,
@@ -76,7 +94,12 @@ function buildPolicyPayload(device) {
     screenTime: {
       isLimitEnabled: device.screenTime?.isLimitEnabled ?? false,
       dailyLimitMinutes: Number(device.screenTime?.dailyLimitMinutes ?? 0),
-      extraMinutesToday: Number(device.screenTime?.extraMinutesToday ?? 0)
+      extraMinutesToday: Number(device.screenTime?.extraMinutesToday ?? 0),
+      limitMode: getEffectiveLimitMode(device.screenTime),
+      weeklyLimitMinutes: Number(device.screenTime?.weeklyLimitMinutes ?? 0),
+      usedTodayMinutes: Number(device.screenTime?.usedTodayMinutes ?? 0),
+      usedWeekMinutes: Number(device.screenTime?.usedWeekMinutes ?? 0),
+      weeklySchedule: device.screenTime?.weeklySchedule ?? [],
     }
   };
 }
@@ -127,13 +150,16 @@ function buildDeviceStatusPayload(device) {
     deviceId: String(device._id),
     isLocked,
     isActive: device.isActive ?? true,
+    limitMode: getEffectiveLimitMode(device.screenTime),
     status: calculateRealtimeHomeStatus(
       usedTodayMinutes,
       isLimitEnabled ? totalAllowedMinutes : null,
       isLocked
     ),
     usedTodayMinutes,
+    usedWeekMinutes: Number(device.screenTime?.usedWeekMinutes ?? 0),
     dailyLimitMinutes: isLimitEnabled ? totalAllowedMinutes : null,
+    weeklyLimitMinutes: Number(device.screenTime?.weeklyLimitMinutes ?? 0),
     extraMinutesToday,
     remainingMinutes: isLimitEnabled
       ? Math.max(totalAllowedMinutes - usedTodayMinutes, 0)
@@ -313,7 +339,10 @@ export async function getDeviceScreenTime(parentId, deviceId) {
     device = await resetDailyScreenTime(deviceId, now);
   }
 
-  return device.screenTime;
+  return {
+    ...(device.screenTime?.toObject?.() ?? device.screenTime ?? {}),
+    limitMode: getEffectiveLimitMode(device.screenTime),
+  };
 }
 
 // Update screen-time settings for a specific device
@@ -327,6 +356,27 @@ export async function updateDeviceScreenTime(parentId, deviceId, body) {
     ...currentScreenTime,
     ...body
   };
+
+  const allowedLimitModes = Object.values(LimitMode);
+
+  if (
+    body.limitMode !== undefined &&
+    !allowedLimitModes.includes(body.limitMode)
+  ) {
+    throw new AppError(CommonErrors.VALIDATION_ERROR);
+  }
+
+  if (body.isLimitEnabled === false) {
+    nextScreenTime.limitMode = LimitMode.NONE;
+  }
+
+  if (
+    body.isLimitEnabled === true &&
+    (!nextScreenTime.limitMode || nextScreenTime.limitMode === LimitMode.NONE)
+  ) {
+    nextScreenTime.limitMode = LimitMode.DAILY;
+  }
+
 
   const patch = {
     screenTime: nextScreenTime
@@ -432,6 +482,7 @@ export async function getDevicePolicy({ deviceId, childId, parentId }) {
     isActive: device.isActive,
     screenTime: {
       isLimitEnabled: device.screenTime?.isLimitEnabled ?? false,
+      limitMode: getEffectiveLimitMode(device.screenTime),
       dailyLimitMinutes: device.screenTime?.dailyLimitMinutes ?? 0,
       extraMinutesToday: device.screenTime?.extraMinutesToday ?? 0,
       weeklyLimitMinutes: device.screenTime?.weeklyLimitMinutes ?? 0,
@@ -577,6 +628,7 @@ export async function getDeviceDailyLimit(parentId, deviceId) {
 
   return {
     isLimitEnabled: device.screenTime?.isLimitEnabled ?? false,
+    limitMode: getEffectiveLimitMode(device.screenTime),
     dailyLimitMinutes: device.screenTime?.dailyLimitMinutes ?? 0,
     extraMinutesToday: device.screenTime?.extraMinutesToday ?? 0,
     usedTodayMinutes: device.screenTime?.usedTodayMinutes ?? 0
@@ -633,6 +685,7 @@ export async function updateDeviceDailyLimitService(parentId, deviceId, body) {
 
   return {
     isLimitEnabled: updatedDevice.screenTime?.isLimitEnabled ?? false,
+    limitMode: getEffectiveLimitMode(updatedDevice.screenTime),
     dailyLimitMinutes: updatedDevice.screenTime?.dailyLimitMinutes ?? 0,
     extraMinutesToday: updatedDevice.screenTime?.extraMinutesToday ?? 0,
     usedTodayMinutes: updatedDevice.screenTime?.usedTodayMinutes ?? 0
