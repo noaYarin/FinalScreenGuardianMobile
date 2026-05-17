@@ -26,6 +26,14 @@ export const DeviceSchema = new mongoose.Schema(
             type: Boolean,
             default: false
         },
+        weeklyLimitLockActive: {
+            type: Boolean,
+            default: false
+        },
+        scheduleLockActive: {
+            type: Boolean,
+            default: false
+        },
         isActive: { type: Boolean, default: true },
         code: { type: String, default: "" },
         location: {

@@ -59,7 +59,8 @@ export async function releaseDevicePolicyBeforeDelete(deviceId) {
   device.isLocked = false;
   device.manualLockEnabled = false;
   device.dailyLimitLockActive = false;
-
+  device.weeklyLimitLockActive = false;
+  device.scheduleLockActive = false;
   if (!device.screenTime) {
     device.screenTime = {};
   }
@@ -147,14 +148,15 @@ export async function resetDailyScreenTime(deviceId, now) {
     return null;
   }
 
-  const manualLockEnabled = device.manualLockEnabled === true;
-
   return DeviceModel.findByIdAndUpdate(
     deviceId,
     {
       $set: {
         dailyLimitLockActive: false,
-        isLocked: manualLockEnabled,
+        isLocked:
+          device.manualLockEnabled === true ||
+          device.weeklyLimitLockActive === true ||
+          device.scheduleLockActive === true,
         "screenTime.usedTodayMinutes": 0,
         "screenTime.extraMinutesToday": 0,
         "screenTime.lastDailyResetAt": now
@@ -164,15 +166,25 @@ export async function resetDailyScreenTime(deviceId, now) {
   ).lean();
 }
 
-
-// Resets the weekly screen-time usage counter when a new week starts.
+// Resets the weekly screen-time usage counter and clears weekly limit lock state when a new week starts.
 export async function resetWeeklyScreenTime(deviceId, now) {
   assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
+
+  const device = await DeviceModel.findById(deviceId).lean();
+
+  if (!device) {
+    return null;
+  }
 
   return DeviceModel.findByIdAndUpdate(
     deviceId,
     {
       $set: {
+        weeklyLimitLockActive: false,
+        isLocked:
+          device.manualLockEnabled === true ||
+          device.dailyLimitLockActive === true ||
+          device.scheduleLockActive === true,
         "screenTime.usedWeekMinutes": 0,
         "screenTime.lastWeeklyResetAt": now
       }
@@ -227,7 +239,7 @@ export async function updateDeviceDailyLimit(deviceId, { isLimitEnabled, dailyLi
   const fieldsToSet = {
     "screenTime.isLimitEnabled": isLimitEnabled,
     "screenTime.limitMode": isLimitEnabled === true ? LimitMode.DAILY : LimitMode.NONE,
-    "screenTime.dailyLimitMinutes": dailyLimitMinutes
+    "screenTime.dailyLimitMinutes": dailyLimitMinutes,
   };
 
   const extraMinutesToday = Number(device.screenTime?.extraMinutesToday ?? 0);
@@ -265,6 +277,8 @@ export async function findDeviceStatusById(deviceId) {
       isLocked: 1,
       manualLockEnabled: 1,
       dailyLimitLockActive: 1,
+      weeklyLimitLockActive: 1,
+      scheduleLockActive: 1,
       isActive: 1,
       "screenTime.isLimitEnabled": 1,
       "screenTime.limitMode": 1,

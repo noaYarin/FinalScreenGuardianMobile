@@ -133,7 +133,9 @@ function buildPolicyPayload(device) {
     isLocked: device.isLocked ?? false,
     lockState: {
       manualLockEnabled: device.manualLockEnabled ?? false,
-      dailyLimitLockActive: device.dailyLimitLockActive ?? false
+      dailyLimitLockActive: device.dailyLimitLockActive ?? false,
+      weeklyLimitLockActive: device.weeklyLimitLockActive ?? false,
+      scheduleLockActive: device.scheduleLockActive ?? false
     },
     screenTime: {
       isLimitEnabled: device.screenTime?.isLimitEnabled ?? false,
@@ -195,6 +197,8 @@ function buildDeviceStatusPayload(device) {
     isLocked,
     isActive: device.isActive ?? true,
     limitMode: getEffectiveLimitMode(device.screenTime),
+    weeklyLimitLockActive: device.weeklyLimitLockActive ?? false,
+    scheduleLockActive: device.scheduleLockActive ?? false,
     status: calculateRealtimeHomeStatus(
       usedTodayMinutes,
       isLimitEnabled ? totalAllowedMinutes : null,
@@ -299,7 +303,10 @@ export async function unlockDevice(parentId, deviceId) {
   const device = await validateDeviceAccess({ deviceId, parentId });
   const updatedDevice = await updateDeviceById(deviceId, {
     manualLockEnabled: false,
-    isLocked: device.dailyLimitLockActive === true
+    isLocked:
+      device.dailyLimitLockActive === true ||
+      device.weeklyLimitLockActive === true ||
+      device.scheduleLockActive === true
   });
   pushPolicyUpdate(updatedDevice);
 
@@ -448,10 +455,18 @@ export async function updateDeviceScreenTime(parentId, deviceId, body) {
   if (body.isLimitEnabled === false) {
     patch.screenTime.extraMinutesToday = 0;
     patch.dailyLimitLockActive = false;
+    patch.weeklyLimitLockActive = false;
+    patch.scheduleLockActive = false;
     patch.isLocked = device.manualLockEnabled === true;
-  } else if (nextScreenTime.isLimitEnabled === true && nextRemainingMinutes > 0) {
+  } else if (
+    getEffectiveLimitMode(nextScreenTime) === LimitMode.DAILY &&
+    nextRemainingMinutes > 0
+  ) {
     patch.dailyLimitLockActive = false;
-    patch.isLocked = device.manualLockEnabled === true;
+    patch.isLocked =
+      device.manualLockEnabled === true ||
+      device.weeklyLimitLockActive === true ||
+      device.scheduleLockActive === true;
   }
 
   const updatedDevice = await updateDeviceById(deviceId, patch);
