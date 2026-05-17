@@ -1,6 +1,7 @@
 import DeviceModel from "../models/device.model.js";
 import { Common as CommonErrors } from "../constants/errors.js";
 import { assertValidObjectId } from "../utils/validators.js";
+import { LimitMode } from "../constants/limitMode.js";
 
 export async function createDevice(doc) {
   return DeviceModel.create(doc);
@@ -64,6 +65,7 @@ export async function releaseDevicePolicyBeforeDelete(deviceId) {
   }
 
   device.screenTime.isLimitEnabled = false;
+  device.screenTime.limitMode = LimitMode.NONE;
   device.screenTime.dailyLimitMinutes = 0;
   device.screenTime.extraMinutesToday = 0;
   device.screenTime.usedTodayMinutes = 0;
@@ -82,6 +84,7 @@ export async function releaseDevicePolicyBeforeDelete(deviceId) {
       }
 
       app.screenTime.isLimitEnabled = false;
+      app.screenTime.limitMode = LimitMode.NONE;
       app.screenTime.dailyLimitMinutes = 0;
       app.screenTime.extraMinutesToday = 0;
       app.screenTime.usedTodayMinutes = 0;
@@ -186,6 +189,7 @@ export async function findDeviceDailyLimitById(deviceId) {
     deviceId,
     {
       "screenTime.isLimitEnabled": 1,
+      "screenTime.limitMode": 1,
       "screenTime.dailyLimitMinutes": 1,
       "screenTime.extraMinutesToday": 1,
       "screenTime.usedTodayMinutes": 1
@@ -204,6 +208,7 @@ export async function updateDeviceDailyLimit(deviceId, { isLimitEnabled, dailyLi
 
   const fieldsToSet = {
     "screenTime.isLimitEnabled": isLimitEnabled,
+    "screenTime.limitMode": isLimitEnabled === true ? LimitMode.DAILY : LimitMode.NONE,
     "screenTime.dailyLimitMinutes": dailyLimitMinutes
   };
 
@@ -244,10 +249,15 @@ export async function findDeviceStatusById(deviceId) {
       dailyLimitLockActive: 1,
       isActive: 1,
       "screenTime.isLimitEnabled": 1,
+      "screenTime.limitMode": 1,
       "screenTime.dailyLimitMinutes": 1,
       "screenTime.extraMinutesToday": 1,
       "screenTime.usedTodayMinutes": 1,
-      "screenTime.lastDailyResetAt": 1
+      "screenTime.lastDailyResetAt": 1,
+      "screenTime.weeklyLimitMinutes": 1,
+      "screenTime.usedWeekMinutes": 1,
+      "screenTime.lastWeeklyResetAt": 1,
+      "screenTime.weeklySchedule": 1
     }
   ).lean();
 }

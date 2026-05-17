@@ -1,9 +1,16 @@
 import mongoose from "mongoose";
 import { DayScheduleSchema } from "./daySchedule.schema.js";
+import { LimitMode } from "../constants/limitMode.js";
+
 
 export const ScreenTimeSchema = new mongoose.Schema(
     {
         isLimitEnabled: { type: Boolean, default: false },
+        limitMode: {
+            type: String,
+            enum: Object.values(LimitMode),
+            default: LimitMode.NONE,
+        },
         dailyLimitMinutes: {
             type: Number,
             default: 0,
@@ -16,7 +23,7 @@ export const ScreenTimeSchema = new mongoose.Schema(
             type: Number,
             default: 0,
             min: 0,
-            max: 10080 
+            max: 10080
         },
         lastWeeklyResetAt: { type: Date, default: Date.now },
         usedTodayMinutes: { type: Number, default: 0 },
