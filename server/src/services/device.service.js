@@ -16,6 +16,7 @@ import {
   updateDeviceDailyLimit,
   findDeviceStatusById,
   updateDeviceUsedTodayMinutes,
+  updateDeviceUsageMinutes,
   updateDeviceHeartbeat,
   releaseDevicePolicyBeforeDelete
 
@@ -61,6 +62,18 @@ function getEffectiveLimitMode(screenTime) {
 
   return LimitMode.DAILY;
 }
+
+
+// Calculates the next weekly usage counter by adding only the new daily usage delta.
+function calculateNextUsedWeekMinutes(screenTime, nextUsedTodayMinutes) {
+  const previousUsedTodayMinutes = Number(screenTime?.usedTodayMinutes ?? 0);
+  const previousUsedWeekMinutes = Number(screenTime?.usedWeekMinutes ?? 0);
+
+  const deltaMinutes = Math.max(nextUsedTodayMinutes - previousUsedTodayMinutes, 0);
+
+  return previousUsedWeekMinutes + deltaMinutes;
+}
+
 
 
 // Builds a lightweight current status object for the device based on daily screen-time data
@@ -808,20 +821,29 @@ export async function updateDeviceUsageByChild({
   }
 
   const previousStatus = buildCurrentStatus(device);
-  const updatedDevice = await updateDeviceUsedTodayMinutes(deviceId, n);
+  const nextUsedWeekMinutes = calculateNextUsedWeekMinutes(device.screenTime, n);
+
+  const updatedDevice = await updateDeviceUsageMinutes(deviceId, {
+    usedTodayMinutes: n,
+    usedWeekMinutes: nextUsedWeekMinutes
+  });
 
   pushDeviceStatusUpdate(updatedDevice);
 
   const currentStatus = buildCurrentStatus(updatedDevice);
 
+  const isDailyLimitMode = currentStatus.limitMode === LimitMode.DAILY;
+
   const crossedEndingThreshold =
     currentStatus.isLimitEnabled &&
+    isDailyLimitMode &&
     previousStatus.remainingMinutes > 5 &&
     currentStatus.remainingMinutes <= 5 &&
     currentStatus.remainingMinutes > 0;
 
   const crossedEndedThreshold =
     currentStatus.isLimitEnabled &&
+    isDailyLimitMode &&
     previousStatus.remainingMinutes > 0 &&
     currentStatus.remainingMinutes <= 0 &&
     !updatedDevice.isLocked;

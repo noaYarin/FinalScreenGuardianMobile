@@ -277,6 +277,24 @@ export async function updateDeviceUsedTodayMinutes(deviceId, usedTodayMinutes) {
 }
 
 
+
+// Updates both daily and weekly screen-time usage counters for a device.
+export async function updateDeviceUsageMinutes(deviceId, { usedTodayMinutes, usedWeekMinutes }) {
+  assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
+
+  return DeviceModel.findByIdAndUpdate(
+    deviceId,
+    {
+      $set: {
+        "screenTime.usedTodayMinutes": usedTodayMinutes,
+        "screenTime.usedWeekMinutes": usedWeekMinutes
+      }
+    },
+    { new: true }
+  ).lean();
+}
+
+
 export async function updateDeviceHeartbeat(
   deviceId,
   { lastSeenAt, accessibilityEnabled, usageAccessEnabled }
