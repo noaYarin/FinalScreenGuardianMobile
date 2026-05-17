@@ -26,7 +26,8 @@ import { FORCE_CHILD_LOGOUT } from "../constants/socketEvents.js";
 import { formatJerusalemOffsetIsoNow } from "../utils/time.js";
 import { LimitMode } from "../constants/limitMode.js";
 
-function assertDailyLimitMinutes(value) {
+// Validates and normalizes a screen-time limit value in minutes before saving it.
+function assertLimitMinutes(value) {
   const n = Number(value);
 
   if (!Number.isFinite(n) || n < 0) {
@@ -366,6 +367,16 @@ export async function updateDeviceScreenTime(parentId, deviceId, body) {
     throw new AppError(CommonErrors.VALIDATION_ERROR);
   }
 
+  if (body.dailyLimitMinutes !== undefined) {
+    nextScreenTime.dailyLimitMinutes = assertLimitMinutes(body.dailyLimitMinutes);
+  }
+
+  if (body.weeklyLimitMinutes !== undefined) {
+    nextScreenTime.weeklyLimitMinutes = assertLimitMinutes(body.weeklyLimitMinutes);
+  }
+
+
+
   if (body.isLimitEnabled === false) {
     nextScreenTime.limitMode = LimitMode.NONE;
   }
@@ -648,7 +659,7 @@ export async function updateDeviceDailyLimitService(parentId, deviceId, body) {
 
   const dailyLimitMinutes =
     body.dailyLimitMinutes !== undefined
-      ? assertDailyLimitMinutes(body.dailyLimitMinutes)
+      ? assertLimitMinutes(body.dailyLimitMinutes)
       : device.screenTime?.dailyLimitMinutes ?? 0;
 
   const updatedDevice = await updateDeviceDailyLimit(deviceId, {
