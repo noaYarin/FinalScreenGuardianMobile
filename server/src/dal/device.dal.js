@@ -164,6 +164,24 @@ export async function resetDailyScreenTime(deviceId, now) {
   ).lean();
 }
 
+
+// Resets the weekly screen-time usage counter when a new week starts.
+export async function resetWeeklyScreenTime(deviceId, now) {
+  assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
+
+  return DeviceModel.findByIdAndUpdate(
+    deviceId,
+    {
+      $set: {
+        "screenTime.usedWeekMinutes": 0,
+        "screenTime.lastWeeklyResetAt": now
+      }
+    },
+    { new: true }
+  ).lean();
+}
+
+
 export async function updateApplicationBlockStatus(deviceId, packageName, isBlocked) {
   assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
 
@@ -270,6 +288,24 @@ export async function updateDeviceUsedTodayMinutes(deviceId, usedTodayMinutes) {
     {
       $set: {
         "screenTime.usedTodayMinutes": usedTodayMinutes
+      }
+    },
+    { new: true }
+  ).lean();
+}
+
+
+
+// Updates both daily and weekly screen-time usage counters for a device.
+export async function updateDeviceUsageMinutes(deviceId, { usedTodayMinutes, usedWeekMinutes }) {
+  assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
+
+  return DeviceModel.findByIdAndUpdate(
+    deviceId,
+    {
+      $set: {
+        "screenTime.usedTodayMinutes": usedTodayMinutes,
+        "screenTime.usedWeekMinutes": usedWeekMinutes
       }
     },
     { new: true }
