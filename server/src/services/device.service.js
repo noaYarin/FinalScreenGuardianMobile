@@ -11,11 +11,11 @@ import {
   findDevicesByChildId,
   deleteDeviceById,
   resetDailyScreenTime,
+  resetWeeklyScreenTime,
   updateApplicationBlockStatus,
   findDeviceDailyLimitById,
   updateDeviceDailyLimit,
   findDeviceStatusById,
-  updateDeviceUsedTodayMinutes,
   updateDeviceUsageMinutes,
   updateDeviceHeartbeat,
   releaseDevicePolicyBeforeDelete
@@ -46,6 +46,36 @@ function isSameDay(date1, date2) {
     date1.getDate() === date2.getDate()
   );
 }
+
+// Checks whether two dates are in the same week, using Sunday as the start of the week.
+function isSameWeek(date1, date2) {
+  const first = new Date(date1);
+  const second = new Date(date2);
+
+  const firstWeekStart = new Date(first);
+  firstWeekStart.setHours(0, 0, 0, 0);
+  firstWeekStart.setDate(firstWeekStart.getDate() - firstWeekStart.getDay());
+
+  const secondWeekStart = new Date(second);
+  secondWeekStart.setHours(0, 0, 0, 0);
+  secondWeekStart.setDate(secondWeekStart.getDate() - secondWeekStart.getDay());
+
+  return firstWeekStart.getTime() === secondWeekStart.getTime();
+}
+
+// Resets weekly usage if the saved weekly reset date belongs to a previous week.
+async function resetWeeklyScreenTimeIfNeeded(device, deviceId, now) {
+  const lastWeeklyReset = device.screenTime?.lastWeeklyResetAt
+    ? new Date(device.screenTime.lastWeeklyResetAt)
+    : null;
+
+  if (!lastWeeklyReset || !isSameWeek(lastWeeklyReset, now)) {
+    return resetWeeklyScreenTime(deviceId, now);
+  }
+
+  return device;
+}
+
 
 // If an old device has limits enabled but no limitMode yet, it falls back to DAILY.
 function getEffectiveLimitMode(screenTime) {
@@ -353,6 +383,8 @@ export async function getDeviceScreenTime(parentId, deviceId) {
     device = await resetDailyScreenTime(deviceId, now);
   }
 
+  device = await resetWeeklyScreenTimeIfNeeded(device, deviceId, now);
+
   return {
     ...(device.screenTime?.toObject?.() ?? device.screenTime ?? {}),
     limitMode: getEffectiveLimitMode(device.screenTime),
@@ -496,6 +528,8 @@ export async function getDevicePolicy({ deviceId, childId, parentId }) {
   if (!lastReset || !isSameDay(lastReset, now)) {
     device = await resetDailyScreenTime(deviceId, now);
   }
+
+  device = await resetWeeklyScreenTimeIfNeeded(device, deviceId, now);
 
   return {
     deviceId: String(device._id),
@@ -746,6 +780,8 @@ export async function getDeviceCurrentStatusForChild({ deviceId, childId, parent
     device = await resetDailyScreenTime(deviceId, now);
   }
 
+  device = await resetWeeklyScreenTimeIfNeeded(device, deviceId, now);
+
   return buildCurrentStatus(device);
 }
 
@@ -819,6 +855,8 @@ export async function updateDeviceUsageByChild({
   if (!lastReset || !isSameDay(lastReset, now)) {
     device = await resetDailyScreenTime(deviceId, now);
   }
+
+  device = await resetWeeklyScreenTimeIfNeeded(device, deviceId, now);
 
   const previousStatus = buildCurrentStatus(device);
   const nextUsedWeekMinutes = calculateNextUsedWeekMinutes(device.screenTime, n);
