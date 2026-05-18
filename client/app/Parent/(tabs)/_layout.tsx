@@ -87,7 +87,7 @@ export default function ParentTabsLayout() {
       />
 
       <Tabs.Screen
-        name="limits"
+        name="limitsEntering"
         options={{
           tabBarLabel: "Limits",
           tabBarIcon: ({ color, size }) => (
