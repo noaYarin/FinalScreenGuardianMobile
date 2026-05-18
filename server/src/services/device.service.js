@@ -24,6 +24,10 @@ import { getChildrenByParentId } from "../dal/parent.dal.js";
 import { getIO, emitPolicyUpdated, emitDeviceStatusUpdated } from "../socketHandler.js";
 import { FORCE_CHILD_LOGOUT } from "../constants/socketEvents.js";
 import { formatJerusalemOffsetIsoNow } from "../utils/time.js";
+import {
+  persistDailyUsageSnapshot,
+  resetDailyScreenTimeWithHistory
+} from "./screenTimeHistory.service.js";
 
 function assertDailyLimitMinutes(value) {
   const n = Number(value);
@@ -310,7 +314,7 @@ export async function getDeviceScreenTime(parentId, deviceId) {
     : null;
 
   if (!lastReset || !isSameDay(lastReset, now)) {
-    device = await resetDailyScreenTime(deviceId, now);
+    device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
   return device.screenTime;
@@ -420,7 +424,7 @@ export async function getDevicePolicy({ deviceId, childId, parentId }) {
     : null;
 
   if (!lastReset || !isSameDay(lastReset, now)) {
-    device = await resetDailyScreenTime(deviceId, now);
+    device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
   return {
@@ -572,7 +576,7 @@ export async function getDeviceDailyLimit(parentId, deviceId) {
     : null;
 
   if (!lastReset || !isSameDay(lastReset, now)) {
-    device = await resetDailyScreenTime(deviceId, now);
+    device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
   return {
@@ -666,7 +670,7 @@ export async function getDeviceCurrentStatusForChild({ deviceId, childId, parent
     : null;
 
   if (!lastReset || !isSameDay(lastReset, now)) {
-    device = await resetDailyScreenTime(deviceId, now);
+    device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
   return buildCurrentStatus(device);
@@ -740,11 +744,11 @@ export async function updateDeviceUsageByChild({
     : null;
 
   if (!lastReset || !isSameDay(lastReset, now)) {
-    device = await resetDailyScreenTime(deviceId, now);
+    device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
   const previousStatus = buildCurrentStatus(device);
-  const updatedDevice = await updateDeviceUsedTodayMinutes(deviceId, n);
+  const updatedDevice = await persistDailyUsageSnapshot(deviceId, n, now);
 
   pushDeviceStatusUpdate(updatedDevice);
 
