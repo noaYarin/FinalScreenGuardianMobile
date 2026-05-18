@@ -9,7 +9,12 @@ import {
   apiLockDevice,
   apiUnlockDevice,
 } from "../../api/device";
-
+import {
+  apiSyncInstalledApps,
+  apiBlockApplication,
+  apiUnblockApplication,
+  type InstalledDeviceApp,
+} from "../../api/device";
 function normalizeLocationLastUpdated(value: unknown): string {
   if (typeof value === "string" && value.trim()) return value.trim();
 
@@ -193,6 +198,64 @@ export const updateDeviceLocation = createAsyncThunk(
     } catch (error) {
       const message = (error as Error)?.message ?? "devices.update_device_location_failed";
       return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+export const syncInstalledAppsThunk = createAsyncThunk<
+  { childId: string; deviceId: string; applications: InstalledDeviceApp[] },
+  { childId: string; deviceId: string; applications: InstalledDeviceApp[] },
+  { rejectValue: string }
+>(
+  "devices/syncInstalledApps",
+  async ({ childId, deviceId, applications }, thunkAPI) => {
+    try {
+      const response = await apiSyncInstalledApps(deviceId, applications);
+
+      return {
+        childId,
+        deviceId,
+        applications: response,
+      };
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        (error as Error)?.message ?? "devices.sync_apps_failed"
+      );
+    }
+  }
+);
+
+export const setApplicationBlockedThunk = createAsyncThunk<
+  {
+    childId: string;
+    deviceId: string;
+    packageName: string;
+    isBlocked: boolean;
+  },
+  {
+    childId: string;
+    deviceId: string;
+    packageName: string;
+    isBlocked: boolean;
+  },
+  { rejectValue: string }
+>(
+  "devices/setApplicationBlocked",
+  async ({ childId, deviceId, packageName, isBlocked }, thunkAPI) => {
+    try {
+      const response = isBlocked
+        ? await apiBlockApplication(deviceId, packageName)
+        : await apiUnblockApplication(deviceId, packageName);
+
+      return {
+        childId,
+        deviceId,
+        packageName,
+        isBlocked: response.isBlocked === true,
+      };
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        (error as Error)?.message ?? "devices.update_app_block_failed"
+      );
     }
   }
 );

@@ -56,7 +56,7 @@ package com.screenguardianmobile
  * This class is critical for ensuring reliable and consistent behavior
  * across online and offline scenarios.
  */
-
+import org.json.JSONArray
 import android.content.Context
 import java.util.Calendar
 
@@ -78,7 +78,9 @@ object PolicyStore {
 
     private const val KEY_CHILD_ID = "childId"
     private const val KEY_PARENT_ID = "parentId"
-
+    
+    private const val KEY_BLOCKED_APPS = "blockedApps"
+    
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
@@ -228,6 +230,50 @@ fun setParentId(context: Context, value: String) {
 
 fun getParentId(context: Context): String? {
     return prefs(context).getString(KEY_PARENT_ID, null)
+}
+
+// ---------- Blocked Applications ----------
+
+fun setBlockedApps(
+    context: Context,
+    packageNames: List<String>
+) {
+    val jsonArray = JSONArray()
+
+    packageNames.forEach {
+        jsonArray.put(it)
+    }
+
+    prefs(context)
+        .edit()
+        .putString(KEY_BLOCKED_APPS, jsonArray.toString())
+        .apply()
+}
+
+fun getBlockedApps(context: Context): Set<String> {
+    val raw = prefs(context)
+        .getString(KEY_BLOCKED_APPS, null)
+        ?: return emptySet()
+
+    return try {
+        val jsonArray = JSONArray(raw)
+
+        buildSet {
+            for (i in 0 until jsonArray.length()) {
+                add(jsonArray.getString(i))
+            }
+        }
+    } catch (_: Exception) {
+        emptySet()
+    }
+}
+
+fun isAppBlocked(
+    context: Context,
+    packageName: String
+): Boolean {
+    return getBlockedApps(context)
+        .contains(packageName)
 }
 
     // ---------- Clear ----------

@@ -6,7 +6,9 @@ import {
   updateDeviceScreenTimeThunk,
   setDeviceLockThunk,
   updateDeviceLocation,
-  updateDeviceName
+  updateDeviceName,
+  syncInstalledAppsThunk,
+setApplicationBlockedThunk
 } from "../thunks/deviceThunks";
 
 
@@ -208,7 +210,38 @@ const devicesSlice = createSlice({
 
         state.byChildId[childId][idx] = device;
       })
+.addCase(syncInstalledAppsThunk.fulfilled, (state, action) => {
+  const { childId, deviceId, applications } = action.payload;
+  const list = state.byChildId[childId];
+  if (!list) return;
 
+  const idx = list.findIndex((d) => String(d._id) === String(deviceId));
+  if (idx < 0) return;
+
+  state.byChildId[childId][idx] = {
+    ...list[idx],
+    applications,
+  };
+})
+
+.addCase(setApplicationBlockedThunk.fulfilled, (state, action) => {
+  const { childId, deviceId, packageName, isBlocked } = action.payload;
+  const list = state.byChildId[childId];
+  if (!list) return;
+
+  const deviceIdx = list.findIndex((d) => String(d._id) === String(deviceId));
+  if (deviceIdx < 0) return;
+
+  const device = list[deviceIdx];
+  const apps = device.applications ?? [];
+
+  state.byChildId[childId][deviceIdx] = {
+    ...device,
+    applications: apps.map((app) =>
+      app.packageName === packageName ? { ...app, isBlocked } : app
+    ),
+  };
+})
   },
 });
 

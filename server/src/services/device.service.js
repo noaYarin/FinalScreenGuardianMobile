@@ -18,7 +18,8 @@ import {
   findDeviceStatusById,
   updateDeviceUsageMinutes,
   updateDeviceHeartbeat,
-  releaseDevicePolicyBeforeDelete
+  releaseDevicePolicyBeforeDelete,
+  syncDeviceApplications
 
 } from "../dal/device.dal.js";
 import { getChildrenByParentId } from "../dal/parent.dal.js";
@@ -144,7 +145,12 @@ function buildPolicyPayload(device) {
       usedTodayMinutes: Number(device.screenTime?.usedTodayMinutes ?? 0),
       usedWeekMinutes: Number(device.screenTime?.usedWeekMinutes ?? 0),
       weeklySchedule: device.screenTime?.weeklySchedule ?? [],
-    }
+    },
+    applications: (device.applications ?? []).map((app) => ({
+      packageName: app.packageName,
+      name: app.name,
+      isBlocked: app.isBlocked === true,
+    })),
   };
 }
 
@@ -550,6 +556,12 @@ export async function getDevicePolicy({ deviceId, childId, parentId }) {
       lastWeeklyResetAt: device.screenTime?.lastWeeklyResetAt ?? null,
       weeklySchedule: device.screenTime?.weeklySchedule ?? []
     },
+    applications: (device.applications ?? []).map((app) => ({
+  packageName: app.packageName,
+  name: app.name,
+  icon: app.icon,
+  isBlocked: app.isBlocked === true,
+})),
     updatedAt: device.updatedAt
   };
 }
@@ -1087,4 +1099,32 @@ export async function handleDeviceHeartbeat({
     accessibilityEnabled: updatedDevice.accessibilityEnabled,
     usageAccessEnabled: updatedDevice.usageAccessEnabled
   };
+}
+
+export async function syncInstalledApplicationsByChild({
+  deviceId,
+  childId,
+  parentId,
+  applications,
+}) {
+  if (!Array.isArray(applications)) {
+    throw new AppError(CommonErrors.VALIDATION_ERROR);
+  }
+
+  await validateDeviceAccess({ deviceId, parentId, childId });
+
+  const normalizedApps = applications
+    .filter((app) => app?.packageName && app?.name)
+    .map((app) => ({
+      name: String(app.name),
+      packageName: String(app.packageName),
+      icon: app.icon ? String(app.icon) : "default.png",
+    }));
+
+  const updatedDevice = await syncDeviceApplications(deviceId, normalizedApps);
+
+  pushPolicyUpdate(updatedDevice);
+  pushDeviceStatusUpdate(updatedDevice);
+
+  return updatedDevice.applications ?? [];
 }

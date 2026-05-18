@@ -240,20 +240,28 @@ class ScreenGuardianAccessibilityService : AccessibilityService() {
         val isLockNow = PolicyStore.isLockNow(applicationContext)
         val isServerLocked = PolicyStore.isServerLocked(applicationContext)
         val isLimitEnabled = PolicyStore.isLimitEnabled(applicationContext)
+        val isBlockedApp =
+    currentPackage != null &&
+        PolicyStore.isAppBlocked(applicationContext, currentPackage)
 
         // Determine block reason based on priority
-        val blockReason = when {
-            isLockNow -> "LOCK_NOW"
-            isLimitEnabled && remaining <= 0 -> "DAILY_LIMIT_REACHED"
-            isServerLocked -> "LOCK_NOW"
-            else -> ""
-        }
+val blockReason = when {
+    isLockNow -> "LOCK_NOW"
+    isBlockedApp -> "APP_BLOCKED"
+    isLimitEnabled && remaining <= 0 -> "DAILY_LIMIT_REACHED"
+    isServerLocked -> "LOCK_NOW"
+    else -> ""
+}
 
         // Persist block reason so BlockScreenActivity can show correct explanation
         PolicyStore.setBlockReason(applicationContext, blockReason)
 
         // Final decision from PolicyStore
-        val shouldLock = PolicyStore.shouldLockDevice(applicationContext)
+
+
+val shouldLock =
+    PolicyStore.shouldLockDevice(applicationContext)
+        || isBlockedApp
 
         Log.d(
             TAG,

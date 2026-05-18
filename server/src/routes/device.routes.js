@@ -20,7 +20,8 @@ import {
   updateDeviceUsageByChildController,
   updateDeviceNameController,
   deviceHeartbeatController,
-  updateDeviceLocationController
+  updateDeviceLocationController,
+  syncInstalledApplicationsController
 } from "../controllers/device.controller.js";
 
 const router = Router();
@@ -75,6 +76,14 @@ router.patch("/:deviceId/daily-limit", authJwt, requireParent, updateDeviceDaily
 // Parent activates/deactivates a device
 router.patch("/:deviceId/active", authJwt, requireParent, setDeviceActiveController);
 
+
+router.patch(
+  "/:deviceId/apps/sync",
+  authJwt,
+  requireChild,
+  syncInstalledApplicationsController
+);
+
 // PATCH /api/v1/devices/:deviceId/apps/:packageName/block
 // Parent blocks an application on a specific device
 router.patch("/:deviceId/apps/:packageName/block", authJwt, requireParent, blockApplicationController);
@@ -114,5 +123,8 @@ router.patch(
   requireChild,
   deviceHeartbeatController
 );
+
+
+
 
 export default router;

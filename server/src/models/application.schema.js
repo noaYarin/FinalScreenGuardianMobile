@@ -6,7 +6,7 @@ export const ApplicationSchema = new mongoose.Schema(
         name: { type: String, required: true },
         icon: { type: String, default: "default.png" },
         packageName: { type: String, required: true },
-        isBlocked: { type: Boolean, default: true },
+        isBlocked: { type: Boolean, default: false },
         screenTime: { type: ScreenTimeSchema, default: {} }
     }, 
 );

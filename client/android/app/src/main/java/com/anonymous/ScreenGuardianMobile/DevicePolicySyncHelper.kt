@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -40,28 +41,42 @@ object DevicePolicySyncHelper {
      * permanent device-removal response and clears the local managed state
      * instead of keeping stale policy values.
      */
-    fun applyPolicyData(context: Context, data: JSONObject) {
-        val screenTime = data.optJSONObject("screenTime") ?: JSONObject()
+   fun applyPolicyData(context: Context, data: JSONObject) {
+    val screenTime = data.optJSONObject("screenTime") ?: JSONObject()
 
-        val isLocked = data.optBoolean("isLocked", false)
-        val isLimitEnabled = screenTime.optBoolean("isLimitEnabled", false)
+    val isLocked = data.optBoolean("isLocked", false)
+    val isLimitEnabled = screenTime.optBoolean("isLimitEnabled", false)
 
-        val dailyLimitMinutesRaw = screenTime.optInt("dailyLimitMinutes", 0)
-        val dailyLimitMinutes = max(0, min(dailyLimitMinutesRaw, MAX_MINUTES_PER_DAY))
+    val dailyLimitMinutesRaw = screenTime.optInt("dailyLimitMinutes", 0)
+    val dailyLimitMinutes = max(0, min(dailyLimitMinutesRaw, MAX_MINUTES_PER_DAY))
 
-        val extraMinutesRaw = screenTime.optInt("extraMinutesToday", 0)
-        val extraMinutesToday = max(0, min(extraMinutesRaw, MAX_MINUTES_PER_DAY))
+    val extraMinutesRaw = screenTime.optInt("extraMinutesToday", 0)
+    val extraMinutesToday = max(0, min(extraMinutesRaw, MAX_MINUTES_PER_DAY))
 
-        PolicyStore.setServerLocked(context, isLocked)
-        PolicyStore.setLimitEnabled(context, isLimitEnabled)
-        PolicyStore.setDailyLimit(context, dailyLimitMinutes)
-        PolicyStore.setExtraMinutes(context, extraMinutesToday)
+    val blockedApps = mutableListOf<String>()
+    val applications = data.optJSONArray("applications") ?: JSONArray()
 
-        Log.d(
-            TAG,
-            "Policy applied: locked=$isLocked limitEnabled=$isLimitEnabled daily=$dailyLimitMinutes extra=$extraMinutesToday"
-        )
+    for (i in 0 until applications.length()) {
+        val app = applications.optJSONObject(i) ?: continue
+        val packageName = app.optString("packageName", "")
+        val isBlocked = app.optBoolean("isBlocked", false)
+
+        if (packageName.isNotBlank() && isBlocked) {
+            blockedApps.add(packageName)
+        }
     }
+
+    PolicyStore.setServerLocked(context, isLocked)
+    PolicyStore.setLimitEnabled(context, isLimitEnabled)
+    PolicyStore.setDailyLimit(context, dailyLimitMinutes)
+    PolicyStore.setExtraMinutes(context, extraMinutesToday)
+    PolicyStore.setBlockedApps(context, blockedApps)
+
+    Log.d(
+        TAG,
+        "Policy applied: locked=$isLocked limitEnabled=$isLimitEnabled daily=$dailyLimitMinutes extra=$extraMinutesToday blockedApps=${blockedApps.size}"
+    )
+}
 
     fun fetchAndSavePolicy(
         context: Context,
