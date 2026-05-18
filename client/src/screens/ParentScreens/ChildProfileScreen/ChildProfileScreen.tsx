@@ -62,6 +62,14 @@ const ACTIONS: ActionCard[] = [
     icon: "message-outline",
     route: "/Parent/extensionRequests",
   },
+  {
+    key: "reports",
+    title: "Reports",
+    subtitle: "View statistics",
+    accessibilityLabel: "Go to child reports screen",
+    icon: "chart-bar",
+    route: "/Parent/(tabs)/reports",
+  },
 ];
 
 export default function ChildProfileScreen() {

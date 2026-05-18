@@ -44,7 +44,7 @@ const ICON = {
   tasks: "clipboard-check-outline",
   achievements: "trophy",
   goals: "target",
-  reports: "information-box",
+  charts: "chart-donut",
   bulb: "lightbulb-on-outline",
   chatbot: "chat-processing-outline",
   help: "help-circle-outline",
@@ -504,10 +504,10 @@ export default function HomeScreen() {
           <Tile iconName={ICON.goals} label="Goals" colorKey="goals" disabled />
 
           <Tile
-            iconName={ICON.reports}
-            label="Reports"
+            iconName={ICON.charts}
+            label="Charts"
             colorKey="help"
-            disabled
+            onPress={() => router.push("/Child/reports" as Href)}
           />
 
           <Tile
