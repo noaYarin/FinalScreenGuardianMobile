@@ -22,7 +22,10 @@ import { styles as rawStyles, TILE_COLORS } from "./styles";
 
 import { Child } from "@/src/redux/slices/children-slice";
 import { fetchCurrentChildProfileThunk } from "@/src/redux/thunks/childrenThunks";
-import { updateDeviceLocation } from "@/src/redux/thunks/deviceThunks";
+import {
+  updateDeviceLocation,
+  syncInstalledAppsThunk,
+} from "@/src/redux/thunks/deviceThunks";
 import type { AppDispatch, RootState } from "@/src/redux/store/types";
 import { selectChildPalette } from "@/src/redux/slices/child-theme-slice";
 import { connectSocket, emitEvent, onEvent } from "@/src/services/socket";
@@ -371,6 +374,34 @@ export default function HomeScreen() {
 
     return () => clearInterval(interval);
   }, [deviceId]);
+useEffect(() => {
+  async function syncInstalledApps() {
+    if (!activeChildId || !deviceId) return;
+
+    try {
+      if (!DeviceControl?.getInstalledApps) {
+        console.log("DeviceControl.getInstalledApps is not available");
+        return;
+      }
+
+      const apps = await DeviceControl.getInstalledApps();
+
+      await dispatch(
+        syncInstalledAppsThunk({
+          childId: String(activeChildId),
+          deviceId: String(deviceId),
+          applications: apps,
+        })
+      ).unwrap();
+
+      console.log("Installed apps synced:", apps.length);
+    } catch (error) {
+      console.log("Failed to sync installed apps:", error);
+    }
+  }
+
+  syncInstalledApps();
+}, [dispatch, activeChildId, deviceId]);
 
   const userName = (
     activeChildData?.name?.trim() ||
@@ -571,7 +602,11 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.grid}>
-            <Tile iconName={ICON.apps} label="Apps" colorKey="apps" disabled />
+            <Tile iconName={ICON.apps} 
+              label="Apps" 
+              colorKey="apps"  
+              onPress={() => router.push(`/Child/apps?deviceId=${deviceId}`)}
+            />
 
             <Tile
               iconName={ICON.extend}

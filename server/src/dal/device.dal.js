@@ -351,3 +351,40 @@ export async function updateDeviceActivation(deviceId, { childId, parentId, devi
     { new: true }
   ).lean();
 }
+
+
+export async function syncDeviceApplications(deviceId, applications) {
+  assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
+
+  const device = await DeviceModel.findById(deviceId).lean();
+
+  if (!device) {
+    return null;
+  }
+
+  const existingByPackage = new Map(
+    (device.applications ?? []).map((app) => [app.packageName, app])
+  );
+
+  const nextApplications = applications.map((app) => {
+    const existing = existingByPackage.get(app.packageName);
+
+    return {
+      name: app.name,
+      icon: app.icon ?? "default.png",
+      packageName: app.packageName,
+      isBlocked: existing?.isBlocked ?? false,
+      screenTime: existing?.screenTime ?? {},
+    };
+  });
+
+  return DeviceModel.findByIdAndUpdate(
+    deviceId,
+    {
+      $set: {
+        applications: nextApplications,
+      },
+    },
+    { new: true }
+  ).lean();
+}

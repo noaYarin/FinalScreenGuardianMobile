@@ -63,6 +63,7 @@ const LIMIT_SECTIONS: LimitSection[] = [
         description: "Manage apps that should not be allowed.",
         accessibilityLabel: "Blocked apps feature coming soon",
         icon: "cellphone-lock",
+        route: "/Parent/appBlocking",
       },
     ],
   },
