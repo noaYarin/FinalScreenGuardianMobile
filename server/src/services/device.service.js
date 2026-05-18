@@ -27,6 +27,10 @@ import { getIO, emitPolicyUpdated, emitDeviceStatusUpdated } from "../socketHand
 import { FORCE_CHILD_LOGOUT } from "../constants/socketEvents.js";
 import { formatJerusalemOffsetIsoNow } from "../utils/time.js";
 import { LimitMode } from "../constants/limitMode.js";
+import {
+  persistDailyUsageSnapshot,
+  resetDailyScreenTimeWithHistory
+} from "./screenTimeHistory.service.js";
 
 // Validates and normalizes a screen-time limit value in minutes before saving it.
 function assertLimitMinutes(value) {
@@ -386,7 +390,7 @@ export async function getDeviceScreenTime(parentId, deviceId) {
     : null;
 
   if (!lastReset || !isSameDay(lastReset, now)) {
-    device = await resetDailyScreenTime(deviceId, now);
+    device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
   device = await resetWeeklyScreenTimeIfNeeded(device, deviceId, now);
@@ -532,7 +536,7 @@ export async function getDevicePolicy({ deviceId, childId, parentId }) {
     : null;
 
   if (!lastReset || !isSameDay(lastReset, now)) {
-    device = await resetDailyScreenTime(deviceId, now);
+    device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
   device = await resetWeeklyScreenTimeIfNeeded(device, deviceId, now);
@@ -693,7 +697,7 @@ export async function getDeviceDailyLimit(parentId, deviceId) {
     : null;
 
   if (!lastReset || !isSameDay(lastReset, now)) {
-    device = await resetDailyScreenTime(deviceId, now);
+    device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
   return {
@@ -789,7 +793,7 @@ export async function getDeviceCurrentStatusForChild({ deviceId, childId, parent
     : null;
 
   if (!lastReset || !isSameDay(lastReset, now)) {
-    device = await resetDailyScreenTime(deviceId, now);
+    device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
   device = await resetWeeklyScreenTimeIfNeeded(device, deviceId, now);
@@ -865,18 +869,15 @@ export async function updateDeviceUsageByChild({
     : null;
 
   if (!lastReset || !isSameDay(lastReset, now)) {
-    device = await resetDailyScreenTime(deviceId, now);
+    device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
   device = await resetWeeklyScreenTimeIfNeeded(device, deviceId, now);
 
   const previousStatus = buildCurrentStatus(device);
-  const nextUsedWeekMinutes = calculateNextUsedWeekMinutes(device.screenTime, n);
+  //const nextUsedWeekMinutes = calculateNextUsedWeekMinutes(device.screenTime, n);
 
-  const updatedDevice = await updateDeviceUsageMinutes(deviceId, {
-    usedTodayMinutes: n,
-    usedWeekMinutes: nextUsedWeekMinutes
-  });
+  const updatedDevice = await persistDailyUsageSnapshot(deviceId, n, now);
 
   pushDeviceStatusUpdate(updatedDevice);
 

@@ -47,7 +47,7 @@ const ICON = {
   tasks: "clipboard-check-outline",
   achievements: "trophy",
   goals: "target",
-  reports: "information-box",
+  charts: "chart-donut",
   bulb: "lightbulb-on-outline",
   chatbot: "chat-processing-outline",
   help: "help-circle-outline",
@@ -622,12 +622,60 @@ useEffect(() => {
               onPress={() => router.push("/Child/store" as Href)}
             />
 
-            <Tile
-              iconName={ICON.tasks}
-              label="Tasks"
-              colorKey="tasks"
-              onPress={() => router.push("/Child/tasks" as Href)}
-            />
+        <View style={styles.grid}>
+          <Tile iconName={ICON.apps} label="Apps" colorKey="apps" disabled />
+
+          <Tile
+            iconName={ICON.extend}
+            label="Request"
+            onPress={() => router.push("/Child/extendTime" as Href)}
+            colorKey="extend"
+          />
+
+          <Tile
+            iconName={ICON.shop}
+            label="Shop"
+            colorKey="shop"
+            onPress={() => router.push("/Child/store" as Href)}
+          />
+
+          <Tile
+            iconName={ICON.tasks}
+            label="Tasks"
+            colorKey="tasks"
+            onPress={() => router.push("/Child/tasks" as Href)}
+          />
+
+          <Tile
+            iconName={ICON.achievements}
+            label="Achievements"
+            colorKey="achievements"
+            onPress={() => router.push("/Child/achievements" as Href)}
+          />
+
+          <Tile iconName={ICON.goals} label="Goals" colorKey="goals" disabled />
+
+          <Tile
+            iconName={ICON.charts}
+            label="Charts"
+            colorKey="help"
+            onPress={() => router.push("/Child/reports" as Href)}
+          />
+
+          <Tile
+            iconName={ICON.bulb}
+            label="Ideas"
+            colorKey="ideas"
+            onPress={() => router.push("/Child/ideas" as Href)}
+          />
+
+          <Tile
+            iconName={ICON.settings}
+            label="Settings"
+            colorKey="help"
+            onPress={() => router.push("/Child/settings" as Href)}
+          />
+        </View>
 
             <Tile
               iconName={ICON.achievements}

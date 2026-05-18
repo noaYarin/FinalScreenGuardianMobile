@@ -1,16 +1,15 @@
 import { Stack } from "expo-router";
-//import ReportsScreen from "@/src/screens/ReportsScreen/ReportsScreen";
+import ParentReportsScreen from "@/src/screens/ParentScreens/ReportsScreen/ReportsScreen";
 
 export default function ParentReportsTabRoute() {
   return (
     <>
       <Stack.Screen
         options={{
-          headerTitleAlign: "center",
           headerShadowVisible: false,
         }}
       />
-    
+      <ParentReportsScreen />
     </>
   );
 }
