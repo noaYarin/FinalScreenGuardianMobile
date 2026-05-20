@@ -1,4 +1,5 @@
 import { api } from "./request";
+import type { LimitMode } from "./device";
 
 type Child = {
   _id: string;
@@ -19,14 +20,31 @@ type Child = {
 export type HomeSummaryChild = {
   childId: string;
   name: string;
-  img?: string;
+  img?: string | null;
   deviceId: string | null;
   deviceName: string | null;
+
+  limitMode: LimitMode;
+  isLimitEnabled: boolean;
+
   usedTodayMinutes: number | null;
+  usedWeekMinutes: number | null;
+
   dailyLimitMinutes: number | null;
+  weeklyLimitMinutes: number | null;
+  extraMinutesToday: number | null;
+
+  usedMinutes: number | null;
+  limitMinutes: number | null;
   remainingMinutes: number | null;
+
   status: "good" | "warn" | "bad";
+
   isLocked: boolean;
+  manualLockEnabled: boolean;
+  dailyLimitLockActive: boolean;
+  weeklyLimitLockActive: boolean;
+  scheduleLockActive: boolean;
 };
 
 const URL = "/api/v1/parent";
