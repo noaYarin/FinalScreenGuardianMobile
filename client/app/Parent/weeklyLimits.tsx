@@ -1,18 +1,18 @@
 import { Stack } from "expo-router";
 
-import WeeklyScheduleScreen from "@/src/screens/ParentScreens/WeeklyScheduleScreen/WeeklyScheduleScreen";
+import WeeklyTimeLimitsScreen from "@/src/screens/ParentScreens/WeeklyTimeLimitsScreen/WeeklyTimeLimitsScreen";
 
-export default function WeeklyScheduleRoute() {
+export default function WeeklyTimeLimitsRoute() {
   return (
     <>
       <Stack.Screen
         options={{
-          title: "Weekly Schedule",
+          title: "Weekly Time Limits",
           headerTitleAlign: "center",
           headerShadowVisible: false,
         }}
       />
-      <WeeklyScheduleScreen />
+      <WeeklyTimeLimitsScreen />
     </>
   );
 }
