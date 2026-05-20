@@ -49,7 +49,7 @@ const LIMIT_SECTIONS: LimitSection[] = [
         description: "Set rest time between usage sessions.",
         accessibilityLabel: "Go to breaks between sessions screen",
         icon: "timer-sand",
-        //route: "/Parent/routineLimits",
+        route: "/Parent/routineLimits",
       },
     ],
   },
