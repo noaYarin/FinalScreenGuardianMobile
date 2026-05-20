@@ -2,6 +2,8 @@ import { api } from "./request";
 
 const URL = "/api/v1/devices";
 
+export type LimitMode = "NONE" | "DAILY" | "WEEKLY" | "SCHEDULE";
+
 export type Device = {
   _id: string;
   name: string;
@@ -13,17 +15,18 @@ export type Device = {
     lat: number;
     lng: number;
     lastUpdated: string;
-  };  parentId: string;
+  }; parentId: string;
   childId: string;
- applications?: Array<{
-  name?: string;
-  appName?: string;
-  icon?: string;
-  packageName: string;
-  isBlocked?: boolean;
-}>;
+  applications?: Array<{
+    name?: string;
+    appName?: string;
+    icon?: string;
+    packageName: string;
+    isBlocked?: boolean;
+  }>;
   screenTime?: {
     isLimitEnabled?: boolean;
+    limitMode?: LimitMode;
     dailyLimitMinutes?: number;
     extraMinutesToday?: number;
     weeklyLimitMinutes?: number;
@@ -96,8 +99,11 @@ export async function apiUpdateDeviceScreenTime(
   deviceId: string,
   payload: {
     isLimitEnabled?: boolean;
+    limitMode?: LimitMode;
     dailyLimitMinutes?: number;
     weeklyLimitMinutes?: number;
+    weeklySchedule?: unknown[];
+
   }
 ): Promise<Device> {
   const data = await api.patch<Device>(
@@ -106,7 +112,7 @@ export async function apiUpdateDeviceScreenTime(
     {
       requireAuth: true,
       role: "PARENT",
-          }
+    }
   );
   return data;
 }
@@ -120,7 +126,7 @@ export async function apiUpdateDeviceLocation(
     { location },
     {
       requireAuth: true,
-      role: "CHILD", 
+      role: "CHILD",
     }
   );
   return data;

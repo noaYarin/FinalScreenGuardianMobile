@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { Device } from "../../api/device";
+import type { Device, LimitMode } from "../../api/device";
 import {
   deleteDeviceForChild,
   fetchDevicesByChild,
@@ -8,7 +8,7 @@ import {
   updateDeviceLocation,
   updateDeviceName,
   syncInstalledAppsThunk,
-setApplicationBlockedThunk
+  setApplicationBlockedThunk
 } from "../thunks/deviceThunks";
 
 
@@ -85,8 +85,15 @@ const devicesSlice = createSlice({
         deviceId: string;
         isLocked?: boolean;
         isActive?: boolean;
+        limitMode?: LimitMode;
+        manualLockEnabled?: boolean;
+        dailyLimitLockActive?: boolean;
+        weeklyLimitLockActive?: boolean;
+        scheduleLockActive?: boolean;
         usedTodayMinutes?: number;
+        usedWeekMinutes?: number;
         dailyLimitMinutes?: number;
+        weeklyLimitMinutes?: number;
         extraMinutesToday?: number;
         remainingMinutes?: number;
         lastSeenAt?: string | null;
@@ -99,9 +106,20 @@ const devicesSlice = createSlice({
         deviceId,
         isLocked,
         isActive,
+
+        limitMode,
+
+        manualLockEnabled,
+        dailyLimitLockActive,
+        weeklyLimitLockActive,
+        scheduleLockActive,
+
         usedTodayMinutes,
+        usedWeekMinutes,
         dailyLimitMinutes,
+        weeklyLimitMinutes,
         extraMinutesToday,
+
         lastSeenAt,
         accessibilityEnabled,
         usageAccessEnabled,
@@ -117,8 +135,19 @@ const devicesSlice = createSlice({
 
       state.byChildId[childId][idx] = {
         ...device,
+
         isLocked: isLocked ?? device.isLocked,
         isActive: isActive ?? (device as any).isActive,
+
+        manualLockEnabled:
+          manualLockEnabled ?? (device as any).manualLockEnabled,
+        dailyLimitLockActive:
+          dailyLimitLockActive ?? (device as any).dailyLimitLockActive,
+        weeklyLimitLockActive:
+          weeklyLimitLockActive ?? (device as any).weeklyLimitLockActive,
+        scheduleLockActive:
+          scheduleLockActive ?? (device as any).scheduleLockActive,
+
         lastSeenAt: lastSeenAt ?? (device as any).lastSeenAt,
         accessibilityEnabled:
           accessibilityEnabled !== undefined
@@ -128,12 +157,23 @@ const devicesSlice = createSlice({
           usageAccessEnabled !== undefined
             ? usageAccessEnabled
             : (device as any).usageAccessEnabled,
+
         screenTime: {
           ...(device.screenTime ?? {}),
+
+          limitMode:
+            limitMode ?? device.screenTime?.limitMode,
+
           usedTodayMinutes:
             usedTodayMinutes ?? device.screenTime?.usedTodayMinutes ?? 0,
+          usedWeekMinutes:
+            usedWeekMinutes ?? device.screenTime?.usedWeekMinutes ?? 0,
+
           dailyLimitMinutes:
             dailyLimitMinutes ?? device.screenTime?.dailyLimitMinutes ?? 0,
+          weeklyLimitMinutes:
+            weeklyLimitMinutes ?? device.screenTime?.weeklyLimitMinutes ?? 0,
+
           extraMinutesToday:
             extraMinutesToday ?? device.screenTime?.extraMinutesToday ?? 0,
         },
@@ -210,38 +250,38 @@ const devicesSlice = createSlice({
 
         state.byChildId[childId][idx] = device;
       })
-.addCase(syncInstalledAppsThunk.fulfilled, (state, action) => {
-  const { childId, deviceId, applications } = action.payload;
-  const list = state.byChildId[childId];
-  if (!list) return;
+      .addCase(syncInstalledAppsThunk.fulfilled, (state, action) => {
+        const { childId, deviceId, applications } = action.payload;
+        const list = state.byChildId[childId];
+        if (!list) return;
 
-  const idx = list.findIndex((d) => String(d._id) === String(deviceId));
-  if (idx < 0) return;
+        const idx = list.findIndex((d) => String(d._id) === String(deviceId));
+        if (idx < 0) return;
 
-  state.byChildId[childId][idx] = {
-    ...list[idx],
-    applications,
-  };
-})
+        state.byChildId[childId][idx] = {
+          ...list[idx],
+          applications,
+        };
+      })
 
-.addCase(setApplicationBlockedThunk.fulfilled, (state, action) => {
-  const { childId, deviceId, packageName, isBlocked } = action.payload;
-  const list = state.byChildId[childId];
-  if (!list) return;
+      .addCase(setApplicationBlockedThunk.fulfilled, (state, action) => {
+        const { childId, deviceId, packageName, isBlocked } = action.payload;
+        const list = state.byChildId[childId];
+        if (!list) return;
 
-  const deviceIdx = list.findIndex((d) => String(d._id) === String(deviceId));
-  if (deviceIdx < 0) return;
+        const deviceIdx = list.findIndex((d) => String(d._id) === String(deviceId));
+        if (deviceIdx < 0) return;
 
-  const device = list[deviceIdx];
-  const apps = device.applications ?? [];
+        const device = list[deviceIdx];
+        const apps = device.applications ?? [];
 
-  state.byChildId[childId][deviceIdx] = {
-    ...device,
-    applications: apps.map((app) =>
-      app.packageName === packageName ? { ...app, isBlocked } : app
-    ),
-  };
-})
+        state.byChildId[childId][deviceIdx] = {
+          ...device,
+          applications: apps.map((app) =>
+            app.packageName === packageName ? { ...app, isBlocked } : app
+          ),
+        };
+      })
   },
 });
 

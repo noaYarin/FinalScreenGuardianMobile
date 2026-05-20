@@ -180,7 +180,8 @@ export default function DailyTimeLimitsScreen() {
 
     const currentEnabled =
       limitId === "daily"
-        ? selectedDevice.screenTime?.isLimitEnabled ?? false
+        ? selectedDevice.screenTime?.isLimitEnabled === true &&
+        selectedDevice.screenTime?.limitMode === "DAILY"
         : false;
 
     setTempLimits((prev) => ({
@@ -228,6 +229,7 @@ export default function DailyTimeLimitsScreen() {
           childId: selectedChildId,
           deviceId: selectedDevice._id,
           isLimitEnabled: nextEnabled ?? false,
+          limitMode: nextEnabled === false ? "NONE" : "DAILY",
           dailyLimitMinutes:
             nextEnabled === false
               ? selectedDevice.screenTime?.dailyLimitMinutes ?? MIN_HOURS * 60
@@ -315,13 +317,13 @@ export default function DailyTimeLimitsScreen() {
           </View>
 
           <View style={styles.heroCard}>
-                <AppText weight="extraBold" style={styles.heroTitle}>
-                  Manage screen time by child and device
-                </AppText>
+            <AppText weight="extraBold" style={styles.heroTitle}>
+              Manage screen time by child and device
+            </AppText>
 
-                <AppText weight="medium" style={styles.heroSubtitle}>
-                  Choose a child and device, then set or update the daily screen-time limit.
-                </AppText>
+            <AppText weight="medium" style={styles.heroSubtitle}>
+              Choose a child and device, then set or update the daily screen-time limit.
+            </AppText>
           </View>
 
           <ChildDeviceSelector
@@ -397,9 +399,12 @@ export default function DailyTimeLimitsScreen() {
               {selectedLimits.map((limitCard) => {
                 const isEditing = editingCardId === limitCard.id;
 
+                const isDailyModeActive =
+                  selectedDevice?.screenTime?.isLimitEnabled === true &&
+                  selectedDevice?.screenTime?.limitMode === "DAILY";
+
                 const isEnabled =
-                  tempLimitEnabled[limitCard.id] ??
-                  (selectedDevice?.screenTime?.isLimitEnabled ?? false);
+                  tempLimitEnabled[limitCard.id] ?? isDailyModeActive;
 
                 const effectiveMaxHours = isEditing
                   ? (tempLimits[limitCard.id] ?? limitCard.maxHours * 60) / 60

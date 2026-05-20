@@ -5,6 +5,7 @@ import {
   apiUpdateDeviceLocation,
   apiUpdateDeviceName,
   type Device,
+  type LimitMode,
   apiUpdateDeviceScreenTime,
   apiLockDevice,
   apiUnlockDevice,
@@ -108,7 +109,7 @@ export const updateDeviceName = createAsyncThunk<
   { childId: string; deviceId: string; name: string },
   { rejectValue: string }
 >("devices/updateName", async ({ childId, deviceId, name }, thunkAPI) => {
-  try { 
+  try {
     const response = await apiUpdateDeviceName(childId, deviceId, name);
     if (response == null) {
       return thunkAPI.rejectWithValue("devices.update_device_name_failed");
@@ -128,21 +129,27 @@ export const updateDeviceScreenTimeThunk = createAsyncThunk<
     childId: string;
     deviceId: string;
     isLimitEnabled?: boolean;
+    limitMode?: LimitMode;
     dailyLimitMinutes?: number;
     weeklyLimitMinutes?: number;
+    weeklySchedule?: unknown[];
   },
   { rejectValue: string }
 >(
   "devices/updateScreenTime",
   async (
-    { childId, deviceId, isLimitEnabled, dailyLimitMinutes, weeklyLimitMinutes },
+    { childId, deviceId, isLimitEnabled, limitMode,
+      dailyLimitMinutes, weeklyLimitMinutes, weeklySchedule,
+    },
     thunkAPI
   ) => {
     try {
       const response = await apiUpdateDeviceScreenTime(deviceId, {
         isLimitEnabled,
+        limitMode,
         dailyLimitMinutes,
         weeklyLimitMinutes,
+        weeklySchedule,
       });
 
       if (response == null) {
