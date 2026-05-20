@@ -374,34 +374,34 @@ export default function HomeScreen() {
 
     return () => clearInterval(interval);
   }, [deviceId]);
-useEffect(() => {
-  async function syncInstalledApps() {
-    if (!activeChildId || !deviceId) return;
+  useEffect(() => {
+    async function syncInstalledApps() {
+      if (!activeChildId || !deviceId) return;
 
-    try {
-      if (!DeviceControl?.getInstalledApps) {
-        console.log("DeviceControl.getInstalledApps is not available");
-        return;
+      try {
+        if (!DeviceControl?.getInstalledApps) {
+          console.log("DeviceControl.getInstalledApps is not available");
+          return;
+        }
+
+        const apps = await DeviceControl.getInstalledApps();
+
+        await dispatch(
+          syncInstalledAppsThunk({
+            childId: String(activeChildId),
+            deviceId: String(deviceId),
+            applications: apps,
+          })
+        ).unwrap();
+
+        console.log("Installed apps synced:", apps.length);
+      } catch (error) {
+        console.log("Failed to sync installed apps:", error);
       }
-
-      const apps = await DeviceControl.getInstalledApps();
-
-      await dispatch(
-        syncInstalledAppsThunk({
-          childId: String(activeChildId),
-          deviceId: String(deviceId),
-          applications: apps,
-        })
-      ).unwrap();
-
-      console.log("Installed apps synced:", apps.length);
-    } catch (error) {
-      console.log("Failed to sync installed apps:", error);
     }
-  }
 
-  syncInstalledApps();
-}, [dispatch, activeChildId, deviceId]);
+    syncInstalledApps();
+  }, [dispatch, activeChildId, deviceId]);
 
   const userName = (
     activeChildData?.name?.trim() ||
@@ -602,10 +602,10 @@ useEffect(() => {
           </View>
 
           <View style={styles.grid}>
-            <Tile iconName={ICON.apps} 
-              label="Apps" 
-              colorKey="apps"  
-              onPress={() => router.push(`/Child/apps?deviceId=${deviceId}`)}
+            <Tile iconName={ICON.apps}
+              label="Apps"
+              colorKey="apps"
+              onPress={() => router.push(`/Child/apps?deviceId=${deviceId}` as Href)}
             />
 
             <Tile
@@ -622,60 +622,12 @@ useEffect(() => {
               onPress={() => router.push("/Child/store" as Href)}
             />
 
-        <View style={styles.grid}>
-          <Tile iconName={ICON.apps} label="Apps" colorKey="apps" disabled />
-
-          <Tile
-            iconName={ICON.extend}
-            label="Request"
-            onPress={() => router.push("/Child/extendTime" as Href)}
-            colorKey="extend"
-          />
-
-          <Tile
-            iconName={ICON.shop}
-            label="Shop"
-            colorKey="shop"
-            onPress={() => router.push("/Child/store" as Href)}
-          />
-
-          <Tile
-            iconName={ICON.tasks}
-            label="Tasks"
-            colorKey="tasks"
-            onPress={() => router.push("/Child/tasks" as Href)}
-          />
-
-          <Tile
-            iconName={ICON.achievements}
-            label="Achievements"
-            colorKey="achievements"
-            onPress={() => router.push("/Child/achievements" as Href)}
-          />
-
-          <Tile iconName={ICON.goals} label="Goals" colorKey="goals" disabled />
-
-          <Tile
-            iconName={ICON.charts}
-            label="Charts"
-            colorKey="help"
-            onPress={() => router.push("/Child/reports" as Href)}
-          />
-
-          <Tile
-            iconName={ICON.bulb}
-            label="Ideas"
-            colorKey="ideas"
-            onPress={() => router.push("/Child/ideas" as Href)}
-          />
-
-          <Tile
-            iconName={ICON.settings}
-            label="Settings"
-            colorKey="help"
-            onPress={() => router.push("/Child/settings" as Href)}
-          />
-        </View>
+            <Tile
+              iconName={ICON.tasks}
+              label="Tasks"
+              colorKey="tasks"
+              onPress={() => router.push("/Child/tasks" as Href)}
+            />
 
             <Tile
               iconName={ICON.achievements}
@@ -687,10 +639,10 @@ useEffect(() => {
             <Tile iconName={ICON.goals} label="Goals" colorKey="goals" disabled />
 
             <Tile
-              iconName={ICON.reports}
-              label="Reports"
+              iconName={ICON.charts}
+              label="Charts"
               colorKey="help"
-              disabled
+              onPress={() => router.push("/Child/reports" as Href)}
             />
 
             <Tile
