@@ -109,6 +109,14 @@ class DeviceControlModule(
                 putBoolean("lockNow", PolicyStore.isLockNow(reactApplicationContext))
                 putBoolean("shouldLock", PolicyStore.shouldLockDevice(reactApplicationContext))
                 putBoolean("limitEnabled", PolicyStore.isLimitEnabled(reactApplicationContext))
+                putString("limitMode", PolicyStore.getLimitMode(reactApplicationContext))
+                putInt("weeklyLimitMinutes", PolicyStore.getWeeklyLimit(reactApplicationContext))
+                putInt("usedWeekMinutes", PolicyStore.getUsedWeek(reactApplicationContext))
+                putBoolean("manualLockEnabled", PolicyStore.isManualLockEnabled(reactApplicationContext))
+               putBoolean("dailyLimitLockActive", PolicyStore.isDailyLimitLockActive(reactApplicationContext))
+               putBoolean("weeklyLimitLockActive", PolicyStore.isWeeklyLimitLockActive(reactApplicationContext))
+               putBoolean("scheduleLockActive", PolicyStore.isScheduleLockActive(reactApplicationContext))
+               putString("blockReason", PolicyStore.getBlockReason(reactApplicationContext))
             }
 
             promise.resolve(result)
