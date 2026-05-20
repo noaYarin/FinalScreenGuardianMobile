@@ -16,7 +16,8 @@ import {
   deleteDeviceForParent,
   handleDeviceHeartbeat,
   updateDeviceLocation,
-  updateDeviceName
+  updateDeviceName,
+  syncInstalledApplicationsByChild
 } from "../services/device.service.js";
 
 export async function getDevicesByChildController(req, res, next) {
@@ -271,6 +272,26 @@ export async function deviceHeartbeatController(req, res, next) {
       parentId,
       accessibilityEnabled,
       usageAccessEnabled
+    });
+
+    res.status(200).json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function syncInstalledApplicationsController(req, res, next) {
+  try {
+    const { deviceId } = req.params;
+    const childId = req.user.childId;
+    const parentId = req.user.parentId;
+    const { applications } = req.body;
+
+    const data = await syncInstalledApplicationsByChild({
+      deviceId,
+      childId,
+      parentId,
+      applications,
     });
 
     res.status(200).json({ ok: true, data });

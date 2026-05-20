@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { DayScheduleSchema } from "./daySchedule.schema.js";
 import { LimitMode } from "../constants/limitMode.js";
 
+import { DailyUsageHistoryEntrySchema } from "./dailyUsageHistoryEntry.schema.js";
 
 export const ScreenTimeSchema = new mongoose.Schema(
     {
@@ -28,6 +29,10 @@ export const ScreenTimeSchema = new mongoose.Schema(
         lastWeeklyResetAt: { type: Date, default: Date.now },
         usedTodayMinutes: { type: Number, default: 0 },
         usedWeekMinutes: { type: Number, default: 0 },
+        dailyUsageHistory: {
+            type: [DailyUsageHistoryEntrySchema],
+            default: []
+        },
         weeklySchedule: {
             type: [DayScheduleSchema],
             default: []

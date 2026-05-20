@@ -11,6 +11,7 @@ import tasksReducer from "../slices/tasks-slice";
 import rewardsReducer from "../slices/rewards-slice";
 import achievementsReducer from "../slices/achievements-slice";
 import childThemeReducer from "../slices/child-theme-slice";
+import reportsReducer from "../slices/reports-slice";
 
 export const store = configureStore({
   reducer: {
@@ -25,6 +26,7 @@ export const store = configureStore({
     rewards: rewardsReducer,
     achievements: achievementsReducer,
     childTheme: childThemeReducer,
+    reports: reportsReducer,
   },
 });
 

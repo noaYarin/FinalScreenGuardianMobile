@@ -139,7 +139,7 @@ export async function addExtraMinutesToDevice(deviceId, minutes) {
   ).lean();
 }
 
-export async function resetDailyScreenTime(deviceId, now) {
+export async function resetDailyScreenTime(deviceId, now, history = null) {
   assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
 
   const device = await DeviceModel.findById(deviceId).lean();
@@ -148,19 +148,25 @@ export async function resetDailyScreenTime(deviceId, now) {
     return null;
   }
 
+  const fieldsToSet = {
+    dailyLimitLockActive: false,
+    isLocked:
+      device.manualLockEnabled === true ||
+      device.weeklyLimitLockActive === true ||
+      device.scheduleLockActive === true,
+    "screenTime.usedTodayMinutes": 0,
+    "screenTime.extraMinutesToday": 0,
+    "screenTime.lastDailyResetAt": now
+  };
+
+  if (Array.isArray(history)) {
+    fieldsToSet["screenTime.dailyUsageHistory"] = history;
+  }
+
   return DeviceModel.findByIdAndUpdate(
     deviceId,
     {
-      $set: {
-        dailyLimitLockActive: false,
-        isLocked:
-          device.manualLockEnabled === true ||
-          device.weeklyLimitLockActive === true ||
-          device.scheduleLockActive === true,
-        "screenTime.usedTodayMinutes": 0,
-        "screenTime.extraMinutesToday": 0,
-        "screenTime.lastDailyResetAt": now
-      }
+      $set: fieldsToSet
     },
     { new: true }
   ).lean();
@@ -294,18 +300,32 @@ export async function findDeviceStatusById(deviceId) {
   ).lean();
 }
 
-export async function updateDeviceUsedTodayMinutes(deviceId, usedTodayMinutes) {
+export async function updateDeviceUsedTodayMinutes(
+  deviceId,
+  usedTodayMinutes,
+  extraFields = {}
+) {
   assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
 
   return DeviceModel.findByIdAndUpdate(
     deviceId,
     {
       $set: {
-        "screenTime.usedTodayMinutes": usedTodayMinutes
+        "screenTime.usedTodayMinutes": usedTodayMinutes,
+        ...extraFields
       }
     },
     { new: true }
   ).lean();
+}
+
+export async function findDeviceScreenTimeById(deviceId) {
+  assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
+
+  return DeviceModel.findById(deviceId, {
+    applications: 1,
+    screenTime: 1
+  }).lean();
 }
 
 
@@ -361,6 +381,43 @@ export async function updateDeviceActivation(deviceId, { childId, parentId, devi
         parentId: String(parentId),
         ...(deviceName && { name: deviceName })
       }
+    },
+    { new: true }
+  ).lean();
+}
+
+
+export async function syncDeviceApplications(deviceId, applications) {
+  assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
+
+  const device = await DeviceModel.findById(deviceId).lean();
+
+  if (!device) {
+    return null;
+  }
+
+  const existingByPackage = new Map(
+    (device.applications ?? []).map((app) => [app.packageName, app])
+  );
+
+  const nextApplications = applications.map((app) => {
+    const existing = existingByPackage.get(app.packageName);
+
+    return {
+      name: app.name,
+      icon: app.icon ?? "default.png",
+      packageName: app.packageName,
+      isBlocked: existing?.isBlocked ?? false,
+      screenTime: existing?.screenTime ?? {},
+    };
+  });
+
+  return DeviceModel.findByIdAndUpdate(
+    deviceId,
+    {
+      $set: {
+        applications: nextApplications,
+      },
     },
     { new: true }
   ).lean();

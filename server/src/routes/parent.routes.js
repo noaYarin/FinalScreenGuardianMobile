@@ -8,7 +8,10 @@ import {
   deleteChildController 
 } from "../controllers/child.controller.js";
 import { requireParent } from "../middlewares/requireParent.js";
-import { getParentHomeSummaryController } from "../controllers/parent.controller.js";
+import {
+  getChildScreenTimeReportsController,
+  getParentHomeSummaryController
+} from "../controllers/parent.controller.js";
 
 const router = Router();
 
@@ -19,6 +22,14 @@ router.post("/children", authJwt, requireParent, addChildController);
 // GET /api/v1/parent/children
 // Get all children of parent
 router.get("/children", authJwt, requireParent, getChildrenController);
+
+// GET /api/v1/parent/children/:childId/screen-time-reports
+router.get(
+  "/children/:childId/screen-time-reports",
+  authJwt,
+  requireParent,
+  getChildScreenTimeReportsController
+);
 
 // GET /api/v1/parent/children/:childId
 // Get specific child

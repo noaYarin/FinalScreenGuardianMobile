@@ -14,7 +14,9 @@
       android:name="android.permission.PACKAGE_USAGE_STATS"
       tools:ignore="ProtectedPermissions" />
   <!-- END OPTIONAL PERMISSIONS -->
-
+<uses-permission
+    android:name="android.permission.QUERY_ALL_PACKAGES"
+    tools:ignore="QueryAllPackagesPermission" />
   <queries>
     <!-- Support checking for http(s) links via the Linking API -->
     <intent>

@@ -14,6 +14,10 @@ import {
 import { validateAndBuildChildDoc } from "./child.service.js";
 import { assertBoolean } from "../utils/validators.js";
 import { findDevicesByChildId } from "../dal/device.dal.js";
+import {
+  buildScreenTimeUsageReport,
+  persistDailyUsageSnapshot
+} from "./screenTimeHistory.service.js";
 import { notifyParent } from "./notification.service.js";
 import { NotificationType } from "../constants/notificationType.js";
 import { NotificationSeverity } from "../constants/severity.js";
@@ -200,6 +204,36 @@ export async function getParentHomeSummary(parentId) {
   return { children: summary };
 }
 
+
+export async function getChildScreenTimeReports(parentId, childId) {
+  const child = await getChildByParentId(parentId, childId);
+
+  if (!child) {
+    throw new AppError(CommonErrors.CHILD_NOT_FOUND);
+  }
+
+  const devices = await findDevicesByChildId(childId);
+  let device = pickRepresentativeDevice(devices);
+
+  if (!device) {
+    return {
+      days: [],
+      weeklyTotalMinutes: 0,
+      dailyAverageMinutes: 0,
+      topApp: null,
+      hasLinkedDevice: false
+    };
+  }
+
+  const usedTodayMinutes = Number(device.screenTime?.usedTodayMinutes ?? 0);
+
+  if (usedTodayMinutes > 0) {
+    device =
+      (await persistDailyUsageSnapshot(device._id, usedTodayMinutes)) ?? device;
+  }
+
+  return buildScreenTimeUsageReport(device);
+}
 
 export async function updateCurrentChildProfile(parentId, childId, name, birthDate, gender) {
   const updated = await updateCurrentChildProfileByParentId(parentId, childId, name, birthDate, gender);

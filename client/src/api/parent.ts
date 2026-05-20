@@ -78,6 +78,30 @@ export async function getHomeSummary(): Promise<{
     { requireAuth: true, role: "PARENT" }
   );
 }
+
+export type ScreenTimeReportDay = {
+  weekdayLabel: string;
+  dateKey: string;
+  date: string;
+  usedMinutes: number;
+};
+
+export type ScreenTimeUsageReport = {
+  days: ScreenTimeReportDay[];
+  weeklyTotalMinutes: number;
+  dailyAverageMinutes: number;
+  topApp: string | null;
+  hasLinkedDevice: boolean;
+};
+
+export async function getChildScreenTimeReports(
+  childId: string
+): Promise<ScreenTimeUsageReport> {
+  return api.get<ScreenTimeUsageReport>(
+    `${URL}/children/${encodeURIComponent(childId)}/screen-time-reports`,
+    { requireAuth: true, role: "PARENT" }
+  );
+}
 export async function deleteChild(
   childId: string
 ): Promise<{ deletedChildId: string }> {

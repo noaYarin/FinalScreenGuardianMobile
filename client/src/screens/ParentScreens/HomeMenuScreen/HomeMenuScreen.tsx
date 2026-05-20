@@ -19,6 +19,8 @@ function getMenuLabel(item: HomeMenuItem) {
       return "Location";
     case "history":
       return "Activity History";
+    case "extensionRequests":
+      return "Extension Requests";
     case "tasks":
       return "Tasks";
     case "rewards":
@@ -36,6 +38,8 @@ function getMenuAccessibilityLabel(item: HomeMenuItem) {
       return "Open location";
     case "history":
       return "Open activity history";
+    case "extensionRequests":
+      return "Open extension requests";
     case "tasks":
       return "Open tasks";
     case "rewards":

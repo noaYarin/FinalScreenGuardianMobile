@@ -18,7 +18,8 @@ import {
   findDeviceStatusById,
   updateDeviceUsageMinutes,
   updateDeviceHeartbeat,
-  releaseDevicePolicyBeforeDelete
+  releaseDevicePolicyBeforeDelete,
+  syncDeviceApplications
 
 } from "../dal/device.dal.js";
 import { getChildrenByParentId } from "../dal/parent.dal.js";
@@ -26,6 +27,10 @@ import { getIO, emitPolicyUpdated, emitDeviceStatusUpdated } from "../socketHand
 import { FORCE_CHILD_LOGOUT } from "../constants/socketEvents.js";
 import { formatJerusalemOffsetIsoNow } from "../utils/time.js";
 import { LimitMode } from "../constants/limitMode.js";
+import {
+  persistDailyUsageSnapshot,
+  resetDailyScreenTimeWithHistory
+} from "./screenTimeHistory.service.js";
 
 // Validates and normalizes a screen-time limit value in minutes before saving it.
 function assertLimitMinutes(value) {
@@ -146,7 +151,12 @@ function buildPolicyPayload(device) {
       usedTodayMinutes: Number(device.screenTime?.usedTodayMinutes ?? 0),
       usedWeekMinutes: Number(device.screenTime?.usedWeekMinutes ?? 0),
       weeklySchedule: device.screenTime?.weeklySchedule ?? [],
-    }
+    },
+    applications: (device.applications ?? []).map((app) => ({
+      packageName: app.packageName,
+      name: app.name,
+      isBlocked: app.isBlocked === true,
+    })),
   };
 }
 
@@ -387,7 +397,7 @@ export async function getDeviceScreenTime(parentId, deviceId) {
     : null;
 
   if (!lastReset || !isSameDay(lastReset, now)) {
-    device = await resetDailyScreenTime(deviceId, now);
+    device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
   device = await resetWeeklyScreenTimeIfNeeded(device, deviceId, now);
@@ -541,7 +551,7 @@ export async function getDevicePolicy({ deviceId, childId, parentId }) {
     : null;
 
   if (!lastReset || !isSameDay(lastReset, now)) {
-    device = await resetDailyScreenTime(deviceId, now);
+    device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
   device = await resetWeeklyScreenTimeIfNeeded(device, deviceId, now);
@@ -565,6 +575,12 @@ export async function getDevicePolicy({ deviceId, childId, parentId }) {
       lastWeeklyResetAt: device.screenTime?.lastWeeklyResetAt ?? null,
       weeklySchedule: device.screenTime?.weeklySchedule ?? []
     },
+    applications: (device.applications ?? []).map((app) => ({
+  packageName: app.packageName,
+  name: app.name,
+  icon: app.icon,
+  isBlocked: app.isBlocked === true,
+})),
     updatedAt: device.updatedAt
   };
 }
@@ -696,7 +712,7 @@ export async function getDeviceDailyLimit(parentId, deviceId) {
     : null;
 
   if (!lastReset || !isSameDay(lastReset, now)) {
-    device = await resetDailyScreenTime(deviceId, now);
+    device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
   return {
@@ -792,7 +808,7 @@ export async function getDeviceCurrentStatusForChild({ deviceId, childId, parent
     : null;
 
   if (!lastReset || !isSameDay(lastReset, now)) {
-    device = await resetDailyScreenTime(deviceId, now);
+    device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
   device = await resetWeeklyScreenTimeIfNeeded(device, deviceId, now);
@@ -868,18 +884,15 @@ export async function updateDeviceUsageByChild({
     : null;
 
   if (!lastReset || !isSameDay(lastReset, now)) {
-    device = await resetDailyScreenTime(deviceId, now);
+    device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
   device = await resetWeeklyScreenTimeIfNeeded(device, deviceId, now);
 
   const previousStatus = buildCurrentStatus(device);
-  const nextUsedWeekMinutes = calculateNextUsedWeekMinutes(device.screenTime, n);
+  //const nextUsedWeekMinutes = calculateNextUsedWeekMinutes(device.screenTime, n);
 
-  const updatedDevice = await updateDeviceUsageMinutes(deviceId, {
-    usedTodayMinutes: n,
-    usedWeekMinutes: nextUsedWeekMinutes
-  });
+  const updatedDevice = await persistDailyUsageSnapshot(deviceId, n, now);
 
   pushDeviceStatusUpdate(updatedDevice);
 
@@ -1102,4 +1115,32 @@ export async function handleDeviceHeartbeat({
     accessibilityEnabled: updatedDevice.accessibilityEnabled,
     usageAccessEnabled: updatedDevice.usageAccessEnabled
   };
+}
+
+export async function syncInstalledApplicationsByChild({
+  deviceId,
+  childId,
+  parentId,
+  applications,
+}) {
+  if (!Array.isArray(applications)) {
+    throw new AppError(CommonErrors.VALIDATION_ERROR);
+  }
+
+  await validateDeviceAccess({ deviceId, parentId, childId });
+
+  const normalizedApps = applications
+    .filter((app) => app?.packageName && app?.name)
+    .map((app) => ({
+      name: String(app.name),
+      packageName: String(app.packageName),
+      icon: app.icon ? String(app.icon) : "default.png",
+    }));
+
+  const updatedDevice = await syncDeviceApplications(deviceId, normalizedApps);
+
+  pushPolicyUpdate(updatedDevice);
+  pushDeviceStatusUpdate(updatedDevice);
+
+  return updatedDevice.applications ?? [];
 }

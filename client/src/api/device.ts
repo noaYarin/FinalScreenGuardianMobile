@@ -15,11 +15,13 @@ export type Device = {
     lastUpdated: string;
   };  parentId: string;
   childId: string;
-  applications?: Array<{
-    packageName: string;
-    appName?: string;
-    isBlocked?: boolean;
-  }>;
+ applications?: Array<{
+  name?: string;
+  appName?: string;
+  icon?: string;
+  packageName: string;
+  isBlocked?: boolean;
+}>;
   screenTime?: {
     isLimitEnabled?: boolean;
     dailyLimitMinutes?: number;
@@ -146,4 +148,75 @@ export async function apiUnlockDevice(deviceId: string): Promise<Device> {
     }
   );
   return data;
+}
+export type InstalledDeviceApp = {
+  name: string;
+  packageName: string;
+  icon?: string;
+  isBlocked?: boolean;
+};
+
+export async function apiSyncInstalledApps(
+  deviceId: string,
+  applications: InstalledDeviceApp[]
+): Promise<InstalledDeviceApp[]> {
+  const data = await api.patch<InstalledDeviceApp[]>(
+    `${URL}/${encodeURIComponent(deviceId)}/apps/sync`,
+    { applications },
+    {
+      requireAuth: true,
+      role: "CHILD",
+    }
+  );
+
+  return data;
+}
+
+export async function apiBlockApplication(
+  deviceId: string,
+  packageName: string
+): Promise<InstalledDeviceApp> {
+  return api.patch<InstalledDeviceApp>(
+    `${URL}/${encodeURIComponent(deviceId)}/apps/${encodeURIComponent(packageName)}/block`,
+    {},
+    {
+      requireAuth: true,
+      role: "PARENT",
+    }
+  );
+}
+
+export async function apiUnblockApplication(
+  deviceId: string,
+  packageName: string
+): Promise<InstalledDeviceApp> {
+  return api.patch<InstalledDeviceApp>(
+    `${URL}/${encodeURIComponent(deviceId)}/apps/${encodeURIComponent(packageName)}/unblock`,
+    {},
+    {
+      requireAuth: true,
+      role: "PARENT",
+    }
+  );
+}
+
+export type DevicePolicy = {
+  applications?: Array<{
+    name?: string;
+    packageName: string;
+    icon?: string;
+    isBlocked?: boolean;
+  }>;
+};
+
+export async function apiGetDevicePolicyForChild(
+  deviceId: string
+): Promise<DevicePolicy> {
+  return api.get<DevicePolicy>(
+    `${URL}/${encodeURIComponent(deviceId)}/policy`,
+    {
+      requireAuth: true,
+      role: "CHILD",
+    }
+  );
 }
