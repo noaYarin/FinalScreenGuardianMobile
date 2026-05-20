@@ -124,10 +124,18 @@ export async function addExtraMinutesToDevice(deviceId, minutes) {
   const fieldsToSet = {
     "screenTime.extraMinutesToday": nextExtraMinutes
   };
-
-  if (device.screenTime?.isLimitEnabled === true && nextRemainingMinutes > 0) {
+  // Extra minutes belong to the DAILY limit flow only.
+  // When releasing a daily-limit lock, preserve any other active lock reason.
+  if (
+    device.screenTime?.isLimitEnabled === true &&
+    device.screenTime?.limitMode === LimitMode.DAILY &&
+    nextRemainingMinutes > 0
+  ) {
     fieldsToSet.dailyLimitLockActive = false;
-    fieldsToSet.isLocked = device.manualLockEnabled === true;
+    fieldsToSet.isLocked =
+      device.manualLockEnabled === true ||
+      device.weeklyLimitLockActive === true ||
+      device.scheduleLockActive === true;
   }
 
   return DeviceModel.findByIdAndUpdate(
@@ -257,10 +265,15 @@ export async function updateDeviceDailyLimit(deviceId, { isLimitEnabled, dailyLi
   if (isLimitEnabled === false) {
     fieldsToSet["screenTime.extraMinutesToday"] = 0;
     fieldsToSet.dailyLimitLockActive = false;
+    fieldsToSet.weeklyLimitLockActive = false;
+    fieldsToSet.scheduleLockActive = false;
     fieldsToSet.isLocked = device.manualLockEnabled === true;
   } else if (isLimitEnabled === true && nextRemainingMinutes > 0) {
     fieldsToSet.dailyLimitLockActive = false;
-    fieldsToSet.isLocked = device.manualLockEnabled === true;
+    fieldsToSet.isLocked =
+      device.manualLockEnabled === true ||
+      device.weeklyLimitLockActive === true ||
+      device.scheduleLockActive === true;
   }
 
   return DeviceModel.findByIdAndUpdate(
