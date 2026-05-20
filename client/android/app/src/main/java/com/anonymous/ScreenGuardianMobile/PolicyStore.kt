@@ -72,6 +72,15 @@ object PolicyStore {
     private const val KEY_EXTRA_MINUTES = "extraMinutes"
     private const val KEY_BLOCK_REASON = "blockReason"
 
+    private const val KEY_LIMIT_MODE = "limitMode"
+    private const val KEY_WEEKLY_LIMIT = "weeklyLimit"
+    private const val KEY_USED_WEEK = "usedWeek"
+
+    private const val KEY_MANUAL_LOCK_ENABLED = "manualLockEnabled"
+    private const val KEY_DAILY_LIMIT_LOCK_ACTIVE = "dailyLimitLockActive"
+    private const val KEY_WEEKLY_LIMIT_LOCK_ACTIVE = "weeklyLimitLockActive"
+    private const val KEY_SCHEDULE_LOCK_ACTIVE = "scheduleLockActive"
+
     private const val KEY_HEARTBEAT_BASE_URL = "heartbeatBaseUrl"
     private const val KEY_HEARTBEAT_DEVICE_ID = "heartbeatDeviceId"
     private const val KEY_HEARTBEAT_TOKEN = "heartbeatToken"
@@ -80,6 +89,16 @@ object PolicyStore {
     private const val KEY_PARENT_ID = "parentId"
     
     private const val KEY_BLOCKED_APPS = "blockedApps"
+
+    const val LIMIT_MODE_NONE = "NONE"
+    const val LIMIT_MODE_DAILY = "DAILY"
+    const val LIMIT_MODE_WEEKLY = "WEEKLY"
+    const val LIMIT_MODE_SCHEDULE = "SCHEDULE"
+
+    const val BLOCK_REASON_LOCK_NOW = "LOCK_NOW"
+    const val BLOCK_REASON_DAILY_LIMIT_REACHED = "DAILY_LIMIT_REACHED"
+    const val BLOCK_REASON_WEEKLY_LIMIT_REACHED = "WEEKLY_LIMIT_REACHED"
+    const val BLOCK_REASON_SCHEDULE_BLOCKED = "SCHEDULE_BLOCKED"
     
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -102,6 +121,38 @@ object PolicyStore {
         return prefs(context).getBoolean(KEY_SERVER_LOCKED, false)
     }
 
+    fun setManualLockEnabled(context: Context, value: Boolean) {
+    prefs(context).edit().putBoolean(KEY_MANUAL_LOCK_ENABLED, value).apply()
+}
+
+fun isManualLockEnabled(context: Context): Boolean {
+    return prefs(context).getBoolean(KEY_MANUAL_LOCK_ENABLED, false)
+}
+
+fun setDailyLimitLockActive(context: Context, value: Boolean) {
+    prefs(context).edit().putBoolean(KEY_DAILY_LIMIT_LOCK_ACTIVE, value).apply()
+}
+
+fun isDailyLimitLockActive(context: Context): Boolean {
+    return prefs(context).getBoolean(KEY_DAILY_LIMIT_LOCK_ACTIVE, false)
+}
+
+fun setWeeklyLimitLockActive(context: Context, value: Boolean) {
+    prefs(context).edit().putBoolean(KEY_WEEKLY_LIMIT_LOCK_ACTIVE, value).apply()
+}
+
+fun isWeeklyLimitLockActive(context: Context): Boolean {
+    return prefs(context).getBoolean(KEY_WEEKLY_LIMIT_LOCK_ACTIVE, false)
+}
+
+ fun setScheduleLockActive(context: Context, value: Boolean) {
+    prefs(context).edit().putBoolean(KEY_SCHEDULE_LOCK_ACTIVE, value).apply()
+ }
+
+ fun isScheduleLockActive(context: Context): Boolean {
+    return prefs(context).getBoolean(KEY_SCHEDULE_LOCK_ACTIVE, false)
+ }
+
     // ---------- Limit ----------
 
     fun setLimitEnabled(context: Context, value: Boolean) {
@@ -112,34 +163,83 @@ object PolicyStore {
         return prefs(context).getBoolean(KEY_LIMIT_ENABLED, false)
     }
 
-    fun setDailyLimit(context: Context, minutes: Int) {
-        prefs(context).edit().putInt(KEY_DAILY_LIMIT, minutes).apply()
+    fun setLimitMode(context: Context, value: String) {
+    val safeMode = when (value) {
+        LIMIT_MODE_DAILY,
+        LIMIT_MODE_WEEKLY,
+        LIMIT_MODE_SCHEDULE,
+        LIMIT_MODE_NONE -> value
+        else -> LIMIT_MODE_NONE
     }
+
+    prefs(context).edit().putString(KEY_LIMIT_MODE, safeMode).apply()
+}
+
+fun getLimitMode(context: Context): String {
+    return prefs(context).getString(KEY_LIMIT_MODE, LIMIT_MODE_NONE)
+        ?: LIMIT_MODE_NONE
+}
+
+  fun setDailyLimit(context: Context, minutes: Int) {
+    prefs(context)
+        .edit()
+        .putInt(KEY_DAILY_LIMIT, minutes.coerceAtLeast(0))
+        .apply()
+}
 
     fun getDailyLimit(context: Context): Int {
         return prefs(context).getInt(KEY_DAILY_LIMIT, 0)
     }
 
+
+    fun setWeeklyLimit(context: Context, minutes: Int) {
+    prefs(context)
+        .edit()
+        .putInt(KEY_WEEKLY_LIMIT, minutes.coerceAtLeast(0))
+        .apply()
+}
+
+fun getWeeklyLimit(context: Context): Int {
+    return prefs(context).getInt(KEY_WEEKLY_LIMIT, 0)
+}
+
     // ---------- Usage ----------
 
-    fun setUsedToday(context: Context, minutes: Int) {
-        prefs(context).edit().putInt(KEY_USED_TODAY, minutes).apply()
-    }
+   fun setUsedToday(context: Context, minutes: Int) {
+    prefs(context)
+        .edit()
+        .putInt(KEY_USED_TODAY, minutes.coerceAtLeast(0))
+        .apply()
+}
 
     fun getUsedToday(context: Context): Int {
         return prefs(context).getInt(KEY_USED_TODAY, 0)
     }
 
-    fun setExtraMinutes(context: Context, minutes: Int) {
-        prefs(context).edit().putInt(KEY_EXTRA_MINUTES, minutes).apply()
-    }
 
-    fun addExtraMinutes(context: Context, minutes: Int) {
-        val current = getExtraMinutes(context)
-        val newValue = (current + minutes).coerceAtMost(600) 
-        setExtraMinutes(context, newValue)
-    }
+    fun setUsedWeek(context: Context, minutes: Int) {
+    prefs(context)
+        .edit()
+        .putInt(KEY_USED_WEEK, minutes.coerceAtLeast(0))
+        .apply()
+}
 
+fun getUsedWeek(context: Context): Int {
+    return prefs(context).getInt(KEY_USED_WEEK, 0)
+}
+
+ fun setExtraMinutes(context: Context, minutes: Int) {
+    prefs(context)
+        .edit()
+        .putInt(KEY_EXTRA_MINUTES, minutes.coerceAtLeast(0))
+        .apply()
+}
+
+fun addExtraMinutes(context: Context, minutes: Int) {
+    val current = getExtraMinutes(context)
+    val newValue = (current + minutes).coerceIn(0, 600)
+    setExtraMinutes(context, newValue)
+}
     fun getExtraMinutes(context: Context): Int {
         return prefs(context).getInt(KEY_EXTRA_MINUTES, 0)
     }
@@ -154,6 +254,9 @@ object PolicyStore {
         return prefs(context).getString(KEY_BLOCK_REASON, "") ?: ""
     }
 
+    fun clearBlockReason(context: Context) {
+    prefs(context).edit().remove(KEY_BLOCK_REASON).apply()
+    }
 
     // ---------- Calculations ----------
 
@@ -161,32 +264,98 @@ object PolicyStore {
        return getDailyLimit(context) + getExtraMinutes(context)
     }
 
-    fun getRemainingMinutes(context: Context): Int {
+  fun getRemainingMinutes(context: Context): Int {
+    if (!isLimitEnabled(context)) {
+        return Int.MAX_VALUE
+    }
 
-        if (!isLimitEnabled(context)) {
-            return Int.MAX_VALUE
+    val remaining = when (getLimitMode(context)) {
+        LIMIT_MODE_DAILY -> {
+            getEffectiveLimit(context) - getUsedToday(context)
         }
 
-        val remaining = getEffectiveLimit(context) - getUsedToday(context)
-        return remaining.coerceAtLeast(0) 
+        LIMIT_MODE_WEEKLY -> {
+            getWeeklyLimit(context) - getUsedWeek(context)
+        }
+
+        LIMIT_MODE_SCHEDULE -> {
+            Int.MAX_VALUE
+        }
+
+        else -> {
+            Int.MAX_VALUE
+        }
     }
 
-    fun isLimitReached(context: Context): Boolean {
-        return getRemainingMinutes(context) <= 0
+    return remaining.coerceAtLeast(0)
+}
+
+   fun isLimitReached(context: Context): Boolean {
+    if (!isLimitEnabled(context)) {
+        return false
     }
 
-    fun shouldLockDevice(context: Context): Boolean {
-        val manualLock = isLockNow(context)
-        val serverLock = isServerLocked(context)
-        val limitEnabled = isLimitEnabled(context)
+    return when (getLimitMode(context)) {
+        LIMIT_MODE_DAILY -> {
+            getDailyLimit(context) > 0 &&
+                getRemainingMinutes(context) <= 0
+        }
 
-        if (manualLock) return true
-        if (serverLock) return true
-        if (!limitEnabled) return false
+        LIMIT_MODE_WEEKLY -> {
+            getWeeklyLimit(context) > 0 &&
+                getRemainingMinutes(context) <= 0
+        }
 
-        return isLimitReached(context)
+        else -> false
+    }
+}
+   fun shouldLockDevice(context: Context): Boolean {
+    val manualLock =
+        isLockNow(context) ||
+            isManualLockEnabled(context)
+
+    val serverLock = isServerLocked(context)
+
+    val automaticLock =
+        isDailyLimitLockActive(context) ||
+            isWeeklyLimitLockActive(context) ||
+            isScheduleLockActive(context)
+
+    if (manualLock) return true
+    if (serverLock) return true
+    if (automaticLock) return true
+
+    return isLimitReached(context)
+}
+
+fun resolveBlockReason(context: Context): String {
+    if (isLockNow(context) || isManualLockEnabled(context)) {
+        return BLOCK_REASON_LOCK_NOW
     }
 
+    if (isScheduleLockActive(context)) {
+        return BLOCK_REASON_SCHEDULE_BLOCKED
+    }
+
+    if (isWeeklyLimitLockActive(context)) {
+        return BLOCK_REASON_WEEKLY_LIMIT_REACHED
+    }
+
+    if (isDailyLimitLockActive(context)) {
+        return BLOCK_REASON_DAILY_LIMIT_REACHED
+    }
+
+    if (isLimitReached(context)) {
+        return when (getLimitMode(context)) {
+            LIMIT_MODE_WEEKLY -> BLOCK_REASON_WEEKLY_LIMIT_REACHED
+            LIMIT_MODE_DAILY -> BLOCK_REASON_DAILY_LIMIT_REACHED
+            LIMIT_MODE_SCHEDULE -> BLOCK_REASON_SCHEDULE_BLOCKED
+            else -> ""
+        }
+    }
+
+    return ""
+}
     // ---------- Heartbeat ----------
 
     fun setHeartbeatBaseUrl(context: Context, value: String) {

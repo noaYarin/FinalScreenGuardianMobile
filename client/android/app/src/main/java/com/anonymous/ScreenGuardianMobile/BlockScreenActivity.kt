@@ -101,9 +101,14 @@ class BlockScreenActivity : AppCompatActivity() {
 
     private fun updateUIFromIntent(intent: Intent) {
         val blockReason = intent.getStringExtra("blockReason") ?: ""
+        val limitMode = intent.getStringExtra("limitMode") ?: PolicyStore.LIMIT_MODE_NONE
+
         val usedToday = intent.getIntExtra("usedTodayMinutes", 0)
         val dailyLimit = intent.getIntExtra("dailyLimitMinutes", 0)
         val extraMinutes = intent.getIntExtra("extraMinutes", 0)
+
+        val usedWeek = intent.getIntExtra("usedWeekMinutes", 0)
+        val weeklyLimit = intent.getIntExtra("weeklyLimitMinutes", 0)
 
         val effectiveLimit = dailyLimit + extraMinutes
 
@@ -128,8 +133,28 @@ class BlockScreenActivity : AppCompatActivity() {
 
                 timeDetailsText.visibility = View.VISIBLE
                 timeDetailsText.text = "Used today: $usedToday / $effectiveLimit minutes"
-
             }
+
+            PolicyStore.BLOCK_REASON_WEEKLY_LIMIT_REACHED -> {
+    iconText.text = "📅"
+    titleText.text = "Weekly screen time limit reached"
+    messageText.text = "You have used all your screen time for this week."
+    hintText.text = "Please wait until next week or until your parent unlocks the device."
+
+    timeDetailsText.visibility = View.VISIBLE
+    timeDetailsText.text = "Used this week: $usedWeek / $weeklyLimit minutes"
+   }
+
+   PolicyStore.BLOCK_REASON_SCHEDULE_BLOCKED -> {
+    iconText.text = "🕒"
+    titleText.text = "Blocked by schedule"
+    messageText.text = "This device is blocked during the current scheduled time."
+    hintText.text = "Please try again when the schedule allows it."
+
+    timeDetailsText.visibility = View.GONE
+}
+
+
 
             //  Default block
             else -> {

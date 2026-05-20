@@ -111,6 +111,13 @@ export async function addExtraMinutesToDevice(deviceId, minutes) {
   if (!device) {
     return null;
   }
+  
+  if (
+    device.screenTime?.isLimitEnabled !== true ||
+    device.screenTime?.limitMode !== LimitMode.DAILY
+  ) {
+    return null;
+  }
 
   const currentExtraMinutes = Number(device.screenTime?.extraMinutesToday ?? 0);
   const nextExtraMinutes = currentExtraMinutes + Number(minutes ?? 0);

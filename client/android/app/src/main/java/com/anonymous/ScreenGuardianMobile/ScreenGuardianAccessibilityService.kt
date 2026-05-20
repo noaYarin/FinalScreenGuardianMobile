@@ -87,9 +87,6 @@ class ScreenGuardianAccessibilityService : AccessibilityService() {
         }
     }
  }
-    
-
-
 
 
     private val handler = Handler(Looper.getMainLooper())
@@ -232,41 +229,42 @@ class ScreenGuardianAccessibilityService : AccessibilityService() {
         val now = SystemClock.elapsedRealtime()
 
         // Read current state from PolicyStore
-        val usedToday = PolicyStore.getUsedToday(applicationContext)
-        val remaining = PolicyStore.getRemainingMinutes(applicationContext)
-        val dailyLimit = PolicyStore.getDailyLimit(applicationContext)
-        val extraMinutes = PolicyStore.getExtraMinutes(applicationContext)
+      val usedToday = PolicyStore.getUsedToday(applicationContext)
+val usedWeek = PolicyStore.getUsedWeek(applicationContext)
 
-        val isLockNow = PolicyStore.isLockNow(applicationContext)
-        val isServerLocked = PolicyStore.isServerLocked(applicationContext)
-        val isLimitEnabled = PolicyStore.isLimitEnabled(applicationContext)
-        val isBlockedApp =
+val remaining = PolicyStore.getRemainingMinutes(applicationContext)
+
+val dailyLimit = PolicyStore.getDailyLimit(applicationContext)
+val extraMinutes = PolicyStore.getExtraMinutes(applicationContext)
+val weeklyLimit = PolicyStore.getWeeklyLimit(applicationContext)
+
+val limitMode = PolicyStore.getLimitMode(applicationContext)
+
+val isBlockedApp =
     currentPackage != null &&
         PolicyStore.isAppBlocked(applicationContext, currentPackage)
 
-        // Determine block reason based on priority
+val policyBlockReason = PolicyStore.resolveBlockReason(applicationContext)
+
 val blockReason = when {
-    isLockNow -> "LOCK_NOW"
     isBlockedApp -> "APP_BLOCKED"
-    isLimitEnabled && remaining <= 0 -> "DAILY_LIMIT_REACHED"
-    isServerLocked -> "LOCK_NOW"
+    policyBlockReason.isNotBlank() -> policyBlockReason
     else -> ""
 }
 
-        // Persist block reason so BlockScreenActivity can show correct explanation
-        PolicyStore.setBlockReason(applicationContext, blockReason)
-
-        // Final decision from PolicyStore
-
+if (blockReason.isNotBlank()) {
+    PolicyStore.setBlockReason(applicationContext, blockReason)
+} else {
+    PolicyStore.clearBlockReason(applicationContext)
+}
 
 val shouldLock =
-    PolicyStore.shouldLockDevice(applicationContext)
-        || isBlockedApp
-
-        Log.d(
-            TAG,
-            "used=$usedToday remaining=$remaining limit=$dailyLimit extra=$extraMinutes shouldLock=$shouldLock reason=$blockReason pkg=$currentPackage"
-        )
+    PolicyStore.shouldLockDevice(applicationContext) ||
+        isBlockedApp
+Log.d(
+    TAG,
+    "mode=$limitMode usedToday=$usedToday usedWeek=$usedWeek remaining=$remaining daily=$dailyLimit weekly=$weeklyLimit extra=$extraMinutes shouldLock=$shouldLock reason=$blockReason pkg=$currentPackage"
+)
 
         // No lock needed
         if (!shouldLock) return
@@ -297,9 +295,14 @@ val shouldLock =
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
 
             putExtra("blockReason", blockReason)
+            putExtra("limitMode", limitMode)
+
             putExtra("usedTodayMinutes", usedToday)
             putExtra("dailyLimitMinutes", dailyLimit)
             putExtra("extraMinutes", extraMinutes)
+
+            putExtra("usedWeekMinutes", usedWeek)
+            putExtra("weeklyLimitMinutes", weeklyLimit)
         }
 
         Log.d(TAG, "Opening BlockScreenActivity")

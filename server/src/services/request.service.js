@@ -12,6 +12,7 @@ import { AuditActionType } from "../constants/auditActionType.js";
 import { validateDeviceAccess, pushPolicyUpdate, pushDeviceStatusUpdate } from "./device.service.js";
 import { getChildrenByParentId } from "../dal/parent.dal.js";
 import { unlockAchievementsForChildService } from "./gamification.service.js";
+import { LimitMode } from "../constants/limitMode.js";
 
 const MIN_MINUTES = 1;
 const MAX_MINUTES = 120;
@@ -53,8 +54,14 @@ export async function createRequest({ parentId, childId, deviceId, requestedMinu
 
     const minutes = assertMinutes(requestedMinutes);
 
-    await validateDeviceAccess({ deviceId, parentId, childId });
+    const device = await validateDeviceAccess({ deviceId, parentId, childId });
 
+    if (
+        device.screenTime?.isLimitEnabled !== true ||
+        device.screenTime?.limitMode !== LimitMode.DAILY
+    ) {
+        throw new AppError(RequestErrors.EXTENSION_ONLY_DAILY_LIMIT);
+    }
     const existingPending = await requestDal.findPendingRequestForDevice({
         parentId,
         childId,
@@ -158,13 +165,15 @@ export async function decideRequest({ parentId, requestId, decision }) {
 
     if (updated) {
         if (decision === RequestStatus.APPROVED) {
-            await addExtraMinutesToDevice(
+            const updatedDevice = await addExtraMinutesToDevice(
                 updated.deviceId,
                 Number(updated.requestedMinutes || 0)
             );
 
-            const updatedDevice = await findDeviceById(updated.deviceId);
+            if (!updatedDevice) {
+                throw new AppError(RequestErrors.EXTENSION_ONLY_DAILY_LIMIT);
 
+            }
             // Push the updated policy to the child device in real time after approval
             pushPolicyUpdate(updatedDevice);
 

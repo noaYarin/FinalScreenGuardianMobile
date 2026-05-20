@@ -129,11 +129,11 @@ export default function WeeklyTimeLimitsScreen() {
 
   const selectedDeviceName = selectedDevice
     ? String(
-        (selectedDevice as any).deviceName ??
-          (selectedDevice as any).model ??
-          (selectedDevice as any).name ??
-          ""
-      )
+      (selectedDevice as any).deviceName ??
+      (selectedDevice as any).model ??
+      (selectedDevice as any).name ??
+      ""
+    )
     : "";
 
   const selectedLimits: ScreenLimitCard[] = useMemo(() => {
@@ -163,7 +163,8 @@ export default function WeeklyTimeLimitsScreen() {
       selectedDevice.screenTime?.weeklyLimitMinutes ?? MIN_HOURS * 60;
 
     const currentEnabled =
-      selectedDevice.screenTime?.isLimitEnabled ?? false;
+      selectedDevice.screenTime?.isLimitEnabled === true &&
+      selectedDevice.screenTime?.limitMode === "WEEKLY";
 
     setTempLimits((prev) => ({
       ...prev,
@@ -201,25 +202,23 @@ export default function WeeklyTimeLimitsScreen() {
     if (!selectedDevice || !selectedChildId) return;
 
     const nextMinutes = tempLimits[limitId];
-    const nextEnabled = tempLimitEnabled[limitId];
 
+    const nextEnabled =
+      tempLimitEnabled[limitId] ??
+      (selectedDevice.screenTime?.isLimitEnabled === true &&
+        selectedDevice.screenTime?.limitMode === "WEEKLY");
     try {
       await dispatch(
         updateDeviceScreenTimeThunk({
           childId: selectedChildId,
           deviceId: selectedDevice._id,
-
-          isWeeklyLimitEnabled: nextEnabled ?? false,
+          isLimitEnabled: nextEnabled ?? false,
+          limitMode: nextEnabled ? "WEEKLY" : "NONE",
           weeklyLimitMinutes:
             nextEnabled === false
               ? selectedDevice.screenTime?.weeklyLimitMinutes ?? MIN_HOURS * 60
               : Math.max(MIN_HOURS * 60, nextMinutes ?? MIN_HOURS * 60),
-
-          // Keep daily values unchanged if the same thunk also updates daily screen time.
-          isLimitEnabled: selectedDevice.screenTime?.isLimitEnabled ?? false,
-          dailyLimitMinutes:
-            selectedDevice.screenTime?.dailyLimitMinutes ?? MIN_HOURS * 60,
-        } as any)
+        })
       ).unwrap();
 
       showInfoToast("The weekly limit was saved and sent to the child device.");
@@ -368,9 +367,12 @@ export default function WeeklyTimeLimitsScreen() {
               {selectedLimits.map((limitCard) => {
                 const isEditing = editingCardId === limitCard.id;
 
+                const isWeeklyModeActive =
+                  selectedDevice?.screenTime?.isLimitEnabled === true &&
+                  selectedDevice?.screenTime?.limitMode === "WEEKLY";
+
                 const isEnabled =
-                  tempLimitEnabled[limitCard.id] ??
-                  (selectedDevice?.screenTime?.isLimitEnabled ?? false);
+                  tempLimitEnabled[limitCard.id] ?? isWeeklyModeActive;
 
                 const effectiveMaxHours = isEditing
                   ? (tempLimits[limitCard.id] ?? limitCard.maxHours * 60) / 60
@@ -382,12 +384,6 @@ export default function WeeklyTimeLimitsScreen() {
                     : 0;
 
                 const canDecrease = isEnabled && effectiveMaxHours > MIN_HOURS;
-
-                if (isEnabled && progress >= 1) {
-                  // TODO: Native weekly lock is not implemented yet.
-                  // When the native Android/iOS lock module is ready,
-                  // trigger the actual weekly device/app lock from here.
-                }
 
                 return (
                   <View key={limitCard.id} style={styles.limitCard}>

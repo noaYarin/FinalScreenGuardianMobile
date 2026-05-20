@@ -11,6 +11,10 @@ export type Device = {
   platform: string;
   isLocked: boolean;
   isActive: boolean;
+  manualLockEnabled?: boolean;
+  dailyLimitLockActive?: boolean;
+  weeklyLimitLockActive?: boolean;
+  scheduleLockActive?: boolean;
   location: {
     lat: number;
     lng: number;
