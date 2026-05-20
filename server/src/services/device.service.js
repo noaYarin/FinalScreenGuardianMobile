@@ -98,37 +98,59 @@ function getEffectiveLimitMode(screenTime) {
   return LimitMode.DAILY;
 }
 
+// Calculates the remaining screen time according to the active limit mode.
+// DAILY uses today's usage and extra minutes, WEEKLY uses accumulated weekly usage.
+// SCHEDULE is not enforced yet, so it currently returns null.
+function calculateRemainingMinutes(device) {
+  const screenTime = device.screenTime ?? {};
+  const limitMode = getEffectiveLimitMode(screenTime);
 
-// Calculates the next weekly usage counter by adding only the new daily usage delta.
-function calculateNextUsedWeekMinutes(screenTime, nextUsedTodayMinutes) {
-  const previousUsedTodayMinutes = Number(screenTime?.usedTodayMinutes ?? 0);
-  const previousUsedWeekMinutes = Number(screenTime?.usedWeekMinutes ?? 0);
+  if (limitMode === LimitMode.DAILY) {
+    const dailyLimitMinutes = Number(screenTime.dailyLimitMinutes ?? 0);
+    const extraMinutesToday = Number(screenTime.extraMinutesToday ?? 0);
+    const usedTodayMinutes = Number(screenTime.usedTodayMinutes ?? 0);
 
-  const deltaMinutes = Math.max(nextUsedTodayMinutes - previousUsedTodayMinutes, 0);
+    return Math.max(dailyLimitMinutes + extraMinutesToday - usedTodayMinutes, 0);
+  }
 
-  return previousUsedWeekMinutes + deltaMinutes;
+  if (limitMode === LimitMode.WEEKLY) {
+    const weeklyLimitMinutes = Number(screenTime.weeklyLimitMinutes ?? 0);
+    const usedWeekMinutes = Number(screenTime.usedWeekMinutes ?? 0);
+
+    return Math.max(weeklyLimitMinutes - usedWeekMinutes, 0);
+  }
+
+  return null;
 }
 
-
-
-// Builds a lightweight current status object for the device based on daily screen-time data
+// Builds a normalized status object used to compare usage before and after updates.
+// The returned remainingMinutes is calculated according to the active limit mode.
 function buildCurrentStatus(device) {
-  const dailyLimitMinutes = Number(device.screenTime?.dailyLimitMinutes ?? 0);
-  const extraMinutesToday = Number(device.screenTime?.extraMinutesToday ?? 0);
-  const usedTodayMinutes = Number(device.screenTime?.usedTodayMinutes ?? 0);
+  const screenTime = device.screenTime ?? {};
+  const limitMode = getEffectiveLimitMode(screenTime);
 
-  const totalAllowedMinutes = dailyLimitMinutes + extraMinutesToday;
-  const remainingMinutes = Math.max(totalAllowedMinutes - usedTodayMinutes, 0);
+  const dailyLimitMinutes = Number(screenTime.dailyLimitMinutes ?? 0);
+  const extraMinutesToday = Number(screenTime.extraMinutesToday ?? 0);
+  const usedTodayMinutes = Number(screenTime.usedTodayMinutes ?? 0);
+
+  const weeklyLimitMinutes = Number(screenTime.weeklyLimitMinutes ?? 0);
+  const usedWeekMinutes = Number(screenTime.usedWeekMinutes ?? 0);
 
   return {
-    isLimitEnabled: device.screenTime?.isLimitEnabled ?? false,
-    limitMode: getEffectiveLimitMode(device.screenTime),
+    isLimitEnabled: screenTime.isLimitEnabled ?? false,
+    limitMode,
+
     dailyLimitMinutes,
     extraMinutesToday,
     usedTodayMinutes,
-    remainingMinutes,
+
+    weeklyLimitMinutes,
+    usedWeekMinutes,
+
+    remainingMinutes: calculateRemainingMinutes(device),
+
     isLocked: device.isLocked ?? false,
-    isActive: device.isActive ?? true
+    isActive: device.isActive ?? true,
   };
 }
 
@@ -138,7 +160,9 @@ function buildPolicyPayload(device) {
     isLocked: device.isLocked ?? false,
     lockState: {
       manualLockEnabled: device.manualLockEnabled ?? false,
-      dailyLimitLockActive: device.dailyLimitLockActive ?? false
+      dailyLimitLockActive: device.dailyLimitLockActive ?? false,
+      weeklyLimitLockActive: device.weeklyLimitLockActive ?? false,
+      scheduleLockActive: device.scheduleLockActive ?? false
     },
     screenTime: {
       isLimitEnabled: device.screenTime?.isLimitEnabled ?? false,
@@ -167,17 +191,16 @@ export function pushPolicyUpdate(device) {
 
 
 // Derives the parent home status from current usage and allowed daily time
-function calculateRealtimeHomeStatus(usedTodayMinutes, totalAllowedMinutes, isLocked) {
+function calculateRealtimeHomeStatus(usedMinutes, allowedMinutes, isLocked) {
   if (isLocked) {
     return "bad";
   }
 
-  if (!totalAllowedMinutes || totalAllowedMinutes <= 0) {
+  if (!allowedMinutes || allowedMinutes <= 0) {
     return "good";
   }
 
-  const ratio = usedTodayMinutes / totalAllowedMinutes;
-
+  const ratio = usedMinutes / allowedMinutes;
   if (ratio >= 1) {
     return "bad";
   }
@@ -189,14 +212,35 @@ function calculateRealtimeHomeStatus(usedTodayMinutes, totalAllowedMinutes, isLo
   return "good";
 }
 
-// Builds a lightweight device status payload for parent-side real-time UI updates
+// Builds a lightweight device status payload for parent-side real-time UI updates.
+// The status and remainingMinutes are calculated according to the active limit mode.
 function buildDeviceStatusPayload(device) {
-  const isLimitEnabled = device.screenTime?.isLimitEnabled === true;
-  const dailyLimitMinutesRaw = Number(device.screenTime?.dailyLimitMinutes ?? 0);
-  const extraMinutesToday = Number(device.screenTime?.extraMinutesToday ?? 0);
-  const usedTodayMinutes = Number(device.screenTime?.usedTodayMinutes ?? 0);
-  const totalAllowedMinutes = dailyLimitMinutesRaw + extraMinutesToday;
+  const screenTime = device.screenTime ?? {};
+  const isLimitEnabled = screenTime.isLimitEnabled === true;
+  const limitMode = getEffectiveLimitMode(screenTime);
+
+  const dailyLimitMinutesRaw = Number(screenTime.dailyLimitMinutes ?? 0);
+  const extraMinutesToday = Number(screenTime.extraMinutesToday ?? 0);
+  const usedTodayMinutes = Number(screenTime.usedTodayMinutes ?? 0);
+  const totalAllowedDailyMinutes = dailyLimitMinutesRaw + extraMinutesToday;
+
+  const weeklyLimitMinutes = Number(screenTime.weeklyLimitMinutes ?? 0);
+  const usedWeekMinutes = Number(screenTime.usedWeekMinutes ?? 0);
+
   const isLocked = device.isLocked ?? false;
+  const remainingMinutes = calculateRemainingMinutes(device);
+
+  let statusUsedMinutes = usedTodayMinutes;
+  let statusAllowedMinutes = isLimitEnabled ? totalAllowedDailyMinutes : null;
+
+  if (limitMode === LimitMode.WEEKLY) {
+    statusUsedMinutes = usedWeekMinutes;
+    statusAllowedMinutes = isLimitEnabled ? weeklyLimitMinutes : null;
+  }
+
+  if (limitMode === LimitMode.SCHEDULE || limitMode === LimitMode.NONE) {
+    statusAllowedMinutes = null;
+  }
 
   return {
     parentId: String(device.parentId),
@@ -204,26 +248,32 @@ function buildDeviceStatusPayload(device) {
     deviceId: String(device._id),
     isLocked,
     isActive: device.isActive ?? true,
-    limitMode: getEffectiveLimitMode(device.screenTime),
+
+    limitMode,
+    manualLockEnabled: device.manualLockEnabled ?? false,
+    dailyLimitLockActive: device.dailyLimitLockActive ?? false,
+    weeklyLimitLockActive: device.weeklyLimitLockActive ?? false,
+    scheduleLockActive: device.scheduleLockActive ?? false,
+
     status: calculateRealtimeHomeStatus(
-      usedTodayMinutes,
-      isLimitEnabled ? totalAllowedMinutes : null,
+      statusUsedMinutes,
+      statusAllowedMinutes,
       isLocked
     ),
+
     usedTodayMinutes,
-    usedWeekMinutes: Number(device.screenTime?.usedWeekMinutes ?? 0),
-    dailyLimitMinutes: isLimitEnabled ? totalAllowedMinutes : null,
-    weeklyLimitMinutes: Number(device.screenTime?.weeklyLimitMinutes ?? 0),
+    usedWeekMinutes,
+
+    dailyLimitMinutes: isLimitEnabled ? totalAllowedDailyMinutes : null,
+    weeklyLimitMinutes,
     extraMinutesToday,
-    remainingMinutes: isLimitEnabled
-      ? Math.max(totalAllowedMinutes - usedTodayMinutes, 0)
-      : null,
+    remainingMinutes,
+
     lastSeenAt: device.lastSeenAt ?? null,
     accessibilityEnabled: device.accessibilityEnabled ?? null,
     usageAccessEnabled: device.usageAccessEnabled ?? null
   };
 }
-
 
 // Sends the latest device status to the parent room after a device-related change
 export function pushDeviceStatusUpdate(device) {
@@ -309,7 +359,10 @@ export async function unlockDevice(parentId, deviceId) {
   const device = await validateDeviceAccess({ deviceId, parentId });
   const updatedDevice = await updateDeviceById(deviceId, {
     manualLockEnabled: false,
-    isLocked: device.dailyLimitLockActive === true
+    isLocked:
+      device.dailyLimitLockActive === true ||
+      device.weeklyLimitLockActive === true ||
+      device.scheduleLockActive === true
   });
   pushPolicyUpdate(updatedDevice);
 
@@ -430,8 +483,6 @@ export async function updateDeviceScreenTime(parentId, deviceId, body) {
     nextScreenTime.weeklyLimitMinutes = assertLimitMinutes(body.weeklyLimitMinutes);
   }
 
-
-
   if (body.isLimitEnabled === false) {
     nextScreenTime.limitMode = LimitMode.NONE;
   }
@@ -448,6 +499,24 @@ export async function updateDeviceScreenTime(parentId, deviceId, body) {
     screenTime: nextScreenTime
   };
 
+  const nextLimitMode = getEffectiveLimitMode(nextScreenTime);
+
+  // Only one automatic limit mode can be active at a time.
+  // When switching modes, clear lock flags that do not belong to the selected mode.
+  if (body.isLimitEnabled === true) {
+    if (nextLimitMode !== LimitMode.DAILY) {
+      patch.dailyLimitLockActive = false;
+    }
+
+    if (nextLimitMode !== LimitMode.WEEKLY) {
+      patch.weeklyLimitLockActive = false;
+    }
+
+    if (nextLimitMode !== LimitMode.SCHEDULE) {
+      patch.scheduleLockActive = false;
+    }
+  }
+
   const nextDailyLimitMinutes = Number(nextScreenTime.dailyLimitMinutes ?? 0);
   const nextExtraMinutesToday = Number(nextScreenTime.extraMinutesToday ?? 0);
   const usedTodayMinutes = Number(currentScreenTime.usedTodayMinutes ?? 0);
@@ -458,10 +527,18 @@ export async function updateDeviceScreenTime(parentId, deviceId, body) {
   if (body.isLimitEnabled === false) {
     patch.screenTime.extraMinutesToday = 0;
     patch.dailyLimitLockActive = false;
+    patch.weeklyLimitLockActive = false;
+    patch.scheduleLockActive = false;
     patch.isLocked = device.manualLockEnabled === true;
-  } else if (nextScreenTime.isLimitEnabled === true && nextRemainingMinutes > 0) {
+  } else if (
+    nextLimitMode === LimitMode.DAILY &&
+    nextRemainingMinutes > 0
+  ) {
     patch.dailyLimitLockActive = false;
-    patch.isLocked = device.manualLockEnabled === true;
+    patch.isLocked =
+      device.manualLockEnabled === true ||
+      device.weeklyLimitLockActive === true ||
+      device.scheduleLockActive === true;
   }
 
   const updatedDevice = await updateDeviceById(deviceId, patch);
@@ -561,11 +638,11 @@ export async function getDevicePolicy({ deviceId, childId, parentId }) {
       weeklySchedule: device.screenTime?.weeklySchedule ?? []
     },
     applications: (device.applications ?? []).map((app) => ({
-  packageName: app.packageName,
-  name: app.name,
-  icon: app.icon,
-  isBlocked: app.isBlocked === true,
-})),
+      packageName: app.packageName,
+      name: app.name,
+      icon: app.icon,
+      isBlocked: app.isBlocked === true,
+    })),
     updatedAt: device.updatedAt
   };
 }
@@ -832,6 +909,84 @@ export async function updateDeviceLocation(deviceId, location, parentId, childId
 
 }
 
+
+// Checks whether weekly usage crossed the weekly limit in this update.
+// This runs only when WEEKLY is the active automatic limit mode.
+function hasCrossedWeeklyLimit(previousStatus, currentStatus, updatedDevice) {
+  return (
+    currentStatus.isLimitEnabled &&
+    currentStatus.limitMode === LimitMode.WEEKLY &&
+    Number(currentStatus.weeklyLimitMinutes ?? 0) > 0 &&
+    previousStatus.remainingMinutes > 0 &&
+    currentStatus.remainingMinutes <= 0 &&
+    !updatedDevice.isLocked
+  );
+}
+
+
+// Locks the device after the weekly screen-time quota has been reached.
+// It updates the weekly lock flag, pushes policy/status updates, and sends notifications.
+async function enforceWeeklyLimitReached({ deviceId, childName }) {
+  const lockedDevice = await updateDeviceById(deviceId, {
+    weeklyLimitLockActive: true,
+    isLocked: true,
+  });
+
+  pushPolicyUpdate(lockedDevice);
+  pushDeviceStatusUpdate(lockedDevice);
+
+  try {
+    await notifyParent({
+      parentId: lockedDevice.parentId,
+      childId: lockedDevice.childId,
+      type: NotificationType.DEVICE_LOCKED,
+      severity: NotificationSeverity.CRITICAL,
+      title: "Weekly Screen Time Limit Reached",
+      description: `${childName} reached the weekly screen time limit and the device has been locked.`,
+      data: {
+        link: "/Parent/child-stats",
+        childId: String(lockedDevice.childId),
+      },
+    });
+  } catch (err) {
+    console.error(
+      "notifyParent failed in enforceWeeklyLimitReached:",
+      err.message
+    );
+  }
+
+  try {
+    await notifyChild({
+      parentId: lockedDevice.parentId,
+      childId: lockedDevice.childId,
+      type: NotificationType.SCREEN_TIME_ENDED,
+      severity: NotificationSeverity.WARNING,
+      title: "Weekly Time's Up",
+      description: "You have reached your weekly screen time limit",
+    });
+  } catch (err) {
+    console.error(
+      "notifyChild failed in enforceWeeklyLimitReached:",
+      err.message
+    );
+  }
+
+  try {
+    await sendAuditLog({
+      parentId: lockedDevice.parentId,
+      childId: lockedDevice.childId,
+      actionType: AuditActionType.LOCK_DEVICE,
+    });
+  } catch (err) {
+    console.error(
+      "sendAuditLog failed in enforceWeeklyLimitReached:",
+      err.message
+    );
+  }
+
+  return lockedDevice;
+}
+
 export async function updateDeviceUsageByChild({
   deviceId,
   childId,
@@ -875,7 +1030,6 @@ export async function updateDeviceUsageByChild({
   device = await resetWeeklyScreenTimeIfNeeded(device, deviceId, now);
 
   const previousStatus = buildCurrentStatus(device);
-  //const nextUsedWeekMinutes = calculateNextUsedWeekMinutes(device.screenTime, n);
 
   const updatedDevice = await persistDailyUsageSnapshot(deviceId, n, now);
 
@@ -983,6 +1137,15 @@ export async function updateDeviceUsageByChild({
     } catch (err) {
       console.error("sendAuditLog failed in updateDeviceUsageByChild (ended)", err.message);
     }
+
+    return buildCurrentStatus(lockedDevice);
+  }
+
+  if (hasCrossedWeeklyLimit(previousStatus, currentStatus, updatedDevice)) {
+    const lockedDevice = await enforceWeeklyLimitReached({
+      deviceId,
+      childName,
+    });
 
     return buildCurrentStatus(lockedDevice);
   }
