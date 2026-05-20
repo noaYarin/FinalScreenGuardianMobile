@@ -523,24 +523,63 @@ export async function updateDeviceScreenTime(parentId, deviceId, body) {
 
   const nextRemainingMinutes =
     nextDailyLimitMinutes + nextExtraMinutesToday - usedTodayMinutes;
-
   if (body.isLimitEnabled === false) {
     patch.screenTime.extraMinutesToday = 0;
+
     patch.dailyLimitLockActive = false;
     patch.weeklyLimitLockActive = false;
     patch.scheduleLockActive = false;
+
     patch.isLocked = device.manualLockEnabled === true;
-  } else if (
-    nextLimitMode === LimitMode.DAILY &&
-    nextRemainingMinutes > 0
-  ) {
+  } else if (nextLimitMode === LimitMode.DAILY) {
+    if (
+      nextScreenTime.isLimitEnabled === true &&
+      nextDailyLimitMinutes > 0 &&
+      nextRemainingMinutes <= 0
+    ) {
+      patch.dailyLimitLockActive = true;
+      patch.weeklyLimitLockActive = false;
+      patch.scheduleLockActive = false;
+      patch.isLocked = true;
+    } else {
+      patch.dailyLimitLockActive = false;
+      patch.weeklyLimitLockActive = false;
+      patch.scheduleLockActive = false;
+      patch.isLocked = device.manualLockEnabled === true;
+    }
+  } else if (nextLimitMode === LimitMode.WEEKLY) {
+    const nextWeeklyLimitMinutes = Number(nextScreenTime.weeklyLimitMinutes ?? 0);
+    const usedWeekMinutes = Number(currentScreenTime.usedWeekMinutes ?? 0);
+
+    if (
+      nextScreenTime.isLimitEnabled === true &&
+      nextWeeklyLimitMinutes > 0 &&
+      usedWeekMinutes >= nextWeeklyLimitMinutes
+    ) {
+      patch.dailyLimitLockActive = false;
+      patch.weeklyLimitLockActive = true;
+      patch.scheduleLockActive = false;
+      patch.isLocked = true;
+    } else {
+      patch.dailyLimitLockActive = false;
+      patch.weeklyLimitLockActive = false;
+      patch.scheduleLockActive = false;
+      patch.isLocked = device.manualLockEnabled === true;
+    }
+  } else if (nextLimitMode === LimitMode.SCHEDULE) {
     patch.dailyLimitLockActive = false;
+    patch.weeklyLimitLockActive = false;
+
     patch.isLocked =
       device.manualLockEnabled === true ||
-      device.weeklyLimitLockActive === true ||
       device.scheduleLockActive === true;
-  }
+  } else {
+    patch.dailyLimitLockActive = false;
+    patch.weeklyLimitLockActive = false;
+    patch.scheduleLockActive = false;
 
+    patch.isLocked = device.manualLockEnabled === true;
+  }
   const updatedDevice = await updateDeviceById(deviceId, patch);
 
   pushPolicyUpdate(updatedDevice);
@@ -625,6 +664,12 @@ export async function getDevicePolicy({ deviceId, childId, parentId }) {
     platform: device.platform,
     isLocked: device.isLocked,
     isActive: device.isActive,
+    lockState: {
+      manualLockEnabled: device.manualLockEnabled ?? false,
+      dailyLimitLockActive: device.dailyLimitLockActive ?? false,
+      weeklyLimitLockActive: device.weeklyLimitLockActive ?? false,
+      scheduleLockActive: device.scheduleLockActive ?? false
+    },
     screenTime: {
       isLimitEnabled: device.screenTime?.isLimitEnabled ?? false,
       limitMode: getEffectiveLimitMode(device.screenTime),
@@ -909,21 +954,17 @@ export async function updateDeviceLocation(deviceId, location, parentId, childId
 
 }
 
-
-// Checks whether weekly usage crossed the weekly limit in this update.
-// This runs only when WEEKLY is the active automatic limit mode.
-function hasCrossedWeeklyLimit(previousStatus, currentStatus, updatedDevice) {
+// Checks whether the weekly limit should lock the device.
+// This handles both crossing the weekly limit now and already being over the limit.
+function hasReachedWeeklyLimit(currentStatus, updatedDevice) {
   return (
     currentStatus.isLimitEnabled &&
     currentStatus.limitMode === LimitMode.WEEKLY &&
     Number(currentStatus.weeklyLimitMinutes ?? 0) > 0 &&
-    previousStatus.remainingMinutes > 0 &&
     currentStatus.remainingMinutes <= 0 &&
-    !updatedDevice.isLocked
+    updatedDevice.weeklyLimitLockActive !== true
   );
 }
-
-
 // Locks the device after the weekly screen-time quota has been reached.
 // It updates the weekly lock flag, pushes policy/status updates, and sends notifications.
 async function enforceWeeklyLimitReached({ deviceId, childName }) {
@@ -1050,8 +1091,7 @@ export async function updateDeviceUsageByChild({
     currentStatus.isLimitEnabled &&
     isDailyLimitMode &&
     previousStatus.remainingMinutes > 0 &&
-    currentStatus.remainingMinutes <= 0 &&
-    !updatedDevice.isLocked;
+    currentStatus.remainingMinutes <= 0;
 
   let childName = "Your child";
 
@@ -1092,7 +1132,7 @@ export async function updateDeviceUsageByChild({
 
   }
 
-  if (crossedEndedThreshold) {
+  if (crossedEndedThreshold && updatedDevice.dailyLimitLockActive !== true) {
     const lockedDevice = await updateDeviceById(deviceId, {
       dailyLimitLockActive: true,
       isLocked: true
@@ -1141,7 +1181,7 @@ export async function updateDeviceUsageByChild({
     return buildCurrentStatus(lockedDevice);
   }
 
-  if (hasCrossedWeeklyLimit(previousStatus, currentStatus, updatedDevice)) {
+  if (hasReachedWeeklyLimit(currentStatus, updatedDevice)) {
     const lockedDevice = await enforceWeeklyLimitReached({
       deviceId,
       childName,

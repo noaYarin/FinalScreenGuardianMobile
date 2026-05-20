@@ -23,6 +23,7 @@ import { NotificationType } from "../constants/notificationType.js";
 import { NotificationSeverity } from "../constants/severity.js";
 import { sendAuditLog } from "./audit.service.js";
 import { AuditActionType } from "../constants/auditActionType.js";
+import { LimitMode } from "../constants/limitMode.js";
 
 export async function addChild(parentId, body) {
   const childDoc = validateAndBuildChildDoc(body);
@@ -163,29 +164,63 @@ export async function getParentHomeSummary(parentId) {
         img: child.img ?? null,
         deviceId: null,
         deviceName: null,
+
+        limitMode: LimitMode.NONE,
+        isLimitEnabled: false,
+
         usedTodayMinutes: null,
+        usedWeekMinutes: null,
+
         dailyLimitMinutes: null,
+        weeklyLimitMinutes: null,
+        extraMinutesToday: null,
+
+        usedMinutes: null,
+        limitMinutes: null,
         remainingMinutes: null,
+
         status: ScreenTimeStatus.GOOD,
-        isLocked: false
+
+        isLocked: false,
+        manualLockEnabled: false,
+        dailyLimitLockActive: false,
+        weeklyLimitLockActive: false,
+        scheduleLockActive: false
       });
       continue;
     }
 
     const screenTime = device.screenTime || {};
-    const usedTodayMinutes = Number(screenTime.usedTodayMinutes || 0);
 
     const isLimitEnabled = screenTime.isLimitEnabled === true;
+    const limitMode = isLimitEnabled
+      ? screenTime.limitMode || LimitMode.DAILY
+      : LimitMode.NONE;
 
-    const dailyLimitMinutes = isLimitEnabled
-      ? Number(screenTime.dailyLimitMinutes || 0) +
-      Number(screenTime.extraMinutesToday || 0)
-      : null;
+    const usedTodayMinutes = Number(screenTime.usedTodayMinutes || 0);
+    const usedWeekMinutes = Number(screenTime.usedWeekMinutes || 0);
 
-    const remainingMinutes =
-      dailyLimitMinutes != null
-        ? Math.max(dailyLimitMinutes - usedTodayMinutes, 0)
-        : null;
+    const dailyLimitMinutes = Number(screenTime.dailyLimitMinutes || 0);
+    const weeklyLimitMinutes = Number(screenTime.weeklyLimitMinutes || 0);
+    const extraMinutesToday = Number(screenTime.extraMinutesToday || 0);
+
+    let usedMinutes = null;
+    let limitMinutes = null;
+    let remainingMinutes = null;
+
+    if (isLimitEnabled && limitMode === LimitMode.DAILY) {
+      usedMinutes = usedTodayMinutes;
+      limitMinutes = dailyLimitMinutes + extraMinutesToday;
+    }
+
+    if (isLimitEnabled && limitMode === LimitMode.WEEKLY) {
+      usedMinutes = usedWeekMinutes;
+      limitMinutes = weeklyLimitMinutes;
+    }
+
+    if (limitMinutes != null && usedMinutes != null) {
+      remainingMinutes = Math.max(limitMinutes - usedMinutes, 0);
+    }
 
     summary.push({
       childId: child._id,
@@ -193,11 +228,28 @@ export async function getParentHomeSummary(parentId) {
       img: child.img ?? null,
       deviceId: device._id,
       deviceName: device.name || null,
+
+      limitMode,
+      isLimitEnabled,
+
       usedTodayMinutes,
+      usedWeekMinutes,
+
       dailyLimitMinutes,
+      weeklyLimitMinutes,
+      extraMinutesToday,
+
+      usedMinutes,
+      limitMinutes,
       remainingMinutes,
-      status: calculateHomeStatus(usedTodayMinutes, dailyLimitMinutes),
-      isLocked: device.isLocked === true
+
+      status: calculateHomeStatus(usedMinutes, limitMinutes),
+
+      isLocked: device.isLocked === true,
+      manualLockEnabled: device.manualLockEnabled === true,
+      dailyLimitLockActive: device.dailyLimitLockActive === true,
+      weeklyLimitLockActive: device.weeklyLimitLockActive === true,
+      scheduleLockActive: device.scheduleLockActive === true
     });
   }
 
