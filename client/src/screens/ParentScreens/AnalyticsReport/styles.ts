@@ -8,6 +8,7 @@ export const analyticsStyles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    paddingBottom: 40,
   },
   scroll: {
     flexGrow: 1,
