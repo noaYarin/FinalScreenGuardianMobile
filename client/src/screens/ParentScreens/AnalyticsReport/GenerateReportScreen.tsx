@@ -12,10 +12,11 @@ import type { AppDispatch, RootState } from "@/src/redux/store/types";
 import { showErrorToast } from "@/src/utils/appToast";
 
 import {
-  defaultReportRange,
-  formatPickerDate,
-  toJerusalemDateKey,
-} from "./reportUtils";
+  formatJerusalemDisplayDate,
+  getJerusalemDateKey,
+} from "@/src/utils/time";
+
+import { defaultReportRange } from "./reportUtils";
 import { analyticsStyles as styles } from "./styles";
 
 export default function GenerateReportScreen() {
@@ -41,8 +42,8 @@ export default function GenerateReportScreen() {
       return;
     }
 
-    const fromKey = toJerusalemDateKey(fromDate);
-    const toKey = toJerusalemDateKey(toDate);
+    const fromKey = getJerusalemDateKey(fromDate);
+    const toKey = getJerusalemDateKey(toDate);
 
     if (fromKey > toKey) {
       showErrorToast("Start date must be before end date");
@@ -87,7 +88,7 @@ export default function GenerateReportScreen() {
             >
               <AppText style={styles.dateLabel}>From</AppText>
               <AppText weight="bold" style={styles.dateValue}>
-                {formatPickerDate(fromDate)}
+                {formatJerusalemDisplayDate(getJerusalemDateKey(fromDate))}
               </AppText>
             </Pressable>
 
@@ -97,7 +98,7 @@ export default function GenerateReportScreen() {
             >
               <AppText style={styles.dateLabel}>To</AppText>
               <AppText weight="bold" style={styles.dateValue}>
-                {formatPickerDate(toDate)}
+                {formatJerusalemDisplayDate(getJerusalemDateKey(toDate))}
               </AppText>
             </Pressable>
           </View>
