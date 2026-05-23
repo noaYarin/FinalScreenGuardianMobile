@@ -132,6 +132,49 @@ export async function getChildScreenTimeReports(
     { requireAuth: true, role: "PARENT" }
   );
 }
+
+export type ParentAnalyticsReportIndicators = {
+  totalMinutes: number;
+  dailyAverageMinutes: number;
+  limitExceededDays: number;
+  tasksApprovedCount: number;
+  extensionRequestsCount: number;
+};
+
+export type ParentAnalyticsReport = {
+  childId: string;
+  childName: string;
+  deviceId: string | null;
+  hasLinkedDevice: boolean;
+  fromKey: string;
+  toKey: string;
+  fromLabel: string;
+  toLabel: string;
+  generatedAtLabel: string;
+  executiveSummary: string;
+  indicators: ParentAnalyticsReportIndicators;
+  trendPercent: number | null;
+};
+
+export async function getParentAnalyticsReport(
+  childId: string,
+  fromKey: string,
+  toKey: string
+): Promise<ParentAnalyticsReport> {
+  const query = new URLSearchParams({ from: fromKey, to: toKey }).toString();
+  const data = await api.get<
+    ParentAnalyticsReport & { kpis?: ParentAnalyticsReportIndicators }
+  >(
+    `${URL}/children/${encodeURIComponent(childId)}/analytics-report?${query}`,
+    { requireAuth: true, role: "PARENT" }
+  );
+
+  const { kpis, ...report } = data;
+  return {
+    ...report,
+    indicators: data.indicators ?? kpis!,
+  };
+}
 export async function deleteChild(
   childId: string
 ): Promise<{ deletedChildId: string }> {
