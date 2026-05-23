@@ -13,9 +13,9 @@ import {
 } from "../dal/device.dal.js";
 
 // Maximum number of history entries to keep
-const MAX_HISTORY_ENTRIES = 30;
+const MAX_HISTORY_ENTRIES = 35;
 
-// Validates time history 
+// Validates time history
 function normalizeHistory(history) {
   if (!Array.isArray(history)) {
     return [];
@@ -30,7 +30,7 @@ function normalizeHistory(history) {
     }));
 }
 
-// Updates an existing date's screen time or pushes a new entry, maintaining a sorted list capped at 30 entries
+// Updates an existing date's screen time or pushes a new entry, maintaining a sorted list capped at 35 entries
 function upsertHistoryEntry(history, dateKey, usedMinutes) {
   const nextHistory = normalizeHistory(history);
   const safeMinutes = Math.max(0, Number(usedMinutes ?? 0));
@@ -50,30 +50,71 @@ function upsertHistoryEntry(history, dateKey, usedMinutes) {
     });
   }
 
-  // Sort the history by date key and keep only the last 30 entries;
+  // Sort the history by date key and keep only the last 35 entries;
   return nextHistory
     .sort((left, right) => left.dateKey.localeCompare(right.dateKey))
     .slice(-MAX_HISTORY_ENTRIES);
 }
 
-// Builds a map of date keys to used minutes
-function buildHistoryMap(history, todayKey, usedTodayMinutes) {
-  const map = new Map();
+function getHistoryEntry(history, dateKey) {
+  return normalizeHistory(history).find((entry) => entry.dateKey === dateKey) ?? null;
+}
 
-  for (const entry of normalizeHistory(history)) {
-    map.set(entry.dateKey, entry.usedMinutes);
+export function getUsedMinutesForDateKey(
+  history,
+  dateKey,
+  todayKey,
+  usedTodayMinutes
+) {
+  const entry = getHistoryEntry(history, dateKey);
+
+  if (entry) {
+    return entry.usedMinutes;
   }
 
-  map.set(todayKey, Math.max(0, Number(usedTodayMinutes ?? 0)));
-  return map;
+  if (dateKey === todayKey) {
+    return Math.max(0, Number(usedTodayMinutes ?? 0));
+  }
+
+  return 0;
+}
+
+export function hasUsageDataForDateKey(
+  history,
+  dateKey,
+  todayKey,
+  usedTodayMinutes
+) {
+  if (getHistoryEntry(history, dateKey)) {
+    return true;
+  }
+
+  return dateKey === todayKey && Number(usedTodayMinutes ?? 0) > 0;
+}
+
+function sumMinutesForWeek(history, weekDateKeys, todayKey, usedTodayMinutes) {
+  return weekDateKeys.reduce(
+    (total, dateKey) =>
+      total + getUsedMinutesForDateKey(history, dateKey, todayKey, usedTodayMinutes),
+    0
+  );
+}
+
+function weekHasUsageData(history, weekDateKeys, todayKey, usedTodayMinutes) {
+  return weekDateKeys.some((dateKey) =>
+    hasUsageDataForDateKey(history, dateKey, todayKey, usedTodayMinutes)
+  );
 }
 
 // Calculates the total screen time minutes accumulated across all days of the current week
-export function calculateUsedWeekMinutes(history, todayKey, usedTodayMinutes) {
-  const weekKeys = getJerusalemWeekDateKeys();
-  const map = buildHistoryMap(history, todayKey, usedTodayMinutes);
+export function calculateUsedWeekMinutes(history, todayKey, usedTodayMinutes, now = new Date()) {
+  const weekKeys = getJerusalemWeekDateKeys(now);
 
-  return weekKeys.reduce((total, dateKey) => total + (map.get(dateKey) ?? 0), 0);
+  return weekKeys.reduce(
+    (total, dateKey) =>
+      total + getUsedMinutesForDateKey(history, dateKey, todayKey, usedTodayMinutes),
+    0
+  );
 }
 
 // Saves today's current usage minutes and updates both history logs and the weekly totals
@@ -94,7 +135,8 @@ export async function persistDailyUsageSnapshot(deviceId, usedTodayMinutes, now 
   const usedWeekMinutes = calculateUsedWeekMinutes(
     nextHistory,
     todayKey,
-    usedTodayMinutes
+    usedTodayMinutes,
+    now
   );
 
   return updateDeviceUsedTodayMinutes(deviceId, usedTodayMinutes, {
@@ -103,7 +145,7 @@ export async function persistDailyUsageSnapshot(deviceId, usedTodayMinutes, now 
   });
 }
 
-// Archives the screen time for the day 
+// Archives the screen time for the day
 export async function archiveScreenTimeDayBeforeReset(device, now = new Date()) {
   if (!device) {
     return normalizeHistory([]);
@@ -111,21 +153,19 @@ export async function archiveScreenTimeDayBeforeReset(device, now = new Date()) 
 
   const screenTime = device.screenTime ?? {};
   const usedTodayMinutes = Math.max(0, Number(screenTime.usedTodayMinutes ?? 0));
+  const history = normalizeHistory(screenTime.dailyUsageHistory);
 
   if (usedTodayMinutes <= 0) {
-    return normalizeHistory(screenTime.dailyUsageHistory);
+    return history;
   }
 
-  const lastResetAt = screenTime.lastDailyResetAt
-    ? new Date(screenTime.lastDailyResetAt)
-    : now;
-  const archiveDateKey = getJerusalemDateKey(lastResetAt);
+  const todayKey = getJerusalemDateKey(now);
+  const archiveDateKey = moment
+    .tz(todayKey, "YYYY-MM-DD", JERUSALEM_TZ)
+    .subtract(1, "day")
+    .format("YYYY-MM-DD");
 
-  return upsertHistoryEntry(
-    screenTime.dailyUsageHistory,
-    archiveDateKey,
-    usedTodayMinutes
-  );
+  return upsertHistoryEntry(history, archiveDateKey, usedTodayMinutes);
 }
 
 export async function resetDailyScreenTimeWithHistory(deviceId, now = new Date()) {
@@ -166,33 +206,55 @@ export function buildScreenTimeUsageReport(device, now = new Date()) {
   const screenTime = device?.screenTime ?? {};
   const todayKey = getJerusalemDateKey(now);
   const weekDateKeys = getJerusalemWeekDateKeys(now);
-  const historyMap = buildHistoryMap(
-    screenTime.dailyUsageHistory,
-    todayKey,
-    screenTime.usedTodayMinutes
-  );
+  const history = normalizeHistory(screenTime.dailyUsageHistory);
+  const usedTodayMinutes = Math.max(0, Number(screenTime.usedTodayMinutes ?? 0));
 
   const days = weekDateKeys.map((dateKey, index) => {
     const date = moment.tz(dateKey, "YYYY-MM-DD", JERUSALEM_TZ).toDate();
+    const usedMinutes = getUsedMinutesForDateKey(
+      history,
+      dateKey,
+      todayKey,
+      usedTodayMinutes
+    );
 
     return {
       weekdayLabel: WEEKDAY_CHART_LABELS[index],
       dateKey,
       date: date.toISOString(),
-      usedMinutes: historyMap.get(dateKey) ?? 0
+      usedMinutes,
+      hasData: hasUsageDataForDateKey(history, dateKey, todayKey, usedTodayMinutes)
     };
   });
 
-  const weeklyTotalMinutes = days.reduce(
-    (total, day) => total + day.usedMinutes,
-    0
-  );
-  const dailyAverageMinutes = Math.round(weeklyTotalMinutes / 7);
+  const weeks = [3, 2, 1, 0].map((weeksAgo) => {
+    const weekDateKeys = getJerusalemWeekDateKeys(
+      moment(now).tz(JERUSALEM_TZ).subtract(weeksAgo * 7, "days").toDate()
+    );
+
+    return {
+      weekLabel: moment.tz(weekDateKeys[0], "YYYY-MM-DD", JERUSALEM_TZ).format("D/M"),
+      weekStartKey: weekDateKeys[0],
+      weekEndKey: weekDateKeys[6],
+      usedMinutes: sumMinutesForWeek(history, weekDateKeys, todayKey, usedTodayMinutes),
+      hasData: weekHasUsageData(history, weekDateKeys, todayKey, usedTodayMinutes)
+    };
+  });
+
+  const weeklyTotalMinutes = days.reduce((total, day) => total + day.usedMinutes, 0);
+  const monthlyTotalMinutes = weeks.reduce((total, week) => total + week.usedMinutes, 0);
+  const daysWithData = days.filter((day) => day.hasData).length;
+  const weeksWithData = weeks.filter((week) => week.hasData).length;
 
   return {
     days,
+    weeks,
     weeklyTotalMinutes,
-    dailyAverageMinutes,
+    monthlyTotalMinutes,
+    dailyAverageMinutes:
+      daysWithData > 0 ? Math.round(weeklyTotalMinutes / daysWithData) : 0,
+    monthlyAverageMinutes:
+      weeksWithData > 0 ? Math.round(monthlyTotalMinutes / weeksWithData) : 0,
     topApp: findTopApp(device?.applications) ?? null,
     hasLinkedDevice: true
   };

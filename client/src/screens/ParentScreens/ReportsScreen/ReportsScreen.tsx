@@ -11,7 +11,6 @@ import { fetchDevicesByChild } from "@/src/redux/thunks/deviceThunks";
 import { fetchParentHomeSummaryThunk } from "@/src/redux/thunks/parentHomeThunks";
 import {
   getChildScreenTimeReports,
-  type HomeSummaryChild,
   type ScreenTimeUsageReport,
 } from "@/src/api/parent";
 import { store } from "@/src/redux/store";
@@ -21,11 +20,9 @@ import {
 } from "@/src/redux/slices/reports-slice";
 
 import {
+  buildEmptyUsageReport,
   buildReportsDatasetFromReport,
-  buildUsageReportFromSnapshot,
-  mergeSnapshotWithHomeSummary,
   pickRepresentativeDevice,
-  screenTimeSnapshotFromDevice,
 } from "./buildReportsDataset";
 import ReportsContent from "@/src/components/ReportsScreen/ReportsContent";
 import ReportsMetricRow from "@/src/components/ReportsScreen/ReportsMetricRow";
@@ -34,7 +31,6 @@ import { showErrorToast } from "@/src/utils/appToast";
 
 function buildFallbackReport(
   devicesByChild: RootState["devices"]["byChildId"],
-  childrenSummary: HomeSummaryChild[],
   childId: string
 ): ScreenTimeUsageReport | null {
   const devices = devicesByChild[childId] ?? [];
@@ -43,25 +39,17 @@ function buildFallbackReport(
   if (!device) {
     return {
       days: [],
+      weeks: [],
       weeklyTotalMinutes: 0,
+      monthlyTotalMinutes: 0,
       dailyAverageMinutes: 0,
+      monthlyAverageMinutes: 0,
       topApp: null,
       hasLinkedDevice: false,
     };
   }
 
-  const fromDevice = screenTimeSnapshotFromDevice(device);
-  if (!fromDevice) {
-    return null;
-  }
-
-  const homeSummary = childrenSummary.find(
-    (child) => String(child.childId) === String(childId)
-  );
-
-  return buildUsageReportFromSnapshot(
-    mergeSnapshotWithHomeSummary(fromDevice, homeSummary)
-  );
+  return buildEmptyUsageReport();
 }
 
 export default function ParentReportsScreen() {
@@ -145,7 +133,6 @@ export default function ParentReportsScreen() {
       const state = store.getState();
       const fallback = buildFallbackReport(
         state.devices.byChildId,
-        state.parentHome.childrenSummary ?? [],
         effectiveChildId
       );
 
@@ -179,7 +166,11 @@ export default function ParentReportsScreen() {
     return buildReportsDatasetFromReport(selectedTimeRange, usageReport);
   }, [selectedTimeRange, usageReport]);
 
-  const hasUsageData = (usageReport?.weeklyTotalMinutes ?? 0) > 0;
+  const hasUsageData =
+    (usageReport?.weeklyTotalMinutes ?? 0) > 0 ||
+    (usageReport?.monthlyTotalMinutes ?? 0) > 0 ||
+    (usageReport?.days?.some((day) => day.hasData) ?? false) ||
+    (usageReport?.weeks?.some((week) => week.hasData) ?? false);
 
   if (!effectiveChildId) {
     return <View style={styles.screen} />;

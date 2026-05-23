@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { useWindowDimensions } from "react-native";
 import { BarChart, yAxisSides } from "react-native-gifted-charts";
 
@@ -9,59 +9,90 @@ import ReportsChartCard from "./ReportsChartCard";
 type Props = {
   title: string;
   bars: ReportsBarPoint[];
+  isWeeklyChart?: boolean;
 };
 
-const CHART_MAX_HOURS = 8;
-const CHART_HOUR_STEP = 2;
-const CHART_SECTIONS = CHART_MAX_HOURS / CHART_HOUR_STEP;
-const Y_AXIS_LABELS = ["0", "2", "4", "6", "8"];
+type YAxisConfig = {
+  maxValue: number;
+  stepValue: number;
+  noOfSections: number;
+  labels: string[];
+};
 
-export default function ReportsUsageChart({ title, bars }: Props) {
-  const { width } = useWindowDimensions();
+const DAILY_Y_AXIS: YAxisConfig = {
+  maxValue: 8,
+  stepValue: 2,
+  noOfSections: 4,
+  labels: ["0", "2", "4", "6", "8"],
+};
 
-  const isWeekdayChart = bars.length === 7;
-  const chartWidth = Math.min(width - 48, 360);
-  const barWidth = isWeekdayChart ? 22 : bars.length > 4 ? 28 : 32;
-  const spacing = isWeekdayChart ? 10 : bars.length > 4 ? 18 : 22;
-  const maxBarValue = Math.max(...bars.map((bar) => bar.value), 0);
-  const hasUsage = maxBarValue > 0;
+const AXIS_TEXT = { color: "#6B7280", fontSize: 12 };
+const EMPTY_BAR_HEIGHT = 0.05;
+const EMPTY_BAR_COLOR = "#E5E7EB";
 
-  const chartData = useMemo(
-    () =>
-      bars.map((bar) => ({
-        value: hasUsage ? Math.min(bar.value, CHART_MAX_HOURS) : 0.05,
-        label: bar.label,
-        frontColor: hasUsage ? REPORTS_COLORS.bar : "#E5E7EB",
-        topLabelComponent: () => null,
-      })),
-    [bars, hasUsage]
+function getWeeklyYAxis(maxBarHours: number): YAxisConfig {
+  const step = maxBarHours > 24 ? 8 : maxBarHours > 12 ? 4 : 2;
+  const maxValue = Math.max(step * 2, Math.ceil(maxBarHours / step) * step);
+  const noOfSections = Math.max(1, Math.ceil(maxValue / step));
+  const labels = Array.from({ length: noOfSections + 1 }, (_, index) =>
+    String(index * step)
   );
+
+  return { maxValue, stepValue: step, noOfSections, labels };
+}
+
+function toChartBar(bar: ReportsBarPoint, yMax: number) {
+  const hasData = bar.hasData === true && bar.value > 0;
+
+  return {
+    value: hasData ? Math.min(bar.value, yMax) : EMPTY_BAR_HEIGHT,
+    label: bar.label,
+    frontColor: hasData ? REPORTS_COLORS.bar : EMPTY_BAR_COLOR,
+    topLabelComponent: () => null,
+  };
+}
+
+export default function ReportsUsageChart({
+  title,
+  bars,
+  isWeeklyChart = false,
+}: Props) {
+  const { width } = useWindowDimensions();
+  const isDayChart = !isWeeklyChart && bars.length === 7;
+
+  const maxBarHours = Math.max(0, ...bars.map((bar) => bar.value));
+  const yAxis = isWeeklyChart ? getWeeklyYAxis(maxBarHours) : DAILY_Y_AXIS;
+  const chartData = bars.map((bar) => toChartBar(bar, yAxis.maxValue));
+
+  const barWidth = isDayChart ? 22 : 36;
+  const spacing = isDayChart ? 10 : 24;
+  const sideGap = isDayChart ? 8 : 16;
 
   return (
     <ReportsChartCard title={title} icon="chart-bar">
       <BarChart
         data={chartData}
-        width={chartWidth}
+        width={Math.min(width - 48, 360)}
         height={190}
         barWidth={barWidth}
         spacing={spacing}
-        initialSpacing={isWeekdayChart ? 8 : 12}
-        endSpacing={isWeekdayChart ? 8 : 12}
-        maxValue={CHART_MAX_HOURS}
-        stepValue={CHART_HOUR_STEP}
-        noOfSections={CHART_SECTIONS}
+        initialSpacing={sideGap}
+        endSpacing={sideGap}
+        maxValue={yAxis.maxValue}
+        stepValue={yAxis.stepValue}
+        noOfSections={yAxis.noOfSections}
         yAxisSide={yAxisSides.LEFT}
-        yAxisLabelTexts={Y_AXIS_LABELS}
+        yAxisLabelTexts={yAxis.labels}
         yAxisLabelWidth={32}
         roundedTop
         roundedBottom={false}
         hideRules
         yAxisThickness={0}
         xAxisThickness={0}
-        yAxisTextStyle={{ color: "#6B7280", fontSize: 12 }}
+        yAxisTextStyle={AXIS_TEXT}
         xAxisLabelTextStyle={{
-          color: "#6B7280",
-          fontSize: 13,
+          ...AXIS_TEXT,
+          fontSize: isWeeklyChart ? 11 : 13,
           textAlign: "center",
         }}
         isAnimated
