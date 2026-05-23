@@ -25,7 +25,10 @@ import {
 import { getChildrenByParentId } from "../dal/parent.dal.js";
 import { getIO, emitPolicyUpdated, emitDeviceStatusUpdated } from "../socketHandler.js";
 import { FORCE_CHILD_LOGOUT } from "../constants/socketEvents.js";
-import { formatJerusalemOffsetIsoNow } from "../utils/time.js";
+import {
+  formatJerusalemOffsetIsoNow,
+  isSameJerusalemDay
+} from "../utils/time.js";
 import { LimitMode } from "../constants/limitMode.js";
 import {
   persistDailyUsageSnapshot,
@@ -43,14 +46,6 @@ function assertLimitMinutes(value) {
   return n;
 }
 
-
-function isSameDay(date1, date2) {
-  return (
-    date1.getFullYear() === date2.getFullYear() &&
-    date1.getMonth() === date2.getMonth() &&
-    date1.getDate() === date2.getDate()
-  );
-}
 
 // Checks whether two dates are in the same week, using Sunday as the start of the week.
 function isSameWeek(date1, date2) {
@@ -442,7 +437,7 @@ export async function getDeviceScreenTime(parentId, deviceId) {
     ? new Date(device.screenTime.lastDailyResetAt)
     : null;
 
-  if (!lastReset || !isSameDay(lastReset, now)) {
+  if (!lastReset || !isSameJerusalemDay(lastReset, now)) {
     device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
@@ -651,7 +646,7 @@ export async function getDevicePolicy({ deviceId, childId, parentId }) {
     ? new Date(device.screenTime.lastDailyResetAt)
     : null;
 
-  if (!lastReset || !isSameDay(lastReset, now)) {
+  if (!lastReset || !isSameJerusalemDay(lastReset, now)) {
     device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
@@ -818,7 +813,7 @@ export async function getDeviceDailyLimit(parentId, deviceId) {
     ? new Date(device.screenTime.lastDailyResetAt)
     : null;
 
-  if (!lastReset || !isSameDay(lastReset, now)) {
+  if (!lastReset || !isSameJerusalemDay(lastReset, now)) {
     device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
@@ -914,7 +909,7 @@ export async function getDeviceCurrentStatusForChild({ deviceId, childId, parent
     ? new Date(device.screenTime.lastDailyResetAt)
     : null;
 
-  if (!lastReset || !isSameDay(lastReset, now)) {
+  if (!lastReset || !isSameJerusalemDay(lastReset, now)) {
     device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
@@ -922,7 +917,6 @@ export async function getDeviceCurrentStatusForChild({ deviceId, childId, parent
 
   return buildCurrentStatus(device);
 }
-
 
 export async function updateDeviceLocation(deviceId, location, parentId, childId) {
   await validateDeviceAccess({ deviceId, parentId, childId });
@@ -1064,7 +1058,7 @@ export async function updateDeviceUsageByChild({
     ? new Date(device.screenTime.lastDailyResetAt)
     : null;
 
-  if (!lastReset || !isSameDay(lastReset, now)) {
+  if (!lastReset || !isSameJerusalemDay(lastReset, now)) {
     device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 

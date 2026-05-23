@@ -102,12 +102,24 @@ export type ScreenTimeReportDay = {
   dateKey: string;
   date: string;
   usedMinutes: number;
+  hasData?: boolean;
+};
+
+export type ScreenTimeReportWeek = {
+  weekLabel: string;
+  weekStartKey: string;
+  weekEndKey: string;
+  usedMinutes: number;
+  hasData?: boolean;
 };
 
 export type ScreenTimeUsageReport = {
   days: ScreenTimeReportDay[];
+  weeks?: ScreenTimeReportWeek[];
   weeklyTotalMinutes: number;
+  monthlyTotalMinutes?: number;
   dailyAverageMinutes: number;
+  monthlyAverageMinutes?: number;
   topApp: string | null;
   hasLinkedDevice: boolean;
 };

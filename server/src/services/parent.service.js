@@ -16,7 +16,8 @@ import { assertBoolean } from "../utils/validators.js";
 import { findDevicesByChildId } from "../dal/device.dal.js";
 import {
   buildScreenTimeUsageReport,
-  persistDailyUsageSnapshot
+  isDeviceDayResetDue,
+  resetDailyScreenTimeWithHistory
 } from "./screenTimeHistory.service.js";
 import { notifyParent } from "./notification.service.js";
 import { NotificationType } from "../constants/notificationType.js";
@@ -270,18 +271,19 @@ export async function getChildScreenTimeReports(parentId, childId) {
   if (!device) {
     return {
       days: [],
+      weeks: [],
       weeklyTotalMinutes: 0,
+      monthlyTotalMinutes: 0,
       dailyAverageMinutes: 0,
+      monthlyAverageMinutes: 0,
       topApp: null,
       hasLinkedDevice: false
     };
   }
 
-  const usedTodayMinutes = Number(device.screenTime?.usedTodayMinutes ?? 0);
-
-  if (usedTodayMinutes > 0) {
+  if (isDeviceDayResetDue(device)) {
     device =
-      (await persistDailyUsageSnapshot(device._id, usedTodayMinutes)) ?? device;
+      (await resetDailyScreenTimeWithHistory(device._id)) ?? device;
   }
 
   return buildScreenTimeUsageReport(device);

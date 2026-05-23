@@ -6,14 +6,16 @@ import type { ReportsTimeRange } from "@/src/redux/slices/reports-slice";
 const WEEKDAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
 const CHART_TITLE = {
   daily: "Daily usage",
-  weekly: "Weekly usage",
+  weekly: "Last 4 weeks",
 } as const;
+
 const NO_DATA = "No data yet";
 
 type AppUsage = {
   name: string;
   usedTodayMinutes: number;
 };
+
 
 export type ScreenTimeSnapshot = {
   usedTodayMinutes: number;
@@ -22,9 +24,11 @@ export type ScreenTimeSnapshot = {
   applications: AppUsage[];
 };
 
+
 export type ReportsBarPoint = {
   value: number;
   label: string;
+  hasData?: boolean;
 };
 
 export type ReportsMetrics = {
@@ -37,6 +41,7 @@ export type ReportsDataset = {
   chartTitle: string;
   bars: ReportsBarPoint[];
   metrics: ReportsMetrics;
+  isWeeklyChart: boolean;
 };
 
 export function pickRepresentativeDevice(devices: Device[]): Device | null {
@@ -45,7 +50,6 @@ export function pickRepresentativeDevice(devices: Device[]): Device | null {
   }
 
   const activeDevices = devices.filter((device) => device?.isActive !== false);
-
   if (activeDevices.length === 0) {
     return devices[0];
   }
@@ -58,74 +62,80 @@ export function pickRepresentativeDevice(devices: Device[]): Device | null {
   return activeDevices[0];
 }
 
+
 function minutesToChartHours(minutes: number): number {
   return Number((minutes / 60).toFixed(1));
 }
 
-function buildWeekDaysFromSnapshot(snapshot: ScreenTimeSnapshot) {
-  const todayIndex = new Date().getDay();
-  const usedToday = snapshot.usedTodayMinutes;
-  const minutesBeforeToday = Math.max(snapshot.usedWeekMinutes - usedToday, 0);
-  const pastDayCount = todayIndex;
-  const minutesPerPastDay =
-    pastDayCount > 0 ? minutesBeforeToday / pastDayCount : 0;
-
-  return WEEKDAY_LABELS.map((weekdayLabel, index) => {
-    let usedMinutes = 0;
-
-    if (index === todayIndex) {
-      usedMinutes = usedToday;
-    } else if (index < todayIndex) {
-      usedMinutes = minutesPerPastDay;
-    }
-
-    return {
-      weekdayLabel,
-      dateKey: "",
-      date: "",
-      usedMinutes: Math.round(usedMinutes),
-    };
-  });
+function buildEmptyWeekDays(): ScreenTimeUsageReport["days"] {
+  return WEEKDAY_LABELS.map((weekdayLabel) => ({
+    weekdayLabel,
+    dateKey: "",
+    date: "",
+    usedMinutes: 0,
+    hasData: false,
+  }));
 }
 
-export function buildUsageReportFromSnapshot(
-  snapshot: ScreenTimeSnapshot
-): ScreenTimeUsageReport {
-  const days = buildWeekDaysFromSnapshot(snapshot);
-  const weeklyTotalMinutes = days.reduce(
-    (total, day) => total + day.usedMinutes,
-    0
-  );
 
-  const sortedApps = [...snapshot.applications].sort(
-    (left, right) => right.usedTodayMinutes - left.usedTodayMinutes
-  );
-  const topAppEntry = sortedApps[0];
+function buildEmptyWeeks(): NonNullable<ScreenTimeUsageReport["weeks"]> {
+  return Array.from({ length: 4 }, (_, index) => ({
+    weekLabel: `W${index + 1}`,
+    weekStartKey: "",
+    weekEndKey: "",
+    usedMinutes: 0,
+    hasData: false,
+  }));
+}
 
+export function buildEmptyUsageReport(): ScreenTimeUsageReport {
   return {
-    days,
-    weeklyTotalMinutes,
-    dailyAverageMinutes: Math.round(weeklyTotalMinutes / 7),
-    topApp:
-      topAppEntry && topAppEntry.usedTodayMinutes > 0
-        ? topAppEntry.name
-        : null,
+    days: buildEmptyWeekDays(),
+    weeks: buildEmptyWeeks(),
+    weeklyTotalMinutes: 0,
+    monthlyTotalMinutes: 0,
+    dailyAverageMinutes: 0,
+    monthlyAverageMinutes: 0,
+    topApp: null,
     hasLinkedDevice: true,
-  };
+  } 
 }
 
 export function buildReportsDatasetFromReport(
   timeRange: ReportsTimeRange,
   report: ScreenTimeUsageReport
 ): ReportsDataset {
-  const bars = (report.days ?? []).map((day) => ({
+
+  if (timeRange === "weekly") {
+    const bars = (report.weeks ?? buildEmptyWeeks()).map((week) => ({
+      label: week.weekLabel,
+      value: minutesToChartHours(week.usedMinutes),
+      hasData: week.hasData === true,
+    }));
+
+
+    return {
+      chartTitle: CHART_TITLE.weekly,
+      bars,
+      isWeeklyChart: true,
+      metrics: { 
+        dailyAverageMinutes: report.monthlyAverageMinutes ?? 0,
+        weeklyTotalMinutes: report.monthlyTotalMinutes ?? 0,
+        topApp: report.topApp?.trim() ? report.topApp : NO_DATA,
+      },
+    };
+  }
+
+  const bars = (report.days ?? buildEmptyWeekDays()).map((day) => ({
     label: day.weekdayLabel,
     value: minutesToChartHours(day.usedMinutes),
+    hasData: day.hasData === true,
   }));
 
   return {
-    chartTitle: CHART_TITLE[timeRange],
+    chartTitle: CHART_TITLE.daily,
     bars,
+    isWeeklyChart: false,
     metrics: {
       dailyAverageMinutes: report.dailyAverageMinutes ?? 0,
       weeklyTotalMinutes: report.weeklyTotalMinutes ?? 0,
@@ -133,6 +143,8 @@ export function buildReportsDatasetFromReport(
     },
   };
 }
+
+
 
 export function screenTimeSnapshotFromDevice(
   device: Device | null
@@ -173,6 +185,7 @@ export function mergeSnapshotWithHomeSummary(
   snapshot: ScreenTimeSnapshot,
   summary?: HomeSummaryChild | null
 ): ScreenTimeSnapshot {
+
   if (!summary) {
     return snapshot;
   }
@@ -185,3 +198,4 @@ export function mergeSnapshotWithHomeSummary(
       summary.dailyLimitMinutes ?? snapshot.dailyLimitMinutes,
   };
 }
+
