@@ -188,7 +188,7 @@ export async function resetDailyScreenTime(deviceId, now, history = null) {
 }
 
 // Resets the weekly screen-time usage counter and clears weekly limit lock state when a new week starts.
-export async function resetWeeklyScreenTime(deviceId, now) {
+export async function resetWeeklyScreenTime(deviceId, now, weeklyHistory = null) {
   assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
 
   const device = await DeviceModel.findById(deviceId).lean();
@@ -197,18 +197,24 @@ export async function resetWeeklyScreenTime(deviceId, now) {
     return null;
   }
 
+  const fieldsToSet = {
+    weeklyLimitLockActive: false,
+    isLocked:
+      device.manualLockEnabled === true ||
+      device.dailyLimitLockActive === true ||
+      device.scheduleLockActive === true,
+    "screenTime.usedWeekMinutes": 0,
+    "screenTime.lastWeeklyResetAt": now
+  };
+
+  if (Array.isArray(weeklyHistory)) {
+    fieldsToSet["screenTime.weeklyUsageHistory"] = weeklyHistory;
+  }
+
   return DeviceModel.findByIdAndUpdate(
     deviceId,
     {
-      $set: {
-        weeklyLimitLockActive: false,
-        isLocked:
-          device.manualLockEnabled === true ||
-          device.dailyLimitLockActive === true ||
-          device.scheduleLockActive === true,
-        "screenTime.usedWeekMinutes": 0,
-        "screenTime.lastWeeklyResetAt": now
-      }
+      $set: fieldsToSet
     },
     { new: true }
   ).lean();

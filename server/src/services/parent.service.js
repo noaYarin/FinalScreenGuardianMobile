@@ -17,7 +17,9 @@ import { findDevicesByChildId } from "../dal/device.dal.js";
 import {
   buildScreenTimeUsageReport,
   isDeviceDayResetDue,
-  resetDailyScreenTimeWithHistory
+  isDeviceWeekResetDue,
+  resetDailyScreenTimeWithHistory,
+  resetWeeklyScreenTimeWithHistory
 } from "./screenTimeHistory.service.js";
 import { notifyParent } from "./notification.service.js";
 import { NotificationType } from "../constants/notificationType.js";
@@ -284,6 +286,11 @@ export async function getChildScreenTimeReports(parentId, childId) {
   if (isDeviceDayResetDue(device)) {
     device =
       (await resetDailyScreenTimeWithHistory(device._id)) ?? device;
+  }
+
+  if (isDeviceWeekResetDue(device)) {
+    device =
+      (await resetWeeklyScreenTimeWithHistory(device._id)) ?? device;
   }
 
   return buildScreenTimeUsageReport(device);

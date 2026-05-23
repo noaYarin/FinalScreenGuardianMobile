@@ -24,6 +24,16 @@ export function isSameJerusalemDay(left, right) {
   return getJerusalemDateKey(left) === getJerusalemDateKey(right);
 }
 
+export function getJerusalemWeekStartKey(date = new Date()) {
+  return getJerusalemWeekDateKeys(date)[0];
+}
+
+export function isSameJerusalemWeek(left, right) {
+  return (
+    getJerusalemWeekStartKey(left) === getJerusalemWeekStartKey(right)
+  );
+}
+
 // Get the date for the current week
 export function getJerusalemWeekDateKeys(date = new Date()) {
   const today = jerusalemMoment(date).startOf("day");

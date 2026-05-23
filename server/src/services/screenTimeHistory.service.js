@@ -3,17 +3,20 @@ import {
   getJerusalemDateKey,
   getJerusalemWeekDateKeys,
   isSameJerusalemDay,
+  isSameJerusalemWeek,
   JERUSALEM_TZ,
   WEEKDAY_CHART_LABELS
 } from "../utils/time.js";
 import {
   findDeviceScreenTimeById,
   resetDailyScreenTime,
+  resetWeeklyScreenTime,
   updateDeviceUsedTodayMinutes
 } from "../dal/device.dal.js";
 
 // Maximum number of history entries to keep
 const MAX_HISTORY_ENTRIES = 35;
+const MAX_WEEKLY_HISTORY_ENTRIES = 12;
 
 // Validates time history
 function normalizeHistory(history) {
@@ -60,6 +63,54 @@ function getHistoryEntry(history, dateKey) {
   return normalizeHistory(history).find((entry) => entry.dateKey === dateKey) ?? null;
 }
 
+function normalizeWeeklyHistory(history) {
+  if (!Array.isArray(history)) {
+    return [];
+  }
+
+  return history
+    .filter((entry) => entry?.weekStartKey)
+    .map((entry) => ({
+      weekStartKey: String(entry.weekStartKey),
+      weekEndKey: String(entry.weekEndKey ?? ""),
+      usedMinutes: Math.max(0, Number(entry.usedMinutes ?? 0)),
+      recordedAt: entry.recordedAt ? new Date(entry.recordedAt) : new Date()
+    }));
+}
+
+function upsertWeeklyHistoryEntry(history, weekStartKey, weekEndKey, usedMinutes) {
+  const nextHistory = normalizeWeeklyHistory(history);
+  const safeMinutes = Math.max(0, Number(usedMinutes ?? 0));
+  const existingIndex = nextHistory.findIndex(
+    (entry) => entry.weekStartKey === weekStartKey
+  );
+
+  const nextEntry = {
+    weekStartKey,
+    weekEndKey,
+    usedMinutes: safeMinutes,
+    recordedAt: new Date()
+  };
+
+  if (existingIndex >= 0) {
+    nextHistory[existingIndex] = nextEntry;
+  } else {
+    nextHistory.push(nextEntry);
+  }
+
+  return nextHistory
+    .sort((left, right) => left.weekStartKey.localeCompare(right.weekStartKey))
+    .slice(-MAX_WEEKLY_HISTORY_ENTRIES);
+}
+
+function getWeeklyHistoryEntry(history, weekStartKey) {
+  return (
+    normalizeWeeklyHistory(history).find(
+      (entry) => entry.weekStartKey === weekStartKey
+    ) ?? null
+  );
+}
+
 export function getUsedMinutesForDateKey(
   history,
   dateKey,
@@ -103,6 +154,43 @@ function sumMinutesForWeek(history, weekDateKeys, todayKey, usedTodayMinutes) {
 function weekHasUsageData(history, weekDateKeys, todayKey, usedTodayMinutes) {
   return weekDateKeys.some((dateKey) =>
     hasUsageDataForDateKey(history, dateKey, todayKey, usedTodayMinutes)
+  );
+}
+
+function getUsedMinutesForWeek(
+  history,
+  weeklyHistory,
+  weekDateKeys,
+  todayKey,
+  usedTodayMinutes
+) {
+  const weekStartKey = weekDateKeys[0];
+  const dailyTotal = sumMinutesForWeek(
+    history,
+    weekDateKeys,
+    todayKey,
+    usedTodayMinutes
+  );
+
+  if (dailyTotal > 0) {
+    return dailyTotal;
+  }
+
+  return getWeeklyHistoryEntry(weeklyHistory, weekStartKey)?.usedMinutes ?? 0;
+}
+
+function weekHasReportData(
+  history,
+  weeklyHistory,
+  weekDateKeys,
+  todayKey,
+  usedTodayMinutes
+) {
+  const weekStartKey = weekDateKeys[0];
+
+  return (
+    weekHasUsageData(history, weekDateKeys, todayKey, usedTodayMinutes) ||
+    Boolean(getWeeklyHistoryEntry(weeklyHistory, weekStartKey))
   );
 }
 
@@ -160,12 +248,40 @@ export async function archiveScreenTimeDayBeforeReset(device, now = new Date()) 
   }
 
   const todayKey = getJerusalemDateKey(now);
-  const archiveDateKey = moment
-    .tz(todayKey, "YYYY-MM-DD", JERUSALEM_TZ)
-    .subtract(1, "day")
-    .format("YYYY-MM-DD");
+  const archiveDateKey = screenTime.lastDailyResetAt
+    ? getJerusalemDateKey(new Date(screenTime.lastDailyResetAt))
+    : moment
+        .tz(todayKey, "YYYY-MM-DD", JERUSALEM_TZ)
+        .subtract(1, "day")
+        .format("YYYY-MM-DD");
 
   return upsertHistoryEntry(history, archiveDateKey, usedTodayMinutes);
+}
+
+export async function archiveWeekBeforeReset(device, now = new Date()) {
+  if (!device) {
+    return normalizeWeeklyHistory([]);
+  }
+
+  const screenTime = device.screenTime ?? {};
+  const usedWeekMinutes = Math.max(0, Number(screenTime.usedWeekMinutes ?? 0));
+  const history = normalizeWeeklyHistory(screenTime.weeklyUsageHistory);
+
+  if (usedWeekMinutes <= 0) {
+    return history;
+  }
+
+  const weekReference = screenTime.lastWeeklyResetAt
+    ? new Date(screenTime.lastWeeklyResetAt)
+    : now;
+  const weekDateKeys = getJerusalemWeekDateKeys(weekReference);
+
+  return upsertWeeklyHistoryEntry(
+    history,
+    weekDateKeys[0],
+    weekDateKeys[6],
+    usedWeekMinutes
+  );
 }
 
 export async function resetDailyScreenTimeWithHistory(deviceId, now = new Date()) {
@@ -178,6 +294,26 @@ export async function resetDailyScreenTimeWithHistory(deviceId, now = new Date()
   const archivedHistory = await archiveScreenTimeDayBeforeReset(device, now);
 
   return resetDailyScreenTime(deviceId, now, archivedHistory);
+}
+
+export async function resetWeeklyScreenTimeWithHistory(deviceId, now = new Date()) {
+  const device = await findDeviceScreenTimeById(deviceId);
+
+  if (!device) {
+    return null;
+  }
+
+  const archivedWeeklyHistory = await archiveWeekBeforeReset(device, now);
+
+  return resetWeeklyScreenTime(deviceId, now, archivedWeeklyHistory);
+}
+
+export function isDeviceWeekResetDue(device, now = new Date()) {
+  const lastWeeklyReset = device?.screenTime?.lastWeeklyResetAt
+    ? new Date(device.screenTime.lastWeeklyResetAt)
+    : null;
+
+  return !lastWeeklyReset || !isSameJerusalemWeek(lastWeeklyReset, now);
 }
 
 // Finds the top application by used today minutes
@@ -207,6 +343,7 @@ export function buildScreenTimeUsageReport(device, now = new Date()) {
   const todayKey = getJerusalemDateKey(now);
   const weekDateKeys = getJerusalemWeekDateKeys(now);
   const history = normalizeHistory(screenTime.dailyUsageHistory);
+  const weeklyHistory = normalizeWeeklyHistory(screenTime.weeklyUsageHistory);
   const usedTodayMinutes = Math.max(0, Number(screenTime.usedTodayMinutes ?? 0));
 
   const days = weekDateKeys.map((dateKey, index) => {
@@ -236,8 +373,20 @@ export function buildScreenTimeUsageReport(device, now = new Date()) {
       weekLabel: moment.tz(weekDateKeys[0], "YYYY-MM-DD", JERUSALEM_TZ).format("D/M"),
       weekStartKey: weekDateKeys[0],
       weekEndKey: weekDateKeys[6],
-      usedMinutes: sumMinutesForWeek(history, weekDateKeys, todayKey, usedTodayMinutes),
-      hasData: weekHasUsageData(history, weekDateKeys, todayKey, usedTodayMinutes)
+      usedMinutes: getUsedMinutesForWeek(
+        history,
+        weeklyHistory,
+        weekDateKeys,
+        todayKey,
+        usedTodayMinutes
+      ),
+      hasData: weekHasReportData(
+        history,
+        weeklyHistory,
+        weekDateKeys,
+        todayKey,
+        usedTodayMinutes
+      )
     };
   });
 

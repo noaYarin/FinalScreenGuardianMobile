@@ -11,7 +11,6 @@ import {
   findDevicesByChildId,
   deleteDeviceById,
   resetDailyScreenTime,
-  resetWeeklyScreenTime,
   updateApplicationBlockStatus,
   findDeviceDailyLimitById,
   updateDeviceDailyLimit,
@@ -32,7 +31,9 @@ import {
 import { LimitMode } from "../constants/limitMode.js";
 import {
   persistDailyUsageSnapshot,
-  resetDailyScreenTimeWithHistory
+  resetDailyScreenTimeWithHistory,
+  resetWeeklyScreenTimeWithHistory,
+  isDeviceWeekResetDue
 } from "./screenTimeHistory.service.js";
 
 // Validates and normalizes a screen-time limit value in minutes before saving it.
@@ -47,33 +48,13 @@ function assertLimitMinutes(value) {
 }
 
 
-// Checks whether two dates are in the same week, using Sunday as the start of the week.
-function isSameWeek(date1, date2) {
-  const first = new Date(date1);
-  const second = new Date(date2);
-
-  const firstWeekStart = new Date(first);
-  firstWeekStart.setHours(0, 0, 0, 0);
-  firstWeekStart.setDate(firstWeekStart.getDate() - firstWeekStart.getDay());
-
-  const secondWeekStart = new Date(second);
-  secondWeekStart.setHours(0, 0, 0, 0);
-  secondWeekStart.setDate(secondWeekStart.getDate() - secondWeekStart.getDay());
-
-  return firstWeekStart.getTime() === secondWeekStart.getTime();
-}
-
 // Resets weekly usage if the saved weekly reset date belongs to a previous week.
 async function resetWeeklyScreenTimeIfNeeded(device, deviceId, now) {
-  const lastWeeklyReset = device.screenTime?.lastWeeklyResetAt
-    ? new Date(device.screenTime.lastWeeklyResetAt)
-    : null;
-
-  if (!lastWeeklyReset || !isSameWeek(lastWeeklyReset, now)) {
-    return resetWeeklyScreenTime(deviceId, now);
+  if (!isDeviceWeekResetDue(device, now)) {
+    return device;
   }
 
-  return device;
+  return resetWeeklyScreenTimeWithHistory(deviceId, now);
 }
 
 
