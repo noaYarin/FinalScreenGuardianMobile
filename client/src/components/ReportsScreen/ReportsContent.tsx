@@ -29,6 +29,7 @@ type Props = {
   selectedTimeRange: ReportsTimeRange;
   onSelectTimeRange: (range: ReportsTimeRange) => void;
   topSlot?: React.ReactNode;
+  bottomSlot?: React.ReactNode;
 };
 
 export default function ReportsContent({
@@ -36,6 +37,7 @@ export default function ReportsContent({
   selectedTimeRange,
   onSelectTimeRange,
   topSlot,
+  bottomSlot,
 }: Props) {
   return (
     <View style={styles.content}>
@@ -61,6 +63,8 @@ export default function ReportsContent({
         value={formatDuration(dataset.metrics.weeklyTotalMinutes)}
       />
       <ReportsMetricRow label="Most popular app" value={dataset.metrics.topApp} />
+
+      {bottomSlot}
     </View>
   );
 }

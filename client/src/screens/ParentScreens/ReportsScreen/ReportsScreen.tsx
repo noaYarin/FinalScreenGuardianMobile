@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams, type Href } from "expo-router";
 
 import ChildSelector from "@/src/components/ChildSelector/ChildSelector";
 import AppText from "@/src/components/AppText/AppText";
@@ -232,6 +232,20 @@ export default function ParentReportsScreen() {
           dataset={dataset}
           selectedTimeRange={selectedTimeRange}
           onSelectTimeRange={(range) => dispatch(setReportsTimeRange(range))}
+          bottomSlot={
+            <Pressable
+              style={styles.generateReportBtn}
+              onPress={() =>
+                router.push(
+                  `/Parent/generateReport?childId=${encodeURIComponent(effectiveChildId)}` as Href
+                )
+              }
+            >
+              <AppText weight="bold" style={styles.generateReportBtnText}>
+                Generate full report
+              </AppText>
+            </Pressable>
+          }
           topSlot={
             <>
               <ChildSelector
