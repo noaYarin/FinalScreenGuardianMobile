@@ -65,7 +65,14 @@ export function pickRepresentativeDevice(devices: Device[]): Device | null {
 
 
 function minutesToChartHours(minutes: number): number {
-  return Number((minutes / 60).toFixed(1));
+  if (minutes <= 0) {
+    return 0;
+  }
+
+  const hours = minutes / 60;
+  const rounded = Number(hours.toFixed(1));
+
+  return rounded > 0 ? rounded : 0.1;
 }
 
 function buildEmptyWeekDays(): ScreenTimeUsageReport["days"] {
@@ -111,7 +118,7 @@ export function buildReportsDatasetFromReport(
     const bars = (report.weeks ?? buildEmptyWeeks()).map((week) => ({
       label: formatJerusalemWeekStartLabel(week.weekStartKey),
       value: minutesToChartHours(week.usedMinutes),
-      hasData: week.hasData === true,
+      hasData: week.usedMinutes > 0,
     }));
 
 
@@ -130,7 +137,7 @@ export function buildReportsDatasetFromReport(
   const bars = (report.days ?? buildEmptyWeekDays()).map((day) => ({
     label: day.weekdayLabel,
     value: minutesToChartHours(day.usedMinutes),
-    hasData: day.hasData === true,
+    hasData: day.usedMinutes > 0,
   }));
 
   return {

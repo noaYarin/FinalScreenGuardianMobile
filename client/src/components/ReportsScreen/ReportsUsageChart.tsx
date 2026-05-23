@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useWindowDimensions } from "react-native";
 import { BarChart, yAxisSides } from "react-native-gifted-charts";
 
@@ -12,32 +12,22 @@ type Props = {
   isWeeklyChart?: boolean;
 };
 
-type YAxisConfig = {
-  maxValue: number;
-  stepValue: number;
-  noOfSections: number;
-  labels: string[];
-};
-
-const CHART_Y_AXIS: YAxisConfig = {
-  maxValue: 8,
-  stepValue: 2,
-  noOfSections: 4,
-  labels: ["0", "2", "4", "6", "8"],
-};
+const CHART_Y_MAX = 8;
+const CHART_Y_STEP = 2;
+const CHART_Y_SECTIONS = 4;
+const CHART_Y_LABELS = ["0", "2", "4", "6", "8"];
 
 const AXIS_TEXT = { color: "#6B7280", fontSize: 12 };
-const EMPTY_BAR_HEIGHT = 0.05;
-const EMPTY_BAR_COLOR = "#E5E7EB";
 
-function toChartBar(bar: ReportsBarPoint, yMax: number) {
-  const hasData = bar.hasData === true && bar.value > 0;
+function toChartBar(bar: ReportsBarPoint, index: number) {
+  const hasUsage = bar.value > 0;
 
   return {
-    value: hasData ? Math.min(bar.value, yMax) : EMPTY_BAR_HEIGHT,
+    value: hasUsage ? Math.min(bar.value, CHART_Y_MAX) : 0,
     label: bar.label,
-    frontColor: hasData ? REPORTS_COLORS.bar : EMPTY_BAR_COLOR,
+    frontColor: hasUsage ? REPORTS_COLORS.bar : REPORTS_COLORS.card,
     topLabelComponent: () => null,
+    id: `${bar.label}-${index}`,
   };
 }
 
@@ -48,9 +38,12 @@ export default function ReportsUsageChart({
 }: Props) {
   const { width } = useWindowDimensions();
   const isDayChart = !isWeeklyChart && bars.length === 7;
+  const chartKey = isWeeklyChart ? "weekly" : "daily";
 
-  const yAxis = CHART_Y_AXIS;
-  const chartData = bars.map((bar) => toChartBar(bar, yAxis.maxValue));
+  const chartData = useMemo(
+    () => bars.map((bar, index) => toChartBar(bar, index)),
+    [bars]
+  );
 
   const barWidth = isDayChart ? 22 : 36;
   const spacing = isDayChart ? 10 : 24;
@@ -59,6 +52,7 @@ export default function ReportsUsageChart({
   return (
     <ReportsChartCard title={title} icon="chart-bar">
       <BarChart
+        key={chartKey}
         data={chartData}
         width={Math.min(width - 48, 360)}
         height={190}
@@ -66,11 +60,11 @@ export default function ReportsUsageChart({
         spacing={spacing}
         initialSpacing={sideGap}
         endSpacing={sideGap}
-        maxValue={yAxis.maxValue}
-        stepValue={yAxis.stepValue}
-        noOfSections={yAxis.noOfSections}
+        maxValue={CHART_Y_MAX}
+        stepValue={CHART_Y_STEP}
+        noOfSections={CHART_Y_SECTIONS}
         yAxisSide={yAxisSides.LEFT}
-        yAxisLabelTexts={yAxis.labels}
+        yAxisLabelTexts={CHART_Y_LABELS}
         yAxisLabelWidth={32}
         roundedTop
         roundedBottom={false}
@@ -83,8 +77,7 @@ export default function ReportsUsageChart({
           fontSize: isWeeklyChart ? 11 : 13,
           textAlign: "center",
         }}
-        isAnimated
-        animationDuration={500}
+        isAnimated={false}
         disablePress
       />
     </ReportsChartCard>

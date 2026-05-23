@@ -49,6 +49,7 @@ export default function ReportsContent({
       />
 
       <ReportsUsageChart
+        key={selectedTimeRange}
         title={dataset.chartTitle}
         bars={dataset.bars}
         isWeeklyChart={dataset.isWeeklyChart}
