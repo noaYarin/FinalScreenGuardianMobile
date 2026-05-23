@@ -2,6 +2,7 @@ import type { ScreenTimeUsageReport } from "@/src/api/parent";
 import type { Device } from "@/src/api/device";
 import type { HomeSummaryChild } from "@/src/api/parent";
 import type { ReportsTimeRange } from "@/src/redux/slices/reports-slice";
+import { formatJerusalemWeekStartLabel } from "@/src/utils/time";
 
 const WEEKDAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
 const CHART_TITLE = {
@@ -108,7 +109,7 @@ export function buildReportsDatasetFromReport(
 
   if (timeRange === "weekly") {
     const bars = (report.weeks ?? buildEmptyWeeks()).map((week) => ({
-      label: week.weekLabel,
+      label: formatJerusalemWeekStartLabel(week.weekStartKey),
       value: minutesToChartHours(week.usedMinutes),
       hasData: week.hasData === true,
     }));

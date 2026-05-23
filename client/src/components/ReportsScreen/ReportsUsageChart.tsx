@@ -19,7 +19,7 @@ type YAxisConfig = {
   labels: string[];
 };
 
-const DAILY_Y_AXIS: YAxisConfig = {
+const CHART_Y_AXIS: YAxisConfig = {
   maxValue: 8,
   stepValue: 2,
   noOfSections: 4,
@@ -29,17 +29,6 @@ const DAILY_Y_AXIS: YAxisConfig = {
 const AXIS_TEXT = { color: "#6B7280", fontSize: 12 };
 const EMPTY_BAR_HEIGHT = 0.05;
 const EMPTY_BAR_COLOR = "#E5E7EB";
-
-function getWeeklyYAxis(maxBarHours: number): YAxisConfig {
-  const step = maxBarHours > 24 ? 8 : maxBarHours > 12 ? 4 : 2;
-  const maxValue = Math.max(step * 2, Math.ceil(maxBarHours / step) * step);
-  const noOfSections = Math.max(1, Math.ceil(maxValue / step));
-  const labels = Array.from({ length: noOfSections + 1 }, (_, index) =>
-    String(index * step)
-  );
-
-  return { maxValue, stepValue: step, noOfSections, labels };
-}
 
 function toChartBar(bar: ReportsBarPoint, yMax: number) {
   const hasData = bar.hasData === true && bar.value > 0;
@@ -60,8 +49,7 @@ export default function ReportsUsageChart({
   const { width } = useWindowDimensions();
   const isDayChart = !isWeeklyChart && bars.length === 7;
 
-  const maxBarHours = Math.max(0, ...bars.map((bar) => bar.value));
-  const yAxis = isWeeklyChart ? getWeeklyYAxis(maxBarHours) : DAILY_Y_AXIS;
+  const yAxis = CHART_Y_AXIS;
   const chartData = bars.map((bar) => toChartBar(bar, yAxis.maxValue));
 
   const barWidth = isDayChart ? 22 : 36;

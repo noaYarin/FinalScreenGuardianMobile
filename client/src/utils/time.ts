@@ -17,3 +17,11 @@ export function getJerusalemDateKey(date: Date = new Date()): string {
 export function formatJerusalemDisplayDate(dateKey: string): string {
   return jerusalemDayFromKey(dateKey).format("DD/MM/YYYY");
 }
+
+export function formatJerusalemWeekStartLabel(dateKey: string): string {
+  if (!dateKey) {
+    return "";
+  }
+
+  return jerusalemDayFromKey(dateKey).format("D/M");
+}
