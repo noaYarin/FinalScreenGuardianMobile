@@ -1,0 +1,141 @@
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  View,
+} from "react-native";
+import { useLocalSearchParams } from "expo-router";
+
+import AppText from "@/src/components/AppText/AppText";
+import {
+  getParentAnalyticsReport,
+  type ParentAnalyticsReport,
+} from "@/src/api/parent";
+import { showErrorToast } from "@/src/utils/appToast";
+
+import AnalyticsReportContent from "./AnalyticsReportContent";
+import { buildAnalyticsReportHtml } from "./buildReportHtml";
+import { analyticsStyles as styles } from "./styles";
+
+export default function AnalyticsReportScreen() {
+  const params = useLocalSearchParams<{
+    childId?: string;
+    from?: string;
+    to?: string;
+  }>();
+
+  const [report, setReport] = useState<ParentAnalyticsReport | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const childId = typeof params.childId === "string" ? params.childId : "";
+  const fromKey = typeof params.from === "string" ? params.from : "";
+  const toKey = typeof params.to === "string" ? params.to : "";
+
+  const loadReport = useCallback(async () => {
+    if (!childId || !fromKey || !toKey) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const data = await getParentAnalyticsReport(childId, fromKey, toKey);
+      setReport(data);
+    } catch (error) {
+      showErrorToast(
+        error instanceof Error ? error.message : "Could not generate report"
+      );
+      setReport(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [childId, fromKey, toKey]);
+
+  useEffect(() => {
+    void loadReport();
+  }, [loadReport]);
+
+  const reportHtml = useMemo(
+    () => (report?.indicators ? buildAnalyticsReportHtml(report) : ""),
+    [report]
+  );
+
+  const onSharePdf = async () => {
+    if (!report || !reportHtml) {
+      return;
+    }
+
+    setIsExporting(true);
+
+    try {
+      const Print = await import("expo-print");
+      const Sharing = await import("expo-sharing");
+      const { uri } = await Print.printToFileAsync({ html: reportHtml });
+      const canShare = await Sharing.isAvailableAsync();
+
+      if (!canShare) {
+        showErrorToast("Sharing is not available on this device");
+        return;
+      }
+
+      await Sharing.shareAsync(uri, {
+        mimeType: "application/pdf",
+        dialogTitle: `${report.childName} — usage report`,
+        UTI: "com.adobe.pdf",
+      });
+    } catch {
+      showErrorToast("Could not export PDF");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <View style={[styles.screen, { justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="large" color="#4F46E5" />
+      </View>
+    );
+  }
+
+  if (!report) {
+    return (
+      <View style={[styles.screen, { justifyContent: "center", padding: 24 }]}>
+        <AppText>Could not load report</AppText>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.screen}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scroll, styles.scrollWithFooter]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.paper}>
+          <AnalyticsReportContent report={report} />
+        </View>
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <Pressable
+          style={[styles.primaryBtn, isExporting && styles.primaryBtnDisabled]}
+          onPress={() => void onSharePdf()}
+          disabled={isExporting}
+        >
+          {isExporting ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <AppText weight="bold" style={styles.btnText}>
+              Export as PDF
+            </AppText>
+          )}
+        </Pressable>
+      </View>
+    </View>
+  );
+}
