@@ -14,6 +14,7 @@ import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
 import AppText from "../../../components/AppText/AppText";
 import ChildDeviceSelector from "../../../components/ChildDeviceSelector/ChildDeviceSelector";
 import InfoHint from "../../../components/InfoHint/InfoHint";
+import AutomaticLimitUnavailableCard from "@/src/components/AutomaticLimitUnavailableCard/AutomaticLimitUnavailableCard";
 import { styles } from "./styles";
 
 import { showErrorToast, showInfoToast } from "@/src/utils/appToast";
@@ -63,7 +64,9 @@ export default function WeeklyTimeLimitsScreen() {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const [tempLimits, setTempLimits] = useState<Record<string, number>>({});
-  const [tempLimitEnabled, setTempLimitEnabled] = useState<Record<string, boolean>>({});
+  const [tempLimitEnabled, setTempLimitEnabled] = useState<
+    Record<string, boolean>
+  >({});
 
   useEffect(() => {
     dispatch(getMyChildrenThunk());
@@ -84,8 +87,9 @@ export default function WeeklyTimeLimitsScreen() {
     if (!children.length) return null;
 
     return (
-      children.find((child: any) => String(child._id) === String(selectedChildId)) ??
-      children[0]
+      children.find(
+        (child: any) => String(child._id) === String(selectedChildId)
+      ) ?? children[0]
     );
   }, [children, selectedChildId]);
 
@@ -129,12 +133,27 @@ export default function WeeklyTimeLimitsScreen() {
 
   const selectedDeviceName = selectedDevice
     ? String(
-      (selectedDevice as any).deviceName ??
-      (selectedDevice as any).model ??
-      (selectedDevice as any).name ??
-      ""
-    )
+        (selectedDevice as any).deviceName ??
+          (selectedDevice as any).model ??
+          (selectedDevice as any).name ??
+          ""
+      )
     : "";
+
+  const activeLimitMode =
+    selectedDevice?.screenTime?.isLimitEnabled === true
+      ? selectedDevice.screenTime?.limitMode ?? "DAILY"
+      : "NONE";
+
+  const isOtherAutomaticLimitActive =
+    activeLimitMode === "DAILY" || activeLimitMode === "SCHEDULE";
+
+  const otherAutomaticLimitLabel =
+    activeLimitMode === "DAILY"
+      ? "Daily Limits"
+      : activeLimitMode === "SCHEDULE"
+        ? "Weekly Schedule"
+        : null;
 
   const selectedLimits: ScreenLimitCard[] = useMemo(() => {
     if (!selectedDevice) return [];
@@ -159,6 +178,13 @@ export default function WeeklyTimeLimitsScreen() {
   const handleEditPress = (limitId: string) => {
     if (!selectedDevice) return;
 
+    if (isOtherAutomaticLimitActive) {
+      showInfoToast(
+        `Weekly Limits are unavailable while ${otherAutomaticLimitLabel} are active. Turn it off first.`
+      );
+      return;
+    }
+
     const currentMinutes =
       selectedDevice.screenTime?.weeklyLimitMinutes ?? MIN_HOURS * 60;
 
@@ -180,7 +206,9 @@ export default function WeeklyTimeLimitsScreen() {
   };
 
   const updateLimitByStep = (limitId: string, deltaHours: number) => {
-    if (!selectedDevice || !selectedChildId) return;
+    if (!selectedDevice || !selectedChildId || isOtherAutomaticLimitActive) {
+      return;
+    }
 
     const isEnabled = tempLimitEnabled[limitId] ?? false;
     if (!isEnabled) return;
@@ -201,12 +229,21 @@ export default function WeeklyTimeLimitsScreen() {
   const handleSavePress = async (limitId: string) => {
     if (!selectedDevice || !selectedChildId) return;
 
+    if (isOtherAutomaticLimitActive) {
+      showErrorToast(
+        `Weekly Limits cannot be enabled while ${otherAutomaticLimitLabel} are active.`,
+        "Limit unavailable"
+      );
+      return;
+    }
+
     const nextMinutes = tempLimits[limitId];
 
     const nextEnabled =
       tempLimitEnabled[limitId] ??
       (selectedDevice.screenTime?.isLimitEnabled === true &&
         selectedDevice.screenTime?.limitMode === "WEEKLY");
+
     try {
       await dispatch(
         updateDeviceScreenTimeThunk({
@@ -289,7 +326,6 @@ export default function WeeklyTimeLimitsScreen() {
                 "The limit counts the total screen time used during the current week",
                 "Usage Access and Accessibility must stay enabled on the child’s device",
                 "If the device is offline, changes will apply when it reconnects",
-                "Native locking is not connected yet, so reaching the limit is currently only displayed here",
               ]}
             />
           </View>
@@ -300,7 +336,8 @@ export default function WeeklyTimeLimitsScreen() {
             </AppText>
 
             <AppText weight="medium" style={styles.heroSubtitle}>
-              Choose a child and device, then set or update the total weekly screen-time limit.
+              Choose a child and device, then set or update the total weekly
+              screen-time limit.
             </AppText>
           </View>
 
@@ -322,6 +359,14 @@ export default function WeeklyTimeLimitsScreen() {
               setTempLimitEnabled({});
             }}
           />
+
+          {selectedDevice && isOtherAutomaticLimitActive ? (
+            <AutomaticLimitUnavailableCard
+              title="Weekly Limits unavailable"
+              activeLimitLabel={otherAutomaticLimitLabel}
+              targetLimitLabel="Weekly Limits"
+            />
+          ) : null}
 
           {isLoading && (
             <View style={styles.emptyState}>
@@ -383,7 +428,10 @@ export default function WeeklyTimeLimitsScreen() {
                     ? Math.min(limitCard.currentHours / effectiveMaxHours, 1)
                     : 0;
 
-                const canDecrease = isEnabled && effectiveMaxHours > MIN_HOURS;
+                const canDecrease =
+                  isEnabled &&
+                  effectiveMaxHours > MIN_HOURS &&
+                  !isOtherAutomaticLimitActive;
 
                 return (
                   <View key={limitCard.id} style={styles.limitCard}>
@@ -490,11 +538,13 @@ export default function WeeklyTimeLimitsScreen() {
                         <View style={styles.editButtonWrap}>
                           <Pressable
                             onPress={() => handleEditPress(limitCard.id)}
+                            disabled={isOtherAutomaticLimitActive}
                             accessibilityRole="button"
                             accessibilityLabel="Edit weekly limit"
                             style={({ pressed }) => [
                               styles.editButton,
                               pressed && styles.editButtonPressed,
+                              isOtherAutomaticLimitActive && { opacity: 0.45 },
                             ]}
                           >
                             <AppText weight="bold" style={styles.editButtonText}>
@@ -527,12 +577,15 @@ export default function WeeklyTimeLimitsScreen() {
 
                             <Switch
                               value={isEnabled}
-                              onValueChange={(value) =>
+                              onValueChange={(value) => {
+                                if (isOtherAutomaticLimitActive) return;
+
                                 setTempLimitEnabled((prev) => ({
                                   ...prev,
                                   [limitCard.id]: value,
-                                }))
-                              }
+                                }));
+                              }}
+                              disabled={isOtherAutomaticLimitActive}
                               accessibilityLabel="Toggle weekly limit"
                             />
                           </View>
@@ -540,7 +593,9 @@ export default function WeeklyTimeLimitsScreen() {
                           <View
                             style={[
                               styles.editorControlsRow,
-                              !isEnabled && { opacity: 0.5 },
+                              (!isEnabled || isOtherAutomaticLimitActive) && {
+                                opacity: 0.5,
+                              },
                             ]}
                           >
                             <Pressable
@@ -596,27 +651,33 @@ export default function WeeklyTimeLimitsScreen() {
                               onPress={() =>
                                 updateLimitByStep(limitCard.id, STEP_HOURS)
                               }
-                              disabled={!isEnabled}
+                              disabled={!isEnabled || isOtherAutomaticLimitActive}
                               accessibilityRole="button"
                               accessibilityLabel="Increase by thirty minutes"
                               style={({ pressed }) => [
                                 styles.stepButton,
                                 styles.stepButtonPrimary,
                                 pressed && styles.stepButtonPressed,
-                                !isEnabled && styles.stepButtonDisabled,
+                                (!isEnabled || isOtherAutomaticLimitActive) &&
+                                  styles.stepButtonDisabled,
                               ]}
                             >
                               <MaterialCommunityIcons
                                 name="plus"
                                 size={18}
-                                color={!isEnabled ? "#A8B3C7" : "#FFFFFF"}
+                                color={
+                                  !isEnabled || isOtherAutomaticLimitActive
+                                    ? "#A8B3C7"
+                                    : "#FFFFFF"
+                                }
                               />
 
                               <AppText
                                 weight="bold"
                                 style={[
                                   styles.stepButtonTextPrimary,
-                                  !isEnabled && styles.stepButtonTextDisabled,
+                                  (!isEnabled || isOtherAutomaticLimitActive) &&
+                                    styles.stepButtonTextDisabled,
                                 ]}
                               >
                                 30
@@ -624,18 +685,16 @@ export default function WeeklyTimeLimitsScreen() {
                             </Pressable>
                           </View>
 
-                          <AppText weight="medium" style={styles.editorHint}>
-                            Native locking is not implemented yet. For now, this screen only saves and displays the weekly limit.
-                          </AppText>
-
                           <Pressable
                             onPress={() => handleSavePress(limitCard.id)}
+                            disabled={isOtherAutomaticLimitActive}
                             accessibilityRole="button"
                             accessibilityLabel="Save weekly limit"
                             style={({ pressed }) => [
                               styles.saveButtonStrong,
                               styles.saveButtonStrongBottom,
                               pressed && styles.saveButtonStrongPressed,
+                              isOtherAutomaticLimitActive && { opacity: 0.45 },
                             ]}
                           >
                             <MaterialCommunityIcons

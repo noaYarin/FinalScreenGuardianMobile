@@ -12,6 +12,7 @@ import { useSelector } from "react-redux";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import ChildDeviceSelector from "../../../components/ChildDeviceSelector/ChildDeviceSelector";
+import AutomaticLimitUnavailableCard from "@/src/components/AutomaticLimitUnavailableCard/AutomaticLimitUnavailableCard";
 import { RootState } from "../../../redux/store/types";
 import { styles } from "./styles";
 
@@ -55,7 +56,10 @@ function formatTime(minutes: number) {
   const suffix = hours24 >= 12 ? "PM" : "AM";
   const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
 
-  return `${String(hours12).padStart(2, "0")}:${String(mins).padStart(2, "0")} ${suffix}`;
+  return `${String(hours12).padStart(2, "0")}:${String(mins).padStart(
+    2,
+    "0"
+  )} ${suffix}`;
 }
 
 function calculateDurationHours(startMinutes: number, endMinutes: number) {
@@ -118,7 +122,9 @@ export default function WeeklyScheduleScreen() {
   }, [childrenList, devicesByChild, selectedChildId]);
 
   const selectedChild = useMemo(() => {
-    return childrenList.find((child: any) => getChildId(child) === selectedChildId);
+    return childrenList.find(
+      (child: any) => getChildId(child) === selectedChildId
+    );
   }, [childrenList, selectedChildId]);
 
   const selectedDevice = useMemo(() => {
@@ -130,7 +136,24 @@ export default function WeeklyScheduleScreen() {
   }, [devicesByChild, selectedChildId, selectedDeviceId]);
 
   const childName = selectedChild?.name || "Child";
-  const deviceName = selectedDevice ? getDeviceName(selectedDevice) : "Connected device";
+  const deviceName = selectedDevice
+    ? getDeviceName(selectedDevice)
+    : "Connected device";
+
+  const activeLimitMode =
+    selectedDevice?.screenTime?.isLimitEnabled === true
+      ? selectedDevice.screenTime?.limitMode ?? "DAILY"
+      : "NONE";
+
+  const isOtherAutomaticLimitActive =
+    activeLimitMode === "DAILY" || activeLimitMode === "WEEKLY";
+
+  const otherAutomaticLimitLabel =
+    activeLimitMode === "DAILY"
+      ? "Daily Limits"
+      : activeLimitMode === "WEEKLY"
+        ? "Weekly Limits"
+        : null;
 
   const enabledDaysCount = weeklyConfig.filter((day) => day.enabled).length;
 
@@ -165,6 +188,8 @@ export default function WeeklyScheduleScreen() {
   };
 
   const toggleDayEnabled = (dayKey: DayKey) => {
+    if (isOtherAutomaticLimitActive) return;
+
     setWeeklyConfig((prev) =>
       prev.map((day) =>
         day.key === dayKey ? { ...day, enabled: !day.enabled } : day
@@ -177,6 +202,8 @@ export default function WeeklyScheduleScreen() {
     field: "startMinutes" | "endMinutes",
     direction: "increase" | "decrease"
   ) => {
+    if (isOtherAutomaticLimitActive) return;
+
     setWeeklyConfig((prev) =>
       prev.map((day) => {
         if (day.key !== dayKey) return day;
@@ -209,6 +236,8 @@ export default function WeeklyScheduleScreen() {
   };
 
   const copyActiveDayToAll = () => {
+    if (isOtherAutomaticLimitActive) return;
+
     const sourceDay = weeklyConfig.find((day) => day.key === activeDayKey);
     if (!sourceDay) return;
 
@@ -227,6 +256,14 @@ export default function WeeklyScheduleScreen() {
   };
 
   const saveSchedule = () => {
+    if (isOtherAutomaticLimitActive) {
+      Alert.alert(
+        "Weekly Schedule unavailable",
+        `${otherAutomaticLimitLabel} are currently active on this device. Turn them off before enabling Weekly Schedule.`
+      );
+      return;
+    }
+
     Alert.alert("Weekly Schedule", "Schedule saved");
   };
 
@@ -246,6 +283,14 @@ export default function WeeklyScheduleScreen() {
               onSelectDevice={setSelectedDeviceId}
               showDevices={true}
             />
+
+            {selectedDevice && isOtherAutomaticLimitActive ? (
+              <AutomaticLimitUnavailableCard
+                title="Weekly Schedule unavailable"
+                activeLimitLabel={otherAutomaticLimitLabel}
+                targetLimitLabel="Weekly Schedule"
+              />
+            ) : null}
 
             <View style={styles.heroCard}>
               <View style={styles.heroTopRow}>
@@ -296,7 +341,12 @@ export default function WeeklyScheduleScreen() {
               </View>
             </View>
 
-            <View style={styles.daysRailSection}>
+            <View
+              style={[
+                styles.daysRailSection,
+                isOtherAutomaticLimitActive && { opacity: 0.55 },
+              ]}
+            >
               <View style={styles.sectionHeaderRow}>
                 <AppText weight="extraBold" style={styles.sectionTitle}>
                   Quick jump by day
@@ -317,6 +367,7 @@ export default function WeeklyScheduleScreen() {
                       <Pressable
                         key={day.key}
                         onPress={() => handleScrollToDay(day.key)}
+                        disabled={isOtherAutomaticLimitActive}
                         accessibilityRole="button"
                         accessibilityLabel={`Jump to ${dayName}`}
                         accessibilityState={{ selected: isActive }}
@@ -360,7 +411,10 @@ export default function WeeklyScheduleScreen() {
             </View>
 
             <View
-              style={styles.cardsSection}
+              style={[
+                styles.cardsSection,
+                isOtherAutomaticLimitActive && { opacity: 0.55 },
+              ]}
               onLayout={(event) => {
                 cardsSectionOffsetRef.current = event.nativeEvent.layout.y;
               }}
@@ -416,6 +470,7 @@ export default function WeeklyScheduleScreen() {
                         accessibilityRole="button"
                         accessibilityLabel={`Enable or disable ${dayName}`}
                         accessibilityState={{ selected: day.enabled }}
+                        disabled={isOtherAutomaticLimitActive}
                         style={({ pressed }) => [
                           styles.toggleWrap,
                           pressed && styles.toggleWrapPressed,
@@ -461,6 +516,7 @@ export default function WeeklyScheduleScreen() {
                           <Pressable
                             accessibilityRole="button"
                             accessibilityLabel={`Decrease start time for ${dayName}`}
+                            disabled={isOtherAutomaticLimitActive}
                             onPress={() =>
                               updateTime(day.key, "startMinutes", "decrease")
                             }
@@ -483,6 +539,7 @@ export default function WeeklyScheduleScreen() {
                           <Pressable
                             accessibilityRole="button"
                             accessibilityLabel={`Increase start time for ${dayName}`}
+                            disabled={isOtherAutomaticLimitActive}
                             onPress={() =>
                               updateTime(day.key, "startMinutes", "increase")
                             }
@@ -517,6 +574,7 @@ export default function WeeklyScheduleScreen() {
                           <Pressable
                             accessibilityRole="button"
                             accessibilityLabel={`Decrease end time for ${dayName}`}
+                            disabled={isOtherAutomaticLimitActive}
                             onPress={() =>
                               updateTime(day.key, "endMinutes", "decrease")
                             }
@@ -539,6 +597,7 @@ export default function WeeklyScheduleScreen() {
                           <Pressable
                             accessibilityRole="button"
                             accessibilityLabel={`Increase end time for ${dayName}`}
+                            disabled={isOtherAutomaticLimitActive}
                             onPress={() =>
                               updateTime(day.key, "endMinutes", "increase")
                             }
@@ -579,9 +638,11 @@ export default function WeeklyScheduleScreen() {
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Copy current settings to all days"
+                disabled={isOtherAutomaticLimitActive}
                 style={({ pressed }) => [
                   styles.secondaryActionButton,
                   pressed && styles.secondaryActionButtonPressed,
+                  isOtherAutomaticLimitActive && { opacity: 0.45 },
                 ]}
                 onPress={copyActiveDayToAll}
               >
@@ -599,9 +660,11 @@ export default function WeeklyScheduleScreen() {
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Save weekly schedule"
+                disabled={isOtherAutomaticLimitActive}
                 style={({ pressed }) => [
                   styles.primaryActionButton,
                   pressed && styles.primaryActionButtonPressed,
+                  isOtherAutomaticLimitActive && { opacity: 0.45 },
                 ]}
                 onPress={saveSchedule}
               >
