@@ -133,4 +133,99 @@ export const styles = StyleSheet.create({
     color: "#94A3B8",
     textAlign: "center",
   },
+  activeLimitInfoBox: {
+    backgroundColor: "#EFF6FF",
+    borderColor: "#BFDBFE",
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 12,
+    marginTop: 12,
+  },
+
+  activeLimitInfoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  activeLimitInfoTitle: {
+    color: "#1E3A8A",
+    fontSize: 14,
+  },
+
+  activeLimitInfoText: {
+    color: "#475569",
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 6,
+  },
+
+  activeLimitCurrentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#DBEAFE",
+  },
+
+  activeLimitCurrentLabel: {
+    color: "#334155",
+    fontSize: 12,
+  },
+
+  activeLimitCurrentValue: {
+    fontSize: 12,
+  },
+
+  activeLimitCurrentValueOn: {
+    color: "#16A34A",
+  },
+
+  activeLimitCurrentValueOff: {
+    color: "#64748B",
+  },
+
+  rowActive: {
+    backgroundColor: "#F0FDF4",
+  },
+
+  rowUnavailable: {
+    backgroundColor: "#F8FAFC",
+    opacity: 0.72,
+  },
+
+  rowTitleActive: {
+    color: "#166534",
+  },
+
+  rowTitleUnavailable: {
+    color: "#334155",
+  },
+
+  rowDescriptionUnavailable: {
+    color: "#475569",
+  },
+
+  rowStatusHint: {
+    fontSize: 11,
+    marginTop: 4,
+  },
+
+  rowStatusHintActive: {
+    color: "#16A34A",
+  },
+
+  rowStatusHintUnavailable: {
+    color: "#B45309",
+  },
+
+  activeBadgeText: {
+    color: "#16A34A",
+  },
+
+  unavailableBadgeText: {
+    color: "#B45309",
+  },
 });

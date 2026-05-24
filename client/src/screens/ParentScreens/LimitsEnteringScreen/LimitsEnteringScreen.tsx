@@ -1,17 +1,11 @@
 import React from "react";
 import { View, ScrollView, Pressable } from "react-native";
-import { router, useFocusEffect } from "expo-router";
+import { router } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useDispatch, useSelector } from "react-redux";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import { styles } from "./styles";
-
-import type { AppDispatch, RootState } from "@/src/redux/store/types";
-import { fetchParentHomeSummaryThunk } from "@/src/redux/thunks/parentHomeThunks";
-
-type AutomaticLimitKey = "daily" | "weekly" | "schedule";
 
 type LimitItem = {
   key: string;
@@ -20,7 +14,6 @@ type LimitItem = {
   accessibilityLabel: string;
   icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
   route?: string;
-  automaticLimitKey?: AutomaticLimitKey;
 };
 
 type LimitSection = {
@@ -37,29 +30,26 @@ const LIMIT_SECTIONS: LimitSection[] = [
       {
         key: "daily",
         label: "Daily Limits",
-        description: "Set usage duration by day.",
+        description: "Limit total screen time per day.",
         accessibilityLabel: "Go to daily limits screen",
         icon: "clock-time-four-outline",
         route: "/Parent/dailyTimeLimits",
-        automaticLimitKey: "daily",
       },
       {
         key: "weekly",
         label: "Weekly Limits",
-        description: "Set usage duration by week.",
+        description: "Limit total screen time across the week.",
         accessibilityLabel: "Go to weekly limits screen",
         icon: "calendar-week-outline",
         route: "/Parent/weeklyLimits",
-        automaticLimitKey: "weekly",
       },
       {
         key: "schedule",
         label: "Weekly Schedule",
-        description: "Set blocked time windows by day.",
+        description: "Block screen time during specific days and hours.",
         accessibilityLabel: "Go to weekly schedule limits screen",
         icon: "calendar-clock-outline",
         route: "/Parent/routineLimits",
-        automaticLimitKey: "schedule",
       },
     ],
   },
@@ -79,47 +69,7 @@ const LIMIT_SECTIONS: LimitSection[] = [
   },
 ];
 
-function getActiveAutomaticLimitLabel(limitKey: AutomaticLimitKey | null) {
-  if (limitKey === "daily") return "Daily Limits";
-  if (limitKey === "weekly") return "Weekly Limits";
-  if (limitKey === "schedule") return "Weekly Schedule";
-  return null;
-}
-
 export default function LimitsScreen() {
-  const dispatch = useDispatch<AppDispatch>();
-
-  const childrenSummary = useSelector(
-    (state: RootState) => state.parentHome.childrenSummary
-  );
-
-  useFocusEffect(
-    React.useCallback(() => {
-      dispatch(fetchParentHomeSummaryThunk());
-    }, [dispatch])
-  );
-
-  const activeAutomaticLimitKey = React.useMemo<AutomaticLimitKey | null>(() => {
-    const activeChild = childrenSummary.find(
-      (child) =>
-        child.isLimitEnabled === true &&
-        (child.limitMode === "DAILY" ||
-          child.limitMode === "WEEKLY" ||
-          child.limitMode === "SCHEDULE")
-    );
-
-    if (!activeChild) return null;
-
-    if (activeChild.limitMode === "DAILY") return "daily";
-    if (activeChild.limitMode === "WEEKLY") return "weekly";
-    if (activeChild.limitMode === "SCHEDULE") return "schedule";
-
-    return null;
-  }, [childrenSummary]);
-
-  const activeAutomaticLimitLabel =
-    getActiveAutomaticLimitLabel(activeAutomaticLimitKey);
-
   const onPressItem = (route?: string) => {
     if (!route) return;
     router.push(route as never);
@@ -138,21 +88,30 @@ export default function LimitsScreen() {
             </AppText>
 
             <AppText weight="medium" style={styles.introSubtitle}>
-              Set screen time, schedules, and app restrictions in a clean and
-              structured way.
+              Choose which type of limit you want to manage. The selected child
+              and device will be checked inside each limit screen.
             </AppText>
 
-            <AppText weight="extraBold" style={styles.introSubtitle}>
-              ⚠️ Only one automatic screen-time limit can be active at a time:
-              daily, weekly, or weekly schedule.
-            </AppText>
+            <View style={styles.activeLimitInfoBox}>
+              <View style={styles.activeLimitInfoHeader}>
+                <MaterialCommunityIcons
+                  name="information-outline"
+                  size={18}
+                  color="#2563EB"
+                />
 
-            {activeAutomaticLimitLabel ? (
-              <AppText weight="medium" style={styles.introSubtitle}>
-                Current active automatic limit: {activeAutomaticLimitLabel}.
-                Turn it off before enabling another automatic limit.
+                <AppText weight="extraBold" style={styles.activeLimitInfoTitle}>
+                  One automatic limit per device
+                </AppText>
+              </View>
+
+              <AppText weight="medium" style={styles.activeLimitInfoText}>
+                Daily Limits, Weekly Limits, and Weekly Schedule cannot be active
+                together on the same device. If one is already active, the other
+                automatic options will be unavailable inside the relevant screen
+                until you turn the active one off.
               </AppText>
-            ) : null}
+            </View>
           </View>
 
           {LIMIT_SECTIONS.map((section) => (
@@ -164,18 +123,7 @@ export default function LimitsScreen() {
               <View style={styles.groupCard}>
                 {section.items.map((item, index) => {
                   const isLast = index === section.items.length - 1;
-
-                  const isBlockedByAnotherAutomaticLimit =
-                    item.automaticLimitKey != null &&
-                    activeAutomaticLimitKey != null &&
-                    item.automaticLimitKey !== activeAutomaticLimitKey;
-
-                  const isPressable =
-                    Boolean(item.route) && !isBlockedByAnotherAutomaticLimit;
-
-                  const description = isBlockedByAnotherAutomaticLimit
-                    ? `Only one automatic limit can be active. Turn off ${activeAutomaticLimitLabel} first.`
-                    : item.description;
+                  const isPressable = Boolean(item.route);
 
                   return (
                     <Pressable
@@ -183,17 +131,12 @@ export default function LimitsScreen() {
                       onPress={() => onPressItem(item.route)}
                       disabled={!isPressable}
                       accessibilityRole="button"
-                      accessibilityLabel={
-                        isBlockedByAnotherAutomaticLimit
-                          ? `${item.label} is locked because ${activeAutomaticLimitLabel} are active`
-                          : item.accessibilityLabel
-                      }
+                      accessibilityLabel={item.accessibilityLabel}
                       style={({ pressed }) => [
                         styles.rowButton,
                         !isLast && styles.rowDivider,
                         pressed && isPressable && styles.rowPressed,
-                        isBlockedByAnotherAutomaticLimit && { opacity: 0.82 },
-                        !item.route && { opacity: 0.45 },
+                        !isPressable && { opacity: 0.45 },
                       ]}
                     >
                       <View style={styles.rowContent}>
@@ -202,11 +145,7 @@ export default function LimitsScreen() {
                             <MaterialCommunityIcons
                               name={item.icon}
                               size={20}
-                              color={
-                                isBlockedByAnotherAutomaticLimit
-                                  ? "#64748B"
-                                  : "#3B82F6"
-                              }
+                              color="#3B82F6"
                             />
                           </View>
 
@@ -221,31 +160,23 @@ export default function LimitsScreen() {
                               {item.label}
                             </AppText>
 
-                            {description ? (
+                            {item.description ? (
                               <AppText
-                                weight={
-                                  isBlockedByAnotherAutomaticLimit
-                                    ? "bold"
-                                    : "medium"
-                                }
+                                weight="medium"
                                 style={[
                                   styles.rowDescription,
                                   !isPressable &&
                                     styles.rowDescriptionDisabled,
                                 ]}
                               >
-                                {description}
+                                {item.description}
                               </AppText>
                             ) : null}
                           </View>
                         </View>
 
                         <View style={styles.rowEnd}>
-                          {isBlockedByAnotherAutomaticLimit ? (
-                            <AppText weight="extraBold" style={styles.soonText}>
-                              Locked
-                            </AppText>
-                          ) : isPressable ? (
+                          {isPressable ? (
                             <MaterialCommunityIcons
                               name="chevron-right"
                               size={22}
