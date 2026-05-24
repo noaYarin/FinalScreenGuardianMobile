@@ -88,8 +88,7 @@ export default function LimitsScreen() {
             </AppText>
 
             <AppText weight="medium" style={styles.introSubtitle}>
-              Choose which type of limit you want to manage. The selected child
-              and device will be checked inside each limit screen.
+              Choose a limit type to manage screen time, schedules, or blocked apps.
             </AppText>
 
             <View style={styles.activeLimitInfoBox}>
@@ -101,15 +100,12 @@ export default function LimitsScreen() {
                 />
 
                 <AppText weight="extraBold" style={styles.activeLimitInfoTitle}>
-                  One automatic limit per device
+                  Automatic limits
                 </AppText>
               </View>
 
               <AppText weight="medium" style={styles.activeLimitInfoText}>
-                Daily Limits, Weekly Limits, and Weekly Schedule cannot be active
-                together on the same device. If one is already active, the other
-                automatic options will be unavailable inside the relevant screen
-                until you turn the active one off.
+                Only one automatic limit can be active per device at a time.
               </AppText>
             </View>
           </View>
@@ -166,7 +162,7 @@ export default function LimitsScreen() {
                                 style={[
                                   styles.rowDescription,
                                   !isPressable &&
-                                    styles.rowDescriptionDisabled,
+                                  styles.rowDescriptionDisabled,
                                 ]}
                               >
                                 {item.description}
