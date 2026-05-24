@@ -1,9 +1,14 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+  },
+
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 28,
+    paddingBottom: 130,
   },
 
   container: {
@@ -16,21 +21,16 @@ export const styles = StyleSheet.create({
   contentMaxWidth: {
     width: "100%",
     maxWidth: 980,
-    gap: 16,
+    gap: 14,
   },
 
   heroCard: {
-    backgroundColor: "#F7FAFF",
-    borderRadius: 26,
-    padding: 18,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 22,
+    padding: 16,
     borderWidth: 1,
-    borderColor: "#E2ECFF",
-    shadowColor: "#9CB8E8",
-    shadowOpacity: 0.14,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
-    gap: 16,
+    borderColor: "#E2E8F0",
+    gap: 14,
   },
 
   heroTopRow: {
@@ -40,33 +40,98 @@ export const styles = StyleSheet.create({
   },
 
   heroIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: "#EAF2FF",
+    width: 46,
+    height: 46,
+    borderRadius: 15,
+    backgroundColor: "#EFF6FF",
     alignItems: "center",
     justifyContent: "center",
   },
 
   heroTextWrap: {
     flex: 1,
-    gap: 4,
+    gap: 3,
   },
 
   heroTitle: {
-    fontSize: 22,
-    color: "#1D2A44",
+    fontSize: 21,
+    color: "#172033",
   },
 
   heroSubtitle: {
-    fontSize: 14,
-    lineHeight: 22,
-    color: "#667189",
+    fontSize: 13.5,
+    lineHeight: 20,
+    color: "#64748B",
+  },
+
+  scheduleToggleCard: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+
+  scheduleToggleTextWrap: {
+    flex: 1,
+  },
+
+  scheduleToggleTitle: {
+    fontSize: 15,
+    color: "#172033",
+    marginBottom: 3,
+  },
+
+  scheduleToggleSubtitle: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: "#64748B",
+  },
+
+  unsavedInlineText: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: "#B45309",
+  },
+
+  scheduleStatusBadge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+
+  scheduleStatusBadgeActive: {
+    backgroundColor: "#ECFDF3",
+    borderColor: "#BBF7D0",
+  },
+
+  scheduleStatusBadgeInactive: {
+    backgroundColor: "#F8FAFC",
+    borderColor: "#E2E8F0",
+  },
+
+  scheduleStatusText: {
+    fontSize: 12.5,
+  },
+
+  scheduleStatusTextActive: {
+    color: "#1F7A3D",
+  },
+
+  scheduleStatusTextInactive: {
+    color: "#64748B",
   },
 
   heroStatsRow: {
     flexDirection: "row",
-    gap: 12,
+    gap: 10,
   },
 
   heroStatsColumn: {
@@ -75,28 +140,28 @@ export const styles = StyleSheet.create({
 
   statCard: {
     flex: 1,
-    minHeight: 82,
-    borderRadius: 20,
-    backgroundColor: "#FFFFFF",
-    padding: 14,
+    minHeight: 74,
+    borderRadius: 16,
+    backgroundColor: "#F8FAFC",
+    padding: 13,
     borderWidth: 1,
-    borderColor: "#EBF1FB",
+    borderColor: "#E2E8F0",
     justifyContent: "center",
-    gap: 6,
+    gap: 5,
   },
 
   statLabel: {
-    fontSize: 13,
-    color: "#7A8498",
+    fontSize: 12.5,
+    color: "#64748B",
   },
 
   statValue: {
-    fontSize: 24,
-    color: "#23324F",
+    fontSize: 22,
+    color: "#172033",
   },
 
   daysRailSection: {
-    gap: 10,
+    gap: 9,
   },
 
   sectionHeaderRow: {
@@ -107,64 +172,57 @@ export const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 18,
-    color: "#1F2B46",
+    fontSize: 17,
+    color: "#172033",
   },
 
   sectionHint: {
-    fontSize: 13,
-    color: "#7A8599",
+    fontSize: 12.5,
+    color: "#64748B",
   },
 
   dayRailOuter: {
     width: "100%",
-    alignItems: "flex-start",
   },
 
   dayRailWrap: {
     width: "100%",
     flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "flex-start",
-    gap: 10,
+    gap: 8,
   },
 
   dayRailChip: {
-    minWidth: 78,
-    borderRadius: 18,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    flex: 1,
+    minHeight: 46,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1.5,
-    gap: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 7,
   },
 
   dayRailChipActive: {
-    backgroundColor: "#F3F8FF",
-    borderColor: "#2F6BFF",
+    backgroundColor: "#FFFFFF",
   },
 
   dayRailChipInactive: {
-    backgroundColor: "#F5F6F8",
-    borderColor: "#D8DEE8",
+    backgroundColor: "#F8FAFC",
   },
 
   dayRailChipFocused: {
-    transform: [{ scale: 1.02 }],
-    shadowColor: "#2F6BFF",
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
+    backgroundColor: "#2F6BFF",
+    borderColor: "#2F6BFF",
   },
 
   dayRailChipPressed: {
-    opacity: 0.84,
+    opacity: 0.82,
   },
 
   dayRailChipLetter: {
-    fontSize: 18,
+    fontSize: 15,
   },
 
   dayRailChipLetterActive: {
@@ -172,128 +230,279 @@ export const styles = StyleSheet.create({
   },
 
   dayRailChipLetterInactive: {
-    color: "#9AA3B5",
+    color: "#94A3B8",
   },
 
   dayRailChipLabel: {
-    fontSize: 12,
+    marginTop: 2,
+    fontSize: 9.5,
   },
 
   dayRailChipLabelActive: {
-    color: "#244B9A",
+    color: "#64748B",
   },
 
   dayRailChipLabelInactive: {
-    color: "#99A1B3",
+    color: "#94A3B8",
+  },
+
+  dayRailChipFocusedText: {
+    color: "#FFFFFF",
+  },
+
+  weeklyOverviewSection: {
+    marginBottom: 2,
+  },
+
+  weeklyOverviewTextButton: {
+    alignSelf: "flex-start",
+    paddingVertical: 6,
+  },
+
+  weeklyOverviewTextButtonPressed: {
+    opacity: 0.65,
+  },
+
+  weeklyOverviewTextButtonLabel: {
+    fontSize: 13.5,
+    color: "#2F6BFF",
+  },
+
+  weeklyOverviewSimpleCard: {
+    marginTop: 6,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+
+  weeklyOverviewSimpleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    paddingVertical: 9,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1F5F9",
+  },
+
+  weeklyOverviewSimpleDay: {
+    flex: 1,
+    fontSize: 13.5,
+    color: "#172033",
+  },
+
+  weeklyOverviewSimpleTime: {
+    fontSize: 13,
+    color: "#2F6BFF",
+    textAlign: "right",
+  },
+
+  weeklyOverviewSimpleBlocked: {
+    color: "#B42318",
+  },
+
+  weeklyOverviewSimpleAllDay: {
+    color: "#1F7A3D",
   },
 
   cardsSection: {
-    gap: 14,
+    gap: 10,
   },
 
   dayCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 28,
-    padding: 18,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#EAF0FA",
-    shadowColor: "#B7C5DA",
-    shadowOpacity: 0.16,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
-    gap: 16,
+    borderColor: "#E2E8F0",
+    overflow: "hidden",
   },
 
   dayCardActive: {
-    borderColor: "#BFD4FF",
-    backgroundColor: "#FCFDFF",
+    borderColor: "#2F6BFF",
+    borderWidth: 1.5,
   },
 
   dayCardDisabled: {
-    opacity: 0.72,
+    backgroundColor: "#FFF7F7",
   },
 
   dayCardHeader: {
+    minHeight: 76,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: 10,
+    padding: 14,
   },
 
   dayIdentityRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    flexShrink: 1,
+    gap: 10,
     flex: 1,
   },
 
   dayBadge: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: "#59A9F8",
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: "#EFF6FF",
     alignItems: "center",
     justifyContent: "center",
   },
 
   dayBadgeDisabled: {
-    backgroundColor: "#B7C3D3",
+    backgroundColor: "#FEF2F2",
   },
 
   dayBadgeText: {
-    fontSize: 22,
-    color: "#FFFFFF",
+    fontSize: 17,
+    color: "#2F6BFF",
   },
 
   dayNameWrap: {
-    gap: 3,
-    flexShrink: 1,
     flex: 1,
+    gap: 3,
   },
 
   dayName: {
-    fontSize: 22,
-    color: "#24324D",
+    fontSize: 17,
+    color: "#172033",
   },
 
   dayStatus: {
-    fontSize: 13,
-    color: "#7A8598",
+    fontSize: 12.5,
+    color: "#64748B",
   },
 
-  toggleWrap: {
-    padding: 4,
+  dayStatusAllowed: {
+    color: "#1F7A3D",
   },
 
-  toggleWrapPressed: {
+  dayStatusBlocked: {
+    color: "#B42318",
+  },
+
+  dayHeaderRight: {
+    alignItems: "flex-end",
+    gap: 7,
+  },
+
+  scheduleModeStatusPill: {
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+
+  scheduleModeStatusPillAllowed: {
+    backgroundColor: "#EFF6FF",
+    borderColor: "#BFDBFE",
+  },
+
+  scheduleModeStatusPillAllDay: {
+    backgroundColor: "#ECFDF3",
+    borderColor: "#BBF7D0",
+  },
+
+  scheduleModeStatusPillBlocked: {
+    backgroundColor: "#FEF2F2",
+    borderColor: "#FECACA",
+  },
+
+  scheduleModeStatusText: {
+    fontSize: 11.5,
+  },
+
+  scheduleModeStatusTextAllowed: {
+    color: "#2F6BFF",
+  },
+
+  scheduleModeStatusTextAllDay: {
+    color: "#1F7A3D",
+  },
+
+  scheduleModeStatusTextBlocked: {
+    color: "#B42318",
+  },
+
+  dayExpandedContent: {
+    borderTopWidth: 1,
+    borderTopColor: "#E2E8F0",
+    padding: 14,
+    backgroundColor: "#FFFFFF",
+  },
+
+  scheduleModeButtonsRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 12,
+  },
+
+  scheduleModeButton: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 6,
+    paddingVertical: 8,
+  },
+
+  scheduleModeButtonActive: {
+    backgroundColor: "#EFF6FF",
+    borderColor: "#2F6BFF",
+  },
+
+  scheduleModeButtonSuccessActive: {
+    backgroundColor: "#ECFDF3",
+    borderColor: "#1F7A3D",
+  },
+
+  scheduleModeButtonDangerActive: {
+    backgroundColor: "#FEF2F2",
+    borderColor: "#B42318",
+  },
+
+  scheduleModeButtonPressed: {
     opacity: 0.8,
   },
 
-  toggleTrack: {
-    width: 56,
-    height: 32,
-    borderRadius: 999,
-    backgroundColor: "#DCE4EF",
-    justifyContent: "center",
-    paddingHorizontal: 4,
+  scheduleModeButtonText: {
+    fontSize: 11.3,
+    color: "#64748B",
+    textAlign: "center",
   },
 
-  toggleTrackOn: {
-    backgroundColor: "#69B5F9",
+  scheduleModeButtonTextActive: {
+    color: "#2F6BFF",
   },
 
-  toggleThumb: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#FFFFFF",
-    alignSelf: "flex-start",
+  scheduleModeButtonSuccessTextActive: {
+    color: "#1F7A3D",
   },
 
-  toggleThumbOn: {
-    alignSelf: "flex-end",
+  scheduleModeButtonDangerTextActive: {
+    color: "#B42318",
+  },
+
+  blockedDayMessage: {
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+  },
+
+  blockedDayText: {
+    fontSize: 13,
+    color: "#B42318",
   },
 
   timeGrid: {
@@ -306,11 +515,11 @@ export const styles = StyleSheet.create({
 
   timeCard: {
     flex: 1,
-    backgroundColor: "#F9FBFE",
-    borderRadius: 20,
-    padding: 14,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 16,
+    padding: 13,
     borderWidth: 1,
-    borderColor: "#EDF2F9",
+    borderColor: "#E2E8F0",
     gap: 10,
   },
 
@@ -321,12 +530,12 @@ export const styles = StyleSheet.create({
   },
 
   timeLabel: {
-    fontSize: 14,
-    color: "#6F7A8D",
+    fontSize: 13.5,
+    color: "#64748B",
   },
 
   timeValueBox: {
-    minHeight: 54,
+    minHeight: 52,
     borderRadius: 14,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
@@ -340,8 +549,8 @@ export const styles = StyleSheet.create({
 
   timeValue: {
     flex: 1,
-    fontSize: 18,
-    color: "#24324A",
+    fontSize: 17,
+    color: "#172033",
     textAlign: "center",
   },
 
@@ -349,11 +558,11 @@ export const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 10,
-    backgroundColor: "#EEF5FF",
+    backgroundColor: "#EFF6FF",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#D7E6FF",
+    borderColor: "#BFDBFE",
   },
 
   timeAdjustButtonPressed: {
@@ -363,71 +572,66 @@ export const styles = StyleSheet.create({
   dayFooter: {
     flexDirection: "row",
     justifyContent: "flex-start",
+    marginTop: 12,
   },
 
   totalHoursPill: {
-    minHeight: 38,
+    minHeight: 36,
     borderRadius: 999,
-    backgroundColor: "#EEF5FF",
-    paddingHorizontal: 14,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingHorizontal: 12,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 7,
     alignSelf: "flex-start",
   },
 
   totalHoursText: {
-    fontSize: 14,
-    color: "#2B4D94",
+    fontSize: 13,
+    color: "#334155",
   },
 
-  bottomActionsWrap: {
-    gap: 12,
-    paddingTop: 4,
+  footer: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 18,
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 1,
+    borderTopColor: "#E2E8F0",
   },
 
-  secondaryActionButton: {
-    minHeight: 52,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: "#CFE0FF",
-    backgroundColor: "#F6FAFF",
-    flexDirection: "row",
+  footerUnsavedRow: {
     alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
+    marginBottom: 8,
   },
 
-  secondaryActionButtonPressed: {
-    opacity: 0.86,
-  },
-
-  secondaryActionText: {
-    fontSize: 15,
-    color: "#2F6BFF",
+  footerUnsavedText: {
+    fontSize: 12.5,
+    color: "#B45309",
   },
 
   primaryActionButton: {
-    minHeight: 56,
-    borderRadius: 20,
+    minHeight: 52,
+    borderRadius: 16,
     backgroundColor: "#2F6BFF",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    shadowColor: "#2F6BFF",
-    shadowOpacity: 0.28,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 5,
   },
 
   primaryActionButtonPressed: {
     opacity: 0.88,
   },
 
+  primaryActionButtonDisabled: {
+    opacity: 0.45,
+  },
+
   primaryActionText: {
-    fontSize: 16,
+    fontSize: 15,
     color: "#FFFFFF",
   },
 });

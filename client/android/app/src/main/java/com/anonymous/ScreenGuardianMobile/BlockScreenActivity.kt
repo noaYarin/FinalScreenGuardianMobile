@@ -154,6 +154,14 @@ class BlockScreenActivity : AppCompatActivity() {
     timeDetailsText.visibility = View.GONE
 }
 
+"APP_BLOCKED" -> {
+    iconText.text = "🚫"
+    titleText.text = "App blocked"
+    messageText.text = "This app is blocked by your parent."
+    hintText.text = "Please choose another app or ask your parent."
+    timeDetailsText.visibility = View.GONE
+}
+
 
 
             //  Default block
