@@ -21,7 +21,8 @@ import {
   updateDeviceNameController,
   deviceHeartbeatController,
   updateDeviceLocationController,
-  syncInstalledApplicationsController
+  syncInstalledApplicationsController,
+  syncApplicationUsageController
 } from "../controllers/device.controller.js";
 
 const router = Router();
@@ -82,6 +83,13 @@ router.patch(
   authJwt,
   requireChild,
   syncInstalledApplicationsController
+);
+
+router.patch(
+  "/:deviceId/apps/usage",
+  authJwt,
+  requireChild,
+  syncApplicationUsageController
 );
 
 // PATCH /api/v1/devices/:deviceId/apps/:packageName/block

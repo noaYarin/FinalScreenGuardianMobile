@@ -45,6 +45,8 @@ import java.util.Calendar
 import kotlin.math.min
 import android.app.AppOpsManager
 import android.os.Process
+import com.facebook.react.bridge.Arguments
+import com.facebook.react.bridge.WritableArray
 
 object UsageStatsHelper {
 
@@ -112,7 +114,64 @@ object UsageStatsHelper {
             Log.e(TAG, "Failed to update today usage", e)
         }
     }
+    fun getTodayUsageByApp(context: Context): WritableArray {
+    val result = Arguments.createArray()
 
+    try {
+        val usageStatsManager =
+            context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+
+        val startOfDay = getStartOfTodayInMillis()
+        val now = System.currentTimeMillis()
+
+        val stats = usageStatsManager.queryUsageStats(
+            UsageStatsManager.INTERVAL_DAILY,
+            startOfDay,
+            now
+        )
+
+        if (stats.isNullOrEmpty()) {
+            Log.d(TAG, "getTodayUsageByApp: queryUsageStats returned empty/null")
+            return result
+        }
+
+        val packageManager = context.packageManager
+
+        for (usage in stats) {
+            val packageName = usage.packageName ?: continue
+            val foregroundTimeMillis = usage.totalTimeInForeground
+
+            if (foregroundTimeMillis <= 0) continue
+            if (shouldExcludePackage(context, packageName)) continue
+
+            val usedMinutesLong = foregroundTimeMillis / 1000L / 60L
+            val usedMinutes = min(usedMinutesLong, MAX_MINUTES_PER_DAY.toLong()).toInt()
+
+            if (usedMinutes <= 0) continue
+
+            val appName = try {
+                val appInfo = packageManager.getApplicationInfo(packageName, 0)
+                packageManager.getApplicationLabel(appInfo).toString()
+            } catch (e: Exception) {
+                packageName
+            }
+
+            val item = Arguments.createMap().apply {
+                putString("packageName", packageName)
+                putString("name", appName)
+                putInt("usedTodayMinutes", usedMinutes)
+                putDouble("lastTimeUsed", usage.lastTimeUsed.toDouble())
+            }
+
+            result.pushMap(item)
+        }
+
+        return result
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to get today usage by app", e)
+        return result
+    }
+}
     private fun shouldExcludePackage(
         context: Context,
         packageName: String

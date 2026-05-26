@@ -25,6 +25,7 @@ import { fetchCurrentChildProfileThunk } from "@/src/redux/thunks/childrenThunks
 import {
   updateDeviceLocation,
   syncInstalledAppsThunk,
+  syncAppUsageThunk,
 } from "@/src/redux/thunks/deviceThunks";
 import type { AppDispatch, RootState } from "@/src/redux/store/types";
 import { selectChildPalette } from "@/src/redux/slices/child-theme-slice";
@@ -54,32 +55,6 @@ const ICON = {
   settings: "cog-outline",
   panic: "alert-circle-outline",
 } as const;
-
-
-/**
- * Gamification rules for the child avatar.
- *
- * Levels:
- * - The child can keep leveling up; there is no hard max level in the client.
- * - The XP required for the current level grows by 50 XP each level.
- * - Formula:
- *   Level 1 -> 100 XP
- *   Level 2 -> 150 XP
- *   Level 3 -> 200 XP
- *   XP required = 100 + (level - 1) * 50
- *
- * Avatar stages:
- * - There are 5 visual avatar stages.
- * - Stage 1: Levels 1-2
- * - Stage 2: Levels 3-4
- * - Stage 3: Levels 5-6
- * - Stage 4: Levels 7-8
- * - Stage 5: Level 9 and above
- *
- * Next avatar look:
- * - The next visual avatar stage is unlocked at levels 3, 5, 7, and 9.
- * - After level 9, the avatar already uses the final stage.
- */
 
 function getXpRequiredForLevel(level: number) {
   return 100 + (level - 1) * 50;
@@ -147,46 +122,46 @@ const AVATAR_INFO_SLIDES: {
   iconBgColor: string;
   iconColor: string;
 }[] = [
-    {
-      icon: "trophy-outline",
-      title: "Achievements",
-      description:
-        "Check your achievements to earn XP and celebrate your progress.",
-      bgColor: "#FFF7ED",
-      borderColor: "#FED7AA",
-      iconBgColor: "#FFE8C2",
-      iconColor: "#B45309",
-    },
-    {
-      icon: "star-circle",
-      title: "XP",
-      description:
-        "XP helps your avatar level up as you complete goals and unlock achievements.",
-      bgColor: "#EEF4FF",
-      borderColor: "#CFE3FF",
-      iconBgColor: "#DBEAFE",
-      iconColor: "#2563EB",
-    },
-    {
-      icon: "trending-up",
-      title: "Levels",
-      description:
-        "The more XP you collect, the higher your avatar level becomes.",
-      bgColor: "#F3EDFF",
-      borderColor: "#E0D2FF",
-      iconBgColor: "#E9D5FF",
-      iconColor: "#6D28D9",
-    },
-    {
-      icon: "palette-outline",
-      title: "Avatar stages",
-      description: "At special levels, your avatar grows and gets a new look.",
-      bgColor: "#EEFFF4",
-      borderColor: "#CFF7DD",
-      iconBgColor: "#DCFCE7",
-      iconColor: "#16A34A",
-    },
-  ];
+  {
+    icon: "trophy-outline",
+    title: "Achievements",
+    description:
+      "Check your achievements to earn XP and celebrate your progress.",
+    bgColor: "#FFF7ED",
+    borderColor: "#FED7AA",
+    iconBgColor: "#FFE8C2",
+    iconColor: "#B45309",
+  },
+  {
+    icon: "star-circle",
+    title: "XP",
+    description:
+      "XP helps your avatar level up as you complete goals and unlock achievements.",
+    bgColor: "#EEF4FF",
+    borderColor: "#CFE3FF",
+    iconBgColor: "#DBEAFE",
+    iconColor: "#2563EB",
+  },
+  {
+    icon: "trending-up",
+    title: "Levels",
+    description:
+      "The more XP you collect, the higher your avatar level becomes.",
+    bgColor: "#F3EDFF",
+    borderColor: "#E0D2FF",
+    iconBgColor: "#E9D5FF",
+    iconColor: "#6D28D9",
+  },
+  {
+    icon: "palette-outline",
+    title: "Avatar stages",
+    description: "At special levels, your avatar grows and gets a new look.",
+    bgColor: "#EEFFF4",
+    borderColor: "#CFF7DD",
+    iconBgColor: "#DCFCE7",
+    iconColor: "#16A34A",
+  },
+];
 
 export default function HomeScreen() {
   const params = useLocalSearchParams<{ initialName?: string }>();
@@ -247,9 +222,11 @@ export default function HomeScreen() {
   const activeChildId = useSelector(
     (state: RootState) => state.auth.activeChildId
   );
+
   const childrenList = useSelector(
     (state: RootState) => state.children.childrenList
   );
+
   const deviceId = useSelector((state: RootState) => state.auth.deviceId);
   const parentId = useSelector((state: RootState) => state.auth.parentId);
   const childPalette = useSelector(selectChildPalette);
@@ -273,7 +250,9 @@ export default function HomeScreen() {
 
     const list = Array.isArray(childrenList) ? childrenList : [];
 
-    return list.find((child: Child) => String(child._id) === String(activeChildId));
+    return list.find(
+      (child: Child) => String(child._id) === String(activeChildId)
+    );
   }, [childrenList, activeChildId]);
 
   const handleSyncLocation = async (requestData?: any) => {
@@ -286,6 +265,7 @@ export default function HomeScreen() {
       });
 
       const lastUpdated = new Date().toISOString();
+
       const locationData = {
         lat: loc.coords.latitude,
         lng: loc.coords.longitude,
@@ -352,7 +332,9 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const sub = AppState.addEventListener("change", (next) => {
-      if (next === "active") void refreshPermissionGate(false);
+      if (next === "active") {
+        void refreshPermissionGate(false);
+      }
     });
 
     return () => sub.remove();
@@ -360,6 +342,11 @@ export default function HomeScreen() {
 
   const loadScreenTime = async () => {
     try {
+      if (!DeviceControl?.getRemainingTime) {
+        console.log("DeviceControl.getRemainingTime is not available");
+        return;
+      }
+
       const result = await DeviceControl.getRemainingTime();
 
       setScreenTime({
@@ -392,33 +379,103 @@ export default function HomeScreen() {
 
     return () => clearInterval(interval);
   }, [deviceId]);
+
   useEffect(() => {
-    async function syncInstalledApps() {
+    async function syncChildDeviceData() {
       if (!activeChildId || !deviceId) return;
 
       try {
-        if (!DeviceControl?.getInstalledApps) {
-          console.log("DeviceControl.getInstalledApps is not available");
+        if (!DeviceControl) {
+          console.log("DeviceControl native module is not available");
           return;
         }
 
-        const apps = await DeviceControl.getInstalledApps();
+        if (DeviceControl.getInstalledApps) {
+          const apps = await DeviceControl.getInstalledApps();
 
-        await dispatch(
-          syncInstalledAppsThunk({
-            childId: String(activeChildId),
-            deviceId: String(deviceId),
-            applications: apps,
-          })
-        ).unwrap();
+          await dispatch(
+            syncInstalledAppsThunk({
+              childId: String(activeChildId),
+              deviceId: String(deviceId),
+              applications: apps,
+            })
+          ).unwrap();
 
-        console.log("Installed apps synced:", apps.length);
+          console.log("Installed apps synced:", apps.length);
+        } else {
+          console.log("DeviceControl.getInstalledApps is not available");
+        }
+
+        if (DeviceControl.getAppUsageStats) {
+          const usageStats = await DeviceControl.getAppUsageStats();
+
+          console.log("APP USAGE STATS:", usageStats);
+
+          const youtubeUsage = usageStats.find(
+            (app: any) =>
+              app.packageName === "com.google.android.youtube" ||
+              String(app.packageName).toLowerCase().includes("youtube")
+          );
+
+          console.log("YOUTUBE USAGE:", youtubeUsage);
+
+          await dispatch(
+            syncAppUsageThunk({
+              childId: String(activeChildId),
+              deviceId: String(deviceId),
+              usageStats,
+            })
+          ).unwrap();
+
+          console.log("App usage synced:", usageStats.length);
+        } else {
+          console.log("DeviceControl.getAppUsageStats is not available");
+        }
       } catch (error) {
-        console.log("Failed to sync installed apps:", error);
+        console.log("Failed to sync child device data:", error);
       }
     }
 
-    syncInstalledApps();
+    syncChildDeviceData();
+  }, [dispatch, activeChildId, deviceId]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (next) => {
+      if (next === "active") {
+        loadScreenTime();
+
+        if (activeChildId && deviceId && DeviceControl?.getAppUsageStats) {
+          DeviceControl.getAppUsageStats()
+            .then((usageStats: any[]) => {
+              console.log("APP USAGE STATS ON APP ACTIVE:", usageStats);
+
+              const youtubeUsage = usageStats.find(
+                (app: any) =>
+                  app.packageName === "com.google.android.youtube" ||
+                  String(app.packageName).toLowerCase().includes("youtube")
+              );
+
+              console.log("YOUTUBE USAGE ON APP ACTIVE:", youtubeUsage);
+
+              return dispatch(
+                syncAppUsageThunk({
+                  childId: String(activeChildId),
+                  deviceId: String(deviceId),
+                  usageStats,
+                })
+              ).unwrap();
+            })
+            .then(() => {
+              console.log("App usage synced after returning to app");
+            })
+            .catch((error: unknown) => {
+              console.log("Failed to sync app usage on app active:", error);
+            });
+        }
+      }
+    });
+
+    return () => sub.remove();
   }, [dispatch, activeChildId, deviceId]);
 
   const userName = (
@@ -432,6 +489,7 @@ export default function HomeScreen() {
   const pointsValue = Number(activeChildData?.avatar?.currentXp) || 0;
 
   const xpRequiredForCurrentLevel = getXpRequiredForLevel(levelValue);
+
   const xpLeftToNextLevel = Math.max(
     0,
     xpRequiredForCurrentLevel - pointsValue
@@ -485,6 +543,7 @@ export default function HomeScreen() {
   };
 
   const total = screenTime.dailyLimitMinutes + screenTime.extraMinutes;
+
   const percent =
     screenTime.limitEnabled && total > 0
       ? Math.min((screenTime.usedTodayMinutes / total) * 100, 100)
@@ -530,7 +589,12 @@ export default function HomeScreen() {
     screenTime.limitEnabled && !isScheduleMode;
 
   return (
-    <View style={[styles.childHomeRoot, { backgroundColor: childPalette.screenBg }]}>
+    <View
+      style={[
+        styles.childHomeRoot,
+        { backgroundColor: childPalette.screenBg },
+      ]}
+    >
       <ScreenLayout>
         <View style={[styles.page, isPhoneSmall && styles.pageSmall]}>
           <View style={styles.headerCard}>
@@ -653,10 +717,13 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.grid}>
-            <Tile iconName={ICON.apps}
+            <Tile
+              iconName={ICON.apps}
               label="Apps"
               colorKey="apps"
-              onPress={() => router.push(`/Child/apps?deviceId=${deviceId}` as Href)}
+              onPress={() =>
+                router.push(`/Child/apps?deviceId=${deviceId}` as Href)
+              }
             />
 
             <Tile
@@ -687,7 +754,12 @@ export default function HomeScreen() {
               onPress={() => router.push("/Child/achievements" as Href)}
             />
 
-            <Tile iconName={ICON.goals} label="Goals" colorKey="goals" disabled />
+            <Tile
+              iconName={ICON.goals}
+              label="Goals"
+              colorKey="goals"
+              disabled
+            />
 
             <Tile
               iconName={ICON.charts}
@@ -724,7 +796,11 @@ export default function HomeScreen() {
           >
             <View style={styles.panicContent}>
               <View style={styles.panicIconBadge}>
-                <MaterialCommunityIcons name={ICON.panic} size={18} color="#fff" />
+                <MaterialCommunityIcons
+                  name={ICON.panic}
+                  size={18}
+                  color="#fff"
+                />
               </View>
 
               <AppText weight="extraBold" style={styles.panicText}>
@@ -743,7 +819,7 @@ export default function HomeScreen() {
               style={styles.avatarModalOverlay}
               onPress={() => setAvatarInfoVisible(false)}
             >
-              <Pressable style={styles.avatarInfoCard} onPress={() => { }}>
+              <Pressable style={styles.avatarInfoCard} onPress={() => {}}>
                 <View style={styles.avatarInfoImageWrap}>
                   <Image
                     source={homeAvatarImage}
@@ -923,6 +999,7 @@ export default function HomeScreen() {
             {permGate === "checking" ? (
               <>
                 <ActivityIndicator size="large" color={childPalette.accent} />
+
                 <AppText weight="bold" style={styles.permissionModalBody}>
                   Checking permissions…
                 </AppText>

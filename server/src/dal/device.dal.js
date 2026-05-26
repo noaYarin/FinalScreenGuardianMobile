@@ -448,3 +448,62 @@ export async function syncDeviceApplications(deviceId, applications) {
     { new: true }
   ).lean();
 }
+
+export async function syncDeviceApplicationsUsage(deviceId, usageStats) {
+  assertValidObjectId(deviceId, CommonErrors.INVALID_DEVICE_ID);
+
+  const device = await DeviceModel.findById(deviceId).lean();
+
+  if (!device) {
+    return null;
+  }
+
+  const usageByPackage = new Map(
+    usageStats
+      .filter((item) => item?.packageName)
+      .map((item) => [
+        String(item.packageName),
+        {
+          name: item.name ? String(item.name) : "",
+          usedTodayMinutes: Math.max(
+            0,
+            Number(item.usedTodayMinutes ?? 0)
+          ),
+          lastTimeUsed: item.lastTimeUsed ?? null
+        }
+      ])
+  );
+
+  const now = new Date();
+
+  const nextApplications = (device.applications ?? []).map((app) => {
+    const usage = usageByPackage.get(app.packageName);
+
+    if (!usage) {
+      return app;
+    }
+
+    return {
+      ...app,
+      name: app.name || usage.name || app.packageName,
+      screenTime: {
+        ...(app.screenTime ?? {}),
+        usedTodayMinutes: usage.usedTodayMinutes,
+        lastDailyResetAt: now
+      },
+      lastUsedAt: usage.lastTimeUsed
+        ? new Date(Number(usage.lastTimeUsed))
+        : app.lastUsedAt ?? null
+    };
+  });
+
+  return DeviceModel.findByIdAndUpdate(
+    deviceId,
+    {
+      $set: {
+        applications: nextApplications
+      }
+    },
+    { new: true }
+  ).lean();
+}

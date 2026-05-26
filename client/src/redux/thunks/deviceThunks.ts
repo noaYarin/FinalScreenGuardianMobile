@@ -9,12 +9,12 @@ import {
   apiUpdateDeviceScreenTime,
   apiLockDevice,
   apiUnlockDevice,
-} from "../../api/device";
-import {
   apiSyncInstalledApps,
   apiBlockApplication,
   apiUnblockApplication,
+  apiSyncAppUsage,
   type InstalledDeviceApp,
+  type AppUsageStat,
 } from "../../api/device";
 function normalizeLocationLastUpdated(value: unknown): string {
   if (typeof value === "string" && value.trim()) return value.trim();
@@ -236,6 +236,29 @@ export const syncInstalledAppsThunk = createAsyncThunk<
     } catch (error) {
       return thunkAPI.rejectWithValue(
         (error as Error)?.message ?? "devices.sync_apps_failed"
+      );
+    }
+  }
+);
+
+export const syncAppUsageThunk = createAsyncThunk<
+  { childId: string; deviceId: string; applications: InstalledDeviceApp[] },
+  { childId: string; deviceId: string; usageStats: AppUsageStat[] },
+  { rejectValue: string }
+>(
+  "devices/syncAppUsage",
+  async ({ childId, deviceId, usageStats }, thunkAPI) => {
+    try {
+      const response = await apiSyncAppUsage(deviceId, usageStats);
+
+      return {
+        childId,
+        deviceId,
+        applications: response,
+      };
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        (error as Error)?.message ?? "devices.sync_app_usage_failed"
       );
     }
   }

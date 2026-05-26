@@ -18,8 +18,8 @@ import {
   updateDeviceUsageMinutes,
   updateDeviceHeartbeat,
   releaseDevicePolicyBeforeDelete,
-  syncDeviceApplications
-
+  syncDeviceApplications,
+  syncDeviceApplicationsUsage
 } from "../dal/device.dal.js";
 import { getChildrenByParentId } from "../dal/parent.dal.js";
 import { getIO, emitPolicyUpdated, emitDeviceStatusUpdated } from "../socketHandler.js";
@@ -1498,6 +1498,52 @@ export async function syncInstalledApplicationsByChild({
   const updatedDevice = await syncDeviceApplications(deviceId, normalizedApps);
 
   pushPolicyUpdate(updatedDevice);
+  pushDeviceStatusUpdate(updatedDevice);
+
+  return updatedDevice.applications ?? [];
+}
+
+export async function syncApplicationUsageByChild({
+  deviceId,
+  childId,
+  parentId,
+  usageStats
+}) {
+  if (!Array.isArray(usageStats)) {
+    throw new AppError(CommonErrors.VALIDATION_ERROR);
+  }
+
+  const device = await validateDeviceAccess({
+    deviceId,
+    parentId,
+    childId
+  });
+
+  if (device.isActive === false) {
+    throw new AppError(CommonErrors.DEVICE_NOT_ACTIVE);
+  }
+
+  const normalizedUsageStats = usageStats
+    .filter((item) => item?.packageName)
+    .map((item) => ({
+      packageName: String(item.packageName),
+      name: item.name ? String(item.name) : "",
+      usedTodayMinutes: Math.max(
+        0,
+        Number(item.usedTodayMinutes ?? 0)
+      ),
+      lastTimeUsed: item.lastTimeUsed ?? null
+    }));
+
+  const updatedDevice = await syncDeviceApplicationsUsage(
+    deviceId,
+    normalizedUsageStats
+  );
+
+  if (!updatedDevice) {
+    throw new AppError(CommonErrors.DEVICE_NOT_FOUND);
+  }
+
   pushDeviceStatusUpdate(updatedDevice);
 
   return updatedDevice.applications ?? [];
