@@ -18,7 +18,7 @@ import {
   setReportsSelectedChildId,
   setReportsTimeRange,
 } from "@/src/redux/slices/reports-slice";
-
+import EmptyStateCard from "@/src/components/EmptyStateCard/EmptyStateCard";
 import {
   buildEmptyUsageReport,
   buildReportsDatasetFromReport,
@@ -197,15 +197,11 @@ export default function ParentReportsScreen() {
                 dispatch(setReportsSelectedChildId(childId))
               }
             />
-            <View style={styles.emptyStateCard}>
-              <AppText weight="bold" style={styles.emptyStateTitle}>
-                No device connected
-              </AppText>
-              <AppText style={styles.emptyStateText}>
-                Connect the child's device to start tracking screen time and view
-                reports.
-              </AppText>
-            </View>
+            <EmptyStateCard
+              icon="cellphone-link-off"
+              title="No device connected"
+              subtitle="Connect the child's device to start tracking screen time and view reports."
+            />
           </View>
         </ScrollView>
       </View>
@@ -258,14 +254,11 @@ export default function ParentReportsScreen() {
                 <AppText style={styles.hintText}>{loadError}</AppText>
               ) : null}
               {!hasUsageData ? (
-                <View style={styles.emptyStateCard}>
-                  <AppText weight="bold" style={styles.emptyStateTitle}>
-                    No usage recorded yet
-                  </AppText>
-                  <AppText style={styles.emptyStateText}>
-                    Screen time appears here after the child device syncs usage.
-                  </AppText>
-                </View>
+                <EmptyStateCard
+                  icon="chart-line"
+                  title="No usage recorded yet"
+                  subtitle="Screen time appears here after the child device syncs usage."
+                />
               ) : null}
             </>
           }

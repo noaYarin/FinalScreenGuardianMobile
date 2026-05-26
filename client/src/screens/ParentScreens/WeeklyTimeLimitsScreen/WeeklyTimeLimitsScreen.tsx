@@ -133,11 +133,11 @@ export default function WeeklyTimeLimitsScreen() {
 
   const selectedDeviceName = selectedDevice
     ? String(
-        (selectedDevice as any).deviceName ??
-          (selectedDevice as any).model ??
-          (selectedDevice as any).name ??
-          ""
-      )
+      (selectedDevice as any).deviceName ??
+      (selectedDevice as any).model ??
+      (selectedDevice as any).name ??
+      ""
+    )
     : "";
 
   const activeLimitMode =
@@ -360,6 +360,14 @@ export default function WeeklyTimeLimitsScreen() {
             }}
           />
 
+          {selectedChildId && currentChildDevices.length === 0 ? (
+            <EmptyStateCard
+              icon="cellphone-link-off"
+              title="No devices yet"
+              subtitle="There are no connected devices for this child yet."
+            />
+          ) : null}
+
           {selectedDevice && isOtherAutomaticLimitActive ? (
             <AutomaticLimitUnavailableCard
               title="Weekly Limits unavailable"
@@ -367,6 +375,7 @@ export default function WeeklyTimeLimitsScreen() {
               targetLimitLabel="Weekly Limits"
             />
           ) : null}
+
 
           {isLoading && (
             <View style={styles.emptyState}>
@@ -659,7 +668,7 @@ export default function WeeklyTimeLimitsScreen() {
                                 styles.stepButtonPrimary,
                                 pressed && styles.stepButtonPressed,
                                 (!isEnabled || isOtherAutomaticLimitActive) &&
-                                  styles.stepButtonDisabled,
+                                styles.stepButtonDisabled,
                               ]}
                             >
                               <MaterialCommunityIcons
@@ -677,7 +686,7 @@ export default function WeeklyTimeLimitsScreen() {
                                 style={[
                                   styles.stepButtonTextPrimary,
                                   (!isEnabled || isOtherAutomaticLimitActive) &&
-                                    styles.stepButtonTextDisabled,
+                                  styles.stepButtonTextDisabled,
                                 ]}
                               >
                                 30

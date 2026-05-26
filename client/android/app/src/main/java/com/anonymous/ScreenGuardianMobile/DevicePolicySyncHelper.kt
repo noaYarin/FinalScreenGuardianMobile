@@ -59,6 +59,8 @@ val dailyLimitMinutesRaw = screenTime.optInt("dailyLimitMinutes", 0)
     val usedWeekMinutesRaw = screenTime.optInt("usedWeekMinutes", 0)
     val usedWeekMinutes = max(0, usedWeekMinutesRaw)
 
+    val weeklySchedule = screenTime.optJSONArray("weeklySchedule") ?: JSONArray()
+
     val blockedApps = mutableListOf<String>()
     val applications = data.optJSONArray("applications") ?: JSONArray()
 
@@ -84,6 +86,7 @@ PolicyStore.setDailyLimit(context, dailyLimitMinutes)
 PolicyStore.setExtraMinutes(context, extraMinutesToday)
 PolicyStore.setWeeklyLimit(context, weeklyLimitMinutes)
 PolicyStore.setUsedWeek(context, usedWeekMinutes)
+PolicyStore.setWeeklySchedule(context, weeklySchedule)
 
 PolicyStore.setBlockedApps(context, blockedApps)
 
@@ -98,8 +101,7 @@ if (shouldLock && blockReason.isNotBlank()) {
 
 Log.d(
     TAG,
-    "Policy applied: locked=$isLocked limitEnabled=$isLimitEnabled mode=$limitMode daily=$dailyLimitMinutes extra=$extraMinutesToday weekly=$weeklyLimitMinutes usedWeek=$usedWeekMinutes manualLock=$manualLockEnabled dailyLock=$dailyLimitLockActive weeklyLock=$weeklyLimitLockActive scheduleLock=$scheduleLockActive blockedApps=${blockedApps.size}"
-)
+"Policy applied: locked=$isLocked limitEnabled=$isLimitEnabled mode=$limitMode daily=$dailyLimitMinutes extra=$extraMinutesToday weekly=$weeklyLimitMinutes usedWeek=$usedWeekMinutes scheduleDays=${weeklySchedule.length()} manualLock=$manualLockEnabled dailyLock=$dailyLimitLockActive weeklyLock=$weeklyLimitLockActive scheduleLock=$scheduleLockActive blockedApps=${blockedApps.size}")
 }
 
     fun fetchAndSavePolicy(

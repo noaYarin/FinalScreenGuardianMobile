@@ -145,11 +145,24 @@ class BlockScreenActivity : AppCompatActivity() {
     timeDetailsText.text = "Used this week: $usedWeek / $weeklyLimit minutes"
    }
 
-   PolicyStore.BLOCK_REASON_SCHEDULE_BLOCKED -> {
+ PolicyStore.BLOCK_REASON_SCHEDULE_BLOCKED -> {
+    val scheduleStatus = PolicyStore.getScheduleStatusForChildHome(this)
+
+    val blockEndsAt = if (scheduleStatus.isNull("blockEndsAt")) {
+        null
+    } else {
+        scheduleStatus.optString("blockEndsAt")
+    }
+
     iconText.text = "🕒"
     titleText.text = "Blocked by schedule"
-    messageText.text = "This device is blocked during the current scheduled time."
-    hintText.text = "Please try again when the schedule allows it."
+    messageText.text = "This is a scheduled break time."
+
+    hintText.text = if (!blockEndsAt.isNullOrBlank()) {
+        "You can use the device again at $blockEndsAt."
+    } else {
+        "Please try again after the blocked time ends."
+    }
 
     timeDetailsText.visibility = View.GONE
 }

@@ -98,33 +98,106 @@ class DeviceControlModule(
         }
     }
 
-    @ReactMethod
-    fun getRemainingTime(promise: Promise) {
-        try {
-            val result = Arguments.createMap().apply {
-                putInt("dailyLimitMinutes", PolicyStore.getDailyLimit(reactApplicationContext))
-                putInt("usedTodayMinutes", PolicyStore.getUsedToday(reactApplicationContext))
-                putInt("extraMinutes", PolicyStore.getExtraMinutes(reactApplicationContext))
-                putInt("remainingMinutes", PolicyStore.getRemainingMinutes(reactApplicationContext))
-                putBoolean("lockNow", PolicyStore.isLockNow(reactApplicationContext))
-                putBoolean("shouldLock", PolicyStore.shouldLockDevice(reactApplicationContext))
-                putBoolean("limitEnabled", PolicyStore.isLimitEnabled(reactApplicationContext))
-                putString("limitMode", PolicyStore.getLimitMode(reactApplicationContext))
-                putInt("weeklyLimitMinutes", PolicyStore.getWeeklyLimit(reactApplicationContext))
-                putInt("usedWeekMinutes", PolicyStore.getUsedWeek(reactApplicationContext))
-                putBoolean("manualLockEnabled", PolicyStore.isManualLockEnabled(reactApplicationContext))
-               putBoolean("dailyLimitLockActive", PolicyStore.isDailyLimitLockActive(reactApplicationContext))
-               putBoolean("weeklyLimitLockActive", PolicyStore.isWeeklyLimitLockActive(reactApplicationContext))
-               putBoolean("scheduleLockActive", PolicyStore.isScheduleLockActive(reactApplicationContext))
-               putString("blockReason", PolicyStore.getBlockReason(reactApplicationContext))
+@ReactMethod
+fun getRemainingTime(promise: Promise) {
+    try {
+        val scheduleStatus =
+            PolicyStore.getScheduleStatusForChildHome(reactApplicationContext)
+
+        val result = Arguments.createMap().apply {
+            putInt(
+                "dailyLimitMinutes",
+                PolicyStore.getDailyLimit(reactApplicationContext)
+            )
+            putInt(
+                "usedTodayMinutes",
+                PolicyStore.getUsedToday(reactApplicationContext)
+            )
+            putInt(
+                "extraMinutes",
+                PolicyStore.getExtraMinutes(reactApplicationContext)
+            )
+            putInt(
+                "remainingMinutes",
+                PolicyStore.getRemainingMinutes(reactApplicationContext)
+            )
+
+            putBoolean(
+                "lockNow",
+                PolicyStore.isLockNow(reactApplicationContext)
+            )
+            putBoolean(
+                "shouldLock",
+                PolicyStore.shouldLockDevice(reactApplicationContext)
+            )
+            putBoolean(
+                "limitEnabled",
+                PolicyStore.isLimitEnabled(reactApplicationContext)
+            )
+
+            putString(
+                "limitMode",
+                PolicyStore.getLimitMode(reactApplicationContext)
+            )
+
+            putInt(
+                "weeklyLimitMinutes",
+                PolicyStore.getWeeklyLimit(reactApplicationContext)
+            )
+            putInt(
+                "usedWeekMinutes",
+                PolicyStore.getUsedWeek(reactApplicationContext)
+            )
+
+            putBoolean(
+                "manualLockEnabled",
+                PolicyStore.isManualLockEnabled(reactApplicationContext)
+            )
+            putBoolean(
+                "dailyLimitLockActive",
+                PolicyStore.isDailyLimitLockActive(reactApplicationContext)
+            )
+            putBoolean(
+                "weeklyLimitLockActive",
+                PolicyStore.isWeeklyLimitLockActive(reactApplicationContext)
+            )
+            putBoolean(
+                "scheduleLockActive",
+                PolicyStore.isScheduleLockCurrentlyActive(reactApplicationContext)
+            )
+
+            putString(
+                "blockReason",
+                PolicyStore.getBlockReason(reactApplicationContext)
+            )
+
+            putBoolean(
+                "isScheduleMode",
+                scheduleStatus.optBoolean("isScheduleMode", false)
+            )
+            putBoolean(
+                "isBlockedNow",
+                scheduleStatus.optBoolean("isBlockedNow", false)
+            )
+
+            if (scheduleStatus.isNull("nextBlockAt")) {
+                putNull("nextBlockAt")
+            } else {
+                putString("nextBlockAt", scheduleStatus.optString("nextBlockAt"))
             }
 
-            promise.resolve(result)
-        } catch (e: Exception) {
-            promise.reject("GET_REMAINING_TIME_ERROR", e.message, e)
+            if (scheduleStatus.isNull("blockEndsAt")) {
+                putNull("blockEndsAt")
+            } else {
+                putString("blockEndsAt", scheduleStatus.optString("blockEndsAt"))
+            }
         }
-    }
 
+        promise.resolve(result)
+    } catch (e: Exception) {
+        promise.reject("GET_REMAINING_TIME_ERROR", e.message, e)
+    }
+}
     @ReactMethod
     fun getAndroidPermissionStates(promise: Promise) {
         try {

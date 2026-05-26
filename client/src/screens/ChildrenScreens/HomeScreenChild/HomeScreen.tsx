@@ -233,6 +233,15 @@ export default function HomeScreen() {
     dailyLimitMinutes: 0,
     extraMinutes: 0,
     limitEnabled: false,
+    limitMode: "NONE",
+    manualLockEnabled: false,
+    dailyLimitLockActive: false,
+    weeklyLimitLockActive: false,
+    scheduleLockActive: false,
+    isScheduleMode: false,
+    isBlockedNow: false,
+    nextBlockAt: null as string | null,
+    blockEndsAt: null as string | null,
   });
 
   const activeChildId = useSelector(
@@ -359,6 +368,15 @@ export default function HomeScreen() {
         dailyLimitMinutes: Number(result.dailyLimitMinutes) || 0,
         extraMinutes: Number(result.extraMinutes) || 0,
         limitEnabled: Boolean(result.limitEnabled),
+        limitMode: String(result.limitMode || "NONE"),
+        manualLockEnabled: Boolean(result.manualLockEnabled),
+        dailyLimitLockActive: Boolean(result.dailyLimitLockActive),
+        weeklyLimitLockActive: Boolean(result.weeklyLimitLockActive),
+        scheduleLockActive: Boolean(result.scheduleLockActive),
+        isScheduleMode: Boolean(result.isScheduleMode),
+        isBlockedNow: Boolean(result.isBlockedNow),
+        nextBlockAt: result.nextBlockAt ?? null,
+        blockEndsAt: result.blockEndsAt ?? null,
       });
     } catch (e) {
       console.log("Error loading screen time", e);
@@ -474,6 +492,43 @@ export default function HomeScreen() {
 
   const isNoLimit = !screenTime.limitEnabled;
 
+  const isScheduleMode = screenTime.limitMode === "SCHEDULE";
+  const isWeeklyMode = screenTime.limitMode === "WEEKLY";
+
+  const isBlockedBySchedule =
+    isScheduleMode && screenTime.isBlockedNow === true;
+
+  const timerTitle = isScheduleMode
+    ? "Weekly schedule"
+    : isWeeklyMode
+      ? "Weekly time left"
+      : "Time left";
+
+  const timerMainText = !screenTime.limitEnabled
+    ? "No limit"
+    : isScheduleMode
+      ? isBlockedBySchedule
+        ? "Blocked now"
+        : "Open now"
+      : formatTime(screenTime.remainingMinutes);
+
+  const timerSubText = !screenTime.limitEnabled
+    ? "There is no active limit right now"
+    : isScheduleMode
+      ? isBlockedBySchedule
+        ? screenTime.blockEndsAt
+          ? `This is a scheduled break time. Ends at ${screenTime.blockEndsAt}`
+          : "This is a scheduled break time"
+        : screenTime.nextBlockAt
+          ? `Next block at ${screenTime.nextBlockAt}`
+          : "You can use the device right now"
+      : isWeeklyMode
+        ? "Weekly screen time limit is active"
+        : "Your time is almost over";
+
+  const shouldShowProgress =
+    screenTime.limitEnabled && !isScheduleMode;
+
   return (
     <View style={[styles.childHomeRoot, { backgroundColor: childPalette.screenBg }]}>
       <ScreenLayout>
@@ -567,7 +622,7 @@ export default function HomeScreen() {
                 </View>
 
                 <AppText weight="extraBold" style={styles.cardTitle}>
-                  Time left
+                  {timerTitle}
                 </AppText>
               </View>
             </View>
@@ -580,24 +635,20 @@ export default function HomeScreen() {
                 styles.timerValueCentered,
               ]}
             >
-              {!screenTime.limitEnabled
-                ? "No limit"
-                : formatTime(screenTime.remainingMinutes)}
+              {timerMainText}
             </AppText>
 
-            {isNoLimit ? null : (
+            {shouldShowProgress ? (
               <View style={styles.progressTrack}>
                 <View style={[styles.progressFill, { width: `${percent}%` }]} />
               </View>
-            )}
+            ) : null}
 
             <AppText
               weight="bold"
               style={[styles.timerSub, styles.timerSubCentered]}
             >
-              {!screenTime.limitEnabled
-                ? "There is no active limit right now"
-                : "Your time is almost over"}
+              {timerSubText}
             </AppText>
           </View>
 
