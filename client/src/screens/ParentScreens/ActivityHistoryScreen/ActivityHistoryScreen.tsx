@@ -39,6 +39,20 @@ function getActivityMeta(actionType: AuditActionType) {
         iconColor: "#16A34A",
       };
 
+    case "BLOCK_APPLICATION":
+      return {
+        icon: "application-cog-outline" as const,
+        iconBg: "#FEE2E2",
+        iconColor: "#DC2626",
+      };
+
+    case "UNBLOCK_APPLICATION":
+      return {
+        icon: "application-outline" as const,
+        iconBg: "#DCFCE7",
+        iconColor: "#16A34A",
+      };
+
     case "APPROVE_REQUEST":
       return {
         icon: "check-circle-outline" as const,
@@ -110,13 +124,16 @@ function getActivityMeta(actionType: AuditActionType) {
       };
   }
 }
-
 function getActivityTitle(actionType: AuditActionType) {
   switch (actionType) {
     case "LOCK_DEVICE":
       return "Device locked";
     case "UNLOCK_DEVICE":
       return "Device unlocked";
+    case "BLOCK_APPLICATION":
+      return "Application blocked";
+    case "UNBLOCK_APPLICATION":
+      return "Application unblocked";
     case "APPROVE_REQUEST":
       return "Request approved";
     case "REJECT_REQUEST":
@@ -142,31 +159,57 @@ function getActivityTitle(actionType: AuditActionType) {
 
 function getActivityDescription(
   actionType: AuditActionType,
-  childName: string
+  childName: string,
+  metadata?: Record<string, unknown>
 ) {
+  const appName =
+    typeof metadata?.appName === "string" && metadata.appName.trim() !== ""
+      ? metadata.appName
+      : typeof metadata?.packageName === "string" &&
+          metadata.packageName.trim() !== ""
+        ? metadata.packageName
+        : "an application";
+
   switch (actionType) {
     case "LOCK_DEVICE":
       return `${childName}'s device was locked`;
+
     case "UNLOCK_DEVICE":
       return `${childName}'s device was unlocked`;
+
+    case "BLOCK_APPLICATION":
+      return `${appName} was blocked for ${childName}`;
+
+    case "UNBLOCK_APPLICATION":
+      return `${appName} was unblocked for ${childName}`;
+
     case "APPROVE_REQUEST":
       return `Screen time extension approved for ${childName}`;
+
     case "REJECT_REQUEST":
       return `Screen time extension request rejected for ${childName}`;
+
     case "UPDATE_SCREEN_TIME":
       return `Screen time settings updated for ${childName}`;
+
     case "CHILD_ADDED":
       return `A new child profile was added for ${childName}`;
+
     case "CHILD_DELETED":
       return `${childName}'s profile was deleted`;
+
     case "CHILD_PROFILE_UPDATED":
       return `${childName}'s profile details were updated`;
+
     case "DEVICE_RENAMED":
       return `A device name was updated for ${childName}`;
+
     case "DEVICE_DELETED":
       return `A device was removed from ${childName}'s profile`;
+
     case "DEVICE_ADDED":
       return `A device was linked to ${childName}`;
+
     default:
       return `A new activity was recorded for ${childName}`;
   }
@@ -263,6 +306,7 @@ export default function ActivityHistoryScreen() {
   }, [dispatch]);
 
   useEffect(() => {
+      console.log("ACTIVITY SCREEN DISPATCH AUDIT:", selectedChildId);
     dispatch(fetchAuditLogsThunk(selectedChildId));
   }, [dispatch, selectedChildId]);
 
@@ -270,9 +314,14 @@ export default function ActivityHistoryScreen() {
     return auditLogs.filter((item) => {
       if (selectedFilter === "all") return true;
 
-      if (selectedFilter === "locks") {
-        return ["LOCK_DEVICE", "UNLOCK_DEVICE"].includes(item.actionType);
-      }
+if (selectedFilter === "locks") {
+  return [
+    "LOCK_DEVICE",
+    "UNLOCK_DEVICE",
+    "BLOCK_APPLICATION",
+    "UNBLOCK_APPLICATION",
+  ].includes(item.actionType);
+}
 
       if (selectedFilter === "extensions") {
         return ["APPROVE_REQUEST", "REJECT_REQUEST"].includes(item.actionType);
@@ -292,10 +341,14 @@ export default function ActivityHistoryScreen() {
 
   const todayCount = todayActivities.length;
 
-  const lockCount = todayActivities.filter((item) =>
-    ["LOCK_DEVICE", "UNLOCK_DEVICE"].includes(item.actionType)
-  ).length;
-
+const lockCount = todayActivities.filter((item) =>
+  [
+    "LOCK_DEVICE",
+    "UNLOCK_DEVICE",
+    "BLOCK_APPLICATION",
+    "UNBLOCK_APPLICATION",
+  ].includes(item.actionType)
+).length;
   const extensionCount = todayActivities.filter((item) =>
     ["APPROVE_REQUEST", "REJECT_REQUEST"].includes(item.actionType)
   ).length;
@@ -520,10 +573,11 @@ export default function ActivityHistoryScreen() {
                 const childName = child?.name ?? "Child";
                 const meta = getActivityMeta(item.actionType);
                 const title = getActivityTitle(item.actionType);
-                const description = getActivityDescription(
-                  item.actionType,
-                  childName
-                );
+const description = getActivityDescription(
+  item.actionType,
+  childName,
+  item.metadata
+);
                 const time = formatTime(item.createdAt);
                 const date = formatDate(item.createdAt);
                 return (

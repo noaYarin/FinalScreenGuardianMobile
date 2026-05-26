@@ -3,13 +3,28 @@ import { AuditActionType } from "../constants/auditActionType.js";
 
 const auditLogSchema = new mongoose.Schema(
   {
-    parentId: { type: mongoose.Schema.Types.ObjectId, ref: "Parent", required: true },
-    childId: { type: mongoose.Schema.Types.ObjectId, default: null  },
-    actionType: { 
-      type: String, 
+    parentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Parent",
       required: true,
-      enum: Object.values(AuditActionType) 
-    },    
+    },
+
+    childId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Child",
+      default: null,
+    },
+
+    actionType: {
+      type: String,
+      required: true,
+      enum: Object.values(AuditActionType),
+    },
+
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
   },
   { timestamps: true }
 );
