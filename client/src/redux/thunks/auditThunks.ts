@@ -29,6 +29,8 @@ function normalizeAuditLog(raw: unknown): AuditLog {
     "TASK_APPROVED",
     "TASK_REJECTED",
     "TASK_DELETED",
+    "BLOCK_APPLICATION",
+"UNBLOCK_APPLICATION",
   ];
 
   if (!allowedActionTypes.includes(actionType)) {

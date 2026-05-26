@@ -16,19 +16,24 @@ export type AuditActionType =
   | "TASK_APPROVED"
   | "TASK_REJECTED"
   | "TASK_DELETED"
-  ;
+  | "BLOCK_APPLICATION"
+  | "UNBLOCK_APPLICATION";
 
 export type AuditLog = {
   _id: string;
   parentId: string;
   childId: string | null;
   actionType: AuditActionType;
+  metadata?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 };
 
-export async function apiGetParentAuditLogs(childId?: string): Promise<AuditLog[]> {
+export async function apiGetParentAuditLogs(
+  childId?: string
+): Promise<AuditLog[]> {
   const query = childId ? `?childId=${encodeURIComponent(childId)}` : "";
+
   return api.get<AuditLog[]>(`/api/v1/audit/parent${query}`, {
     requireAuth: true,
     role: "PARENT",

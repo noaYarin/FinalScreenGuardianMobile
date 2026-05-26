@@ -916,9 +916,34 @@ export async function blockApplication(parentId, deviceId, packageName) {
     throw new AppError(CommonErrors.APP_NOT_FOUND);
   }
 
-  const updatedDevice = await updateApplicationBlockStatus(deviceId, packageName, true);
+  const updatedDevice = await updateApplicationBlockStatus(
+    deviceId,
+    packageName,
+    true
+  );
+
+  if (!updatedDevice) {
+    throw new AppError(CommonErrors.DEVICE_NOT_FOUND);
+  }
 
   pushPolicyUpdate(updatedDevice);
+console.log("BLOCK APPLICATION AUDIT POINT:", {
+  parentId,
+  childId: device.childId,
+  packageName,
+  appName: app.name,
+  actionType: AuditActionType.BLOCK_APPLICATION,
+});
+  await sendAuditLog({
+    parentId,
+    childId: device.childId,
+    actionType: AuditActionType.BLOCK_APPLICATION,
+    metadata: {
+      deviceId: String(deviceId),
+      packageName,
+      appName: app.name ?? packageName,
+    },
+  });
 
   const updatedApp = updatedDevice.applications?.find(
     (application) => application.packageName === packageName
@@ -926,7 +951,6 @@ export async function blockApplication(parentId, deviceId, packageName) {
 
   return updatedApp;
 }
-
 
 export async function unblockApplication(parentId, deviceId, packageName) {
   const device = await validateDeviceAccess({ deviceId, parentId });
@@ -939,9 +963,28 @@ export async function unblockApplication(parentId, deviceId, packageName) {
     throw new AppError(CommonErrors.APP_NOT_FOUND);
   }
 
-  const updatedDevice = await updateApplicationBlockStatus(deviceId, packageName, false);
+  const updatedDevice = await updateApplicationBlockStatus(
+    deviceId,
+    packageName,
+    false
+  );
+
+  if (!updatedDevice) {
+    throw new AppError(CommonErrors.DEVICE_NOT_FOUND);
+  }
 
   pushPolicyUpdate(updatedDevice);
+
+  await sendAuditLog({
+    parentId,
+    childId: device.childId,
+    actionType: AuditActionType.UNBLOCK_APPLICATION,
+    metadata: {
+      deviceId: String(deviceId),
+      packageName,
+      appName: app.name ?? packageName,
+    },
+  });
 
   const updatedApp = updatedDevice.applications?.find(
     (application) => application.packageName === packageName
@@ -949,8 +992,6 @@ export async function unblockApplication(parentId, deviceId, packageName) {
 
   return updatedApp;
 }
-
-
 
 
 

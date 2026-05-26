@@ -14,18 +14,23 @@ function ensureChildBelongsToParent(childList, childId) {
   return child;
 }
 
-export async function sendAuditLog({ parentId, childId = null, actionType }) {
+export async function sendAuditLog({
+  parentId,
+  childId = null,
+  actionType,
+  metadata = {},
+}) {
   try {
     await auditDal.createAuditLogDoc({
       parentId,
       childId,
       actionType,
+      metadata,
     });
   } catch (err) {
     console.error("Audit log failed:", err.message);
   }
 }
-
 export async function getParentAuditLogs({ parentId, childId }) {
   assertValidObjectId(parentId, CommonErrors.INVALID_PARENT_ID);
 
