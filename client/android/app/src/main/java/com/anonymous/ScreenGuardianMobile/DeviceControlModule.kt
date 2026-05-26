@@ -297,4 +297,13 @@ class DeviceControlModule(
             promise.reject("GET_INSTALLED_APPS_ERROR", e.message, e)
         }
     }
+    @ReactMethod
+fun getAppUsageStats(promise: Promise) {
+    try {
+        val result = UsageStatsHelper.getTodayUsageByApp(reactApplicationContext)
+        promise.resolve(result)
+    } catch (e: Exception) {
+        promise.reject("GET_APP_USAGE_STATS_ERROR", e.message, e)
+    }
+}
 }

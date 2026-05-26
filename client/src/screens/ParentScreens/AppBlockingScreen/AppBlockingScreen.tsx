@@ -25,6 +25,25 @@ import type { RootState } from "../../../redux/store/types";
 
 type FilterMode = "all" | "blocked" | "allowed";
 
+function formatMinutes(minutes: number) {
+  if (!minutes || minutes <= 0) {
+    return "0 min";
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+
+  if (hours <= 0) {
+    return `${mins} min`;
+  }
+
+  if (mins === 0) {
+    return `${hours}h`;
+  }
+
+  return `${hours}h ${mins}m`;
+}
+
 export default function AppBlockingScreen() {
   const dispatch = useDispatch<any>();
   const { width } = useWindowDimensions();
@@ -90,6 +109,7 @@ export default function AppBlockingScreen() {
         icon: app.icon,
         packageName: app.packageName,
         isBlocked: app.isBlocked === true,
+        usedTodayMinutes: Number(app.screenTime?.usedTodayMinutes ?? 0),
       }))
       .filter((app) => {
         const query = searchText.trim().toLowerCase();
@@ -114,6 +134,11 @@ export default function AppBlockingScreen() {
       .length ?? 0;
 
   const totalCount = selectedDevice?.applications?.length ?? 0;
+
+  const totalUsedTodayMinutes =
+    selectedDevice?.applications?.reduce((sum, app) => {
+      return sum + Number(app.screenTime?.usedTodayMinutes ?? 0);
+    }, 0) ?? 0;
 
   const isLoading = selectedChildId
     ? statusByChildId[selectedChildId] === "loading"
@@ -167,7 +192,8 @@ export default function AppBlockingScreen() {
               </AppText>
 
               <AppText weight="medium" style={styles.subtitle}>
-                Choose a child and device, then block or allow installed apps.
+                Choose a child and device, then view usage and block or allow
+                installed apps.
               </AppText>
             </View>
           </View>
@@ -197,6 +223,15 @@ export default function AppBlockingScreen() {
               </AppText>
               <AppText weight="medium" style={styles.summaryLabel}>
                 Blocked apps
+              </AppText>
+            </View>
+
+            <View style={styles.summaryCard}>
+              <AppText weight="extraBold" style={styles.summaryNumber}>
+                {formatMinutes(totalUsedTodayMinutes)}
+              </AppText>
+              <AppText weight="medium" style={styles.summaryLabel}>
+                Used today
               </AppText>
             </View>
           </View>
@@ -279,7 +314,8 @@ export default function AppBlockingScreen() {
                 No apps found yet
               </AppText>
               <AppText weight="medium" style={styles.stateText}>
-                Open the child app and sync installed apps from the child device.
+                Open the child app and sync installed apps from the child
+                device.
               </AppText>
             </View>
           ) : apps.length === 0 ? (
@@ -315,6 +351,18 @@ export default function AppBlockingScreen() {
                       <AppText weight="medium" style={styles.packageName}>
                         {app.packageName}
                       </AppText>
+
+                      <View style={styles.usageBadge}>
+                        <MaterialCommunityIcons
+                          name="clock-outline"
+                          size={14}
+                          color="#EA580C"
+                        />
+
+                        <AppText weight="bold" style={styles.usageText}>
+                          Used today: {formatMinutes(app.usedTodayMinutes)}
+                        </AppText>
+                      </View>
 
                       <View
                         style={[

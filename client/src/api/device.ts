@@ -17,13 +17,26 @@ export type Device = {
     lastUpdated: string;
   }; parentId: string;
   childId: string;
-  applications?: Array<{
-    name?: string;
-    appName?: string;
-    icon?: string;
-    packageName: string;
-    isBlocked?: boolean;
-  }>;
+applications?: Array<{
+  name?: string;
+  appName?: string;
+  icon?: string;
+  packageName: string;
+  isBlocked?: boolean;
+  lastUsedAt?: string | null;
+  screenTime?: {
+    isLimitEnabled?: boolean;
+    limitMode?: LimitMode;
+    dailyLimitMinutes?: number;
+    extraMinutesToday?: number;
+    weeklyLimitMinutes?: number;
+    usedTodayMinutes?: number;
+    usedWeekMinutes?: number;
+    lastDailyResetAt?: string | null;
+    lastWeeklyResetAt?: string | null;
+    weeklySchedule?: unknown[];
+  };
+}>;
   screenTime?: {
     isLimitEnabled?: boolean;
     limitMode?: LimitMode;
@@ -160,6 +173,19 @@ export type InstalledDeviceApp = {
   packageName: string;
   icon?: string;
   isBlocked?: boolean;
+  lastUsedAt?: string | null;
+  screenTime?: {
+    isLimitEnabled?: boolean;
+    limitMode?: LimitMode;
+    dailyLimitMinutes?: number;
+    extraMinutesToday?: number;
+    weeklyLimitMinutes?: number;
+    usedTodayMinutes?: number;
+    usedWeekMinutes?: number;
+    lastDailyResetAt?: string | null;
+    lastWeeklyResetAt?: string | null;
+    weeklySchedule?: unknown[];
+  };
 };
 
 export async function apiSyncInstalledApps(
@@ -225,4 +251,27 @@ export async function apiGetDevicePolicyForChild(
       role: "CHILD",
     }
   );
+}
+
+export type AppUsageStat = {
+  packageName: string;
+  name?: string;
+  usedTodayMinutes: number;
+  lastTimeUsed?: number;
+};
+
+export async function apiSyncAppUsage(
+  deviceId: string,
+  usageStats: AppUsageStat[]
+): Promise<InstalledDeviceApp[]> {
+  const data = await api.patch<InstalledDeviceApp[]>(
+    `${URL}/${encodeURIComponent(deviceId)}/apps/usage`,
+    { usageStats },
+    {
+      requireAuth: true,
+      role: "CHILD",
+    }
+  );
+
+  return data;
 }

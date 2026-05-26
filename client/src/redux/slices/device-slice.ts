@@ -1,16 +1,16 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { Device, LimitMode } from "../../api/device";
 import {
-  deleteDeviceForChild,
   fetchDevicesByChild,
+  deleteDeviceForChild,
+  updateDeviceName,
   updateDeviceScreenTimeThunk,
   setDeviceLockThunk,
   updateDeviceLocation,
-  updateDeviceName,
   syncInstalledAppsThunk,
-  setApplicationBlockedThunk
+  syncAppUsageThunk,
+  setApplicationBlockedThunk,
 } from "../thunks/deviceThunks";
-
 
 export type DeviceFetchStatus = "idle" | "loading" | "succeeded" | "failed";
 
@@ -263,7 +263,19 @@ const devicesSlice = createSlice({
           applications,
         };
       })
+      .addCase(syncAppUsageThunk.fulfilled, (state, action) => {
+        const { childId, deviceId, applications } = action.payload;
+        const list = state.byChildId[childId];
+        if (!list) return;
 
+        const idx = list.findIndex((d) => String(d._id) === String(deviceId));
+        if (idx < 0) return;
+
+        state.byChildId[childId][idx] = {
+          ...list[idx],
+          applications,
+        };
+      })
       .addCase(setApplicationBlockedThunk.fulfilled, (state, action) => {
         const { childId, deviceId, packageName, isBlocked } = action.payload;
         const list = state.byChildId[childId];
@@ -292,6 +304,6 @@ export {
   fetchDevicesByChild,
   deleteDeviceForChild,
   updateDeviceScreenTimeThunk,
+  syncAppUsageThunk,
 } from "../thunks/deviceThunks";
-
 export default devicesSlice.reducer;

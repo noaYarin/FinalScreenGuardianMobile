@@ -12,6 +12,8 @@ const COLORS = {
   redSoft: "#FEE2E2",
   green: "#16A34A",
   greenSoft: "#DCFCE7",
+  orange: "#EA580C",
+  orangeSoft: "#FFEDD5",
   shadow: "#000000",
 };
 
@@ -86,16 +88,18 @@ export const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: 16,
+    padding: 14,
+    minHeight: 82,
+    justifyContent: "center",
   },
 
   summaryNumber: {
-    fontSize: 26,
+    fontSize: 22,
     color: COLORS.text,
   },
 
   summaryLabel: {
-    fontSize: 13,
+    fontSize: 12,
     color: COLORS.muted,
     marginTop: 4,
   },
@@ -196,6 +200,23 @@ export const styles = StyleSheet.create({
   packageName: {
     fontSize: 12,
     color: COLORS.muted,
+  },
+
+  usageBadge: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginTop: 4,
+    backgroundColor: COLORS.orangeSoft,
+  },
+
+  usageText: {
+    fontSize: 12,
+    color: COLORS.orange,
   },
 
   statusBadge: {

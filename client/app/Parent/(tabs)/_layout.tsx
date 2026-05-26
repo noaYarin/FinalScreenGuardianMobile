@@ -1,24 +1,19 @@
 import React from "react";
-import { Text } from "react-native";
 import { Tabs, router, type Href } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { COLORS } from "@/constants/theme";
 import { useSelector } from "react-redux";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import type { RootState } from "@/src/redux/store/types";
 import {
   ParentMenuHeaderButton,
   ParentNotificationsHeaderButton,
 } from "@/src/components/Navigation/ParentHeaderButtons";
 
-const TAB_LABELS: Record<string, string> = {
-  home: "Home",
-  children: "Children",
-  limits: "Limits",
-  reports: "Reports",
-  settings: "Settings",
-};
-
 export default function ParentTabsLayout() {
+  const insets = useSafeAreaInsets();
+
   const unreadNotificationsCount = useSelector((state: RootState) => {
     const parentId = state.auth.parentId;
 
@@ -32,37 +27,46 @@ export default function ParentTabsLayout() {
 
   return (
     <Tabs
-      screenOptions={({ route }) => {
+      screenOptions={() => {
         return {
           sceneContainerStyle: {
             backgroundColor: COLORS.light.background,
           },
+
           headerStyle: {
             backgroundColor: COLORS.light.tint,
           },
+
           title: "",
           headerTitle: "",
+
           tabBarShowLabel: true,
+
           tabBarStyle: {
-            height: 72,
+            height: 72 + insets.bottom,
             paddingTop: 8,
-            paddingBottom: 10,
+            paddingBottom: Math.max(insets.bottom, 10),
             borderTopWidth: 1,
             borderTopColor: "#E7EFFA",
             backgroundColor: "#FFFFFF",
           },
+
           tabBarLabelStyle: {
             fontSize: 12,
           },
+
           tabBarActiveTintColor: COLORS.light.primary,
           tabBarInactiveTintColor: COLORS.light.tabIconDefault,
+
           headerTitleAlign: "center",
           headerShadowVisible: false,
+
           headerLeft: () => (
             <ParentMenuHeaderButton
               onPress={() => router.push("/Parent/homeMenu" as Href)}
             />
           ),
+
           headerRight: () => (
             <ParentNotificationsHeaderButton
               onPress={() => router.push("/Parent/systemAlerts" as Href)}
