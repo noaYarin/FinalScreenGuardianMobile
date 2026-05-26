@@ -69,55 +69,13 @@ const DAYS: Record<DayKey, { short: string; full: string }> = {
 };
 
 const INITIAL_WEEKLY_CONFIG: WeeklyDayConfig[] = [
-  {
-    key: "sun",
-    startMinutes: 21 * 60,
-    endMinutes: 23 * 60,
-    enabled: false,
-    mode: "CUSTOM",
-  },
-  {
-    key: "mon",
-    startMinutes: 21 * 60,
-    endMinutes: 23 * 60,
-    enabled: false,
-    mode: "CUSTOM",
-  },
-  {
-    key: "tue",
-    startMinutes: 21 * 60,
-    endMinutes: 23 * 60,
-    enabled: false,
-    mode: "CUSTOM",
-  },
-  {
-    key: "wed",
-    startMinutes: 21 * 60,
-    endMinutes: 23 * 60,
-    enabled: false,
-    mode: "CUSTOM",
-  },
-  {
-    key: "thu",
-    startMinutes: 21 * 60,
-    endMinutes: 23 * 60,
-    enabled: false,
-    mode: "CUSTOM",
-  },
-  {
-    key: "fri",
-    startMinutes: 21 * 60,
-    endMinutes: 23 * 60,
-    enabled: false,
-    mode: "CUSTOM",
-  },
-  {
-    key: "sat",
-    startMinutes: 21 * 60,
-    endMinutes: 23 * 60,
-    enabled: false,
-    mode: "CUSTOM",
-  },
+  { key: "sun", startMinutes: 21 * 60, endMinutes: 23 * 60, enabled: false, mode: "CUSTOM" },
+  { key: "mon", startMinutes: 21 * 60, endMinutes: 23 * 60, enabled: false, mode: "CUSTOM" },
+  { key: "tue", startMinutes: 21 * 60, endMinutes: 23 * 60, enabled: false, mode: "CUSTOM" },
+  { key: "wed", startMinutes: 21 * 60, endMinutes: 23 * 60, enabled: false, mode: "CUSTOM" },
+  { key: "thu", startMinutes: 21 * 60, endMinutes: 23 * 60, enabled: false, mode: "CUSTOM" },
+  { key: "fri", startMinutes: 21 * 60, endMinutes: 23 * 60, enabled: false, mode: "CUSTOM" },
+  { key: "sat", startMinutes: 21 * 60, endMinutes: 23 * 60, enabled: false, mode: "CUSTOM" },
 ];
 
 const DAY_KEY_TO_SERVER_DAY: Record<DayKey, number> = {
@@ -285,9 +243,25 @@ function calculateDurationHours(day: WeeklyDayConfig) {
 }
 
 function getModeLabel(day: WeeklyDayConfig) {
-  if (!day.enabled) return "No block today";
+  if (!day.enabled) return "";
   if (day.mode === "ALL_DAY") return "Blocked all day";
   return "Blocked hours";
+}
+
+function getScheduleColors(day: WeeklyDayConfig) {
+  if (day.mode === "ALL_DAY") {
+    return {
+      backgroundColor: "#FDECEC",
+      borderColor: "#F5B5B5",
+      textColor: "#B42318",
+    };
+  }
+
+  return {
+    backgroundColor: "#EAF2FF",
+    borderColor: "#BFD7FF",
+    textColor: "#1D4ED8",
+  };
 }
 
 export default function WeeklyScheduleScreen() {
@@ -314,9 +288,7 @@ export default function WeeklyScheduleScreen() {
 
   const [activeDayKey, setActiveDayKey] = useState<DayKey>("sun");
   const [showWeeklyOverview, setShowWeeklyOverview] = useState(false);
-
   const [isSaving, setIsSaving] = useState(false);
-
   const [isScheduleEnabled, setIsScheduleEnabled] = useState(false);
   const [initialIsScheduleEnabled, setInitialIsScheduleEnabled] =
     useState(false);
@@ -347,7 +319,6 @@ export default function WeeklyScheduleScreen() {
 
   useEffect(() => {
     if (!selectedChildId) return;
-
     dispatch(fetchDevicesByChild(selectedChildId));
   }, [dispatch, selectedChildId]);
 
@@ -363,7 +334,6 @@ export default function WeeklyScheduleScreen() {
 
   const currentChildDevices = useMemo(() => {
     if (!selectedChild?._id) return [];
-
     return byChildId[selectedChild._id] ?? [];
   }, [byChildId, selectedChild]);
 
@@ -481,11 +451,11 @@ export default function WeeklyScheduleScreen() {
 
   const selectedDeviceName = selectedDevice
     ? String(
-        (selectedDevice as any).deviceName ??
-          (selectedDevice as any).model ??
-          (selectedDevice as any).name ??
-          "Connected device"
-      )
+      (selectedDevice as any).deviceName ??
+      (selectedDevice as any).model ??
+      (selectedDevice as any).name ??
+      "Connected device"
+    )
     : "Connected device";
 
   const activeLimitMode =
@@ -555,10 +525,18 @@ export default function WeeklyScheduleScreen() {
       prev.map((day) =>
         day.key === dayKey
           ? {
-              ...day,
-              enabled: nextEnabled,
-              mode: nextEnabled ? day.mode : "CUSTOM",
-            }
+            ...day,
+            enabled: nextEnabled,
+            mode: nextEnabled ? day.mode : "CUSTOM",
+            startMinutes:
+              nextEnabled && (!day.startMinutes || day.mode === "ALL_DAY")
+                ? 21 * 60
+                : day.startMinutes,
+            endMinutes:
+              nextEnabled && (!day.endMinutes || day.mode === "ALL_DAY")
+                ? 23 * 60
+                : day.endMinutes,
+          }
           : day
       )
     );
@@ -703,11 +681,7 @@ export default function WeeklyScheduleScreen() {
                     <View style={styles.heroTopRow}>
                       <View style={styles.heroIconWrap}>
                         <MaterialCommunityIcons
-                          name={
-                            isScheduleEnabled
-                              ? "calendar-check"
-                              : "calendar-remove"
-                          }
+                          name="calendar-clock"
                           size={23}
                           color="#2F6BFF"
                         />
@@ -719,63 +693,9 @@ export default function WeeklyScheduleScreen() {
                         </AppText>
 
                         <AppText weight="medium" style={styles.heroSubtitle}>
-                          {`Set weekly blocked hours for ${childName} on ${selectedDeviceName}`}
+                          {`Choose the days and hours when ${selectedDeviceName} should be blocked for ${childName}.`}
                         </AppText>
                       </View>
-                    </View>
-
-                    <View style={styles.scheduleToggleCard}>
-                      <View style={styles.scheduleToggleTextWrap}>
-                        <AppText
-                          weight="extraBold"
-                          style={styles.scheduleToggleTitle}
-                        >
-                          Enable weekly schedule
-                        </AppText>
-
-                        <AppText
-                          weight="medium"
-                          style={styles.scheduleToggleSubtitle}
-                        >
-                          Turning this on or off is saved only after tapping
-                          Save.
-                        </AppText>
-                      </View>
-
-                      <Switch
-                        value={isScheduleEnabled}
-                        disabled={isOtherAutomaticLimitActive || isSaving}
-                        onValueChange={setIsScheduleEnabled}
-                        trackColor={{ false: "#CBD5E1", true: "#BFDBFE" }}
-                        thumbColor={isScheduleEnabled ? "#2F6BFF" : "#F8FAFC"}
-                      />
-                    </View>
-
-                    {hasUnsavedChanges ? (
-                      <AppText weight="medium" style={styles.unsavedInlineText}>
-                        Unsaved changes
-                      </AppText>
-                    ) : null}
-
-                    <View
-                      style={[
-                        styles.scheduleStatusBadge,
-                        isScheduleEnabled
-                          ? styles.scheduleStatusBadgeActive
-                          : styles.scheduleStatusBadgeInactive,
-                      ]}
-                    >
-                      <AppText
-                        weight="bold"
-                        style={[
-                          styles.scheduleStatusText,
-                          isScheduleEnabled
-                            ? styles.scheduleStatusTextActive
-                            : styles.scheduleStatusTextInactive,
-                        ]}
-                      >
-                        {isScheduleEnabled ? "Schedule on" : "Schedule off"}
-                      </AppText>
                     </View>
 
                     <View
@@ -829,7 +749,6 @@ export default function WeeklyScheduleScreen() {
                         {weeklyConfig.map((day) => {
                           const isActive = activeDayKey === day.key;
                           const dayName = DAYS[day.key].full;
-                          const isOff = !day.enabled;
 
                           return (
                             <Pressable
@@ -841,9 +760,14 @@ export default function WeeklyScheduleScreen() {
                               accessibilityState={{ selected: isActive }}
                               style={({ pressed }) => [
                                 styles.dayRailChip,
-                                isOff
-                                  ? styles.dayRailChipInactive
-                                  : styles.dayRailChipActive,
+                                {
+                                  backgroundColor: day.enabled
+                                    ? "#EAF2FF"
+                                    : "#FFFFFF",
+                                  borderColor: day.enabled
+                                    ? "#BFD7FF"
+                                    : "#E2E8F0",
+                                },
                                 isActive && styles.dayRailChipFocused,
                                 pressed && styles.dayRailChipPressed,
                               ]}
@@ -852,9 +776,9 @@ export default function WeeklyScheduleScreen() {
                                 weight="extraBold"
                                 style={[
                                   styles.dayRailChipLetter,
-                                  isOff
-                                    ? styles.dayRailChipLetterInactive
-                                    : styles.dayRailChipLetterActive,
+                                  {
+                                    color: day.enabled ? "#1D4ED8" : "#64748B",
+                                  },
                                   isActive && styles.dayRailChipFocusedText,
                                 ]}
                               >
@@ -865,9 +789,9 @@ export default function WeeklyScheduleScreen() {
                                 weight="medium"
                                 style={[
                                   styles.dayRailChipLabel,
-                                  isOff
-                                    ? styles.dayRailChipLabelInactive
-                                    : styles.dayRailChipLabelActive,
+                                  {
+                                    color: day.enabled ? "#1D4ED8" : "#64748B",
+                                  },
                                   isActive && styles.dayRailChipFocusedText,
                                 ]}
                               >
@@ -907,17 +831,22 @@ export default function WeeklyScheduleScreen() {
                     {showWeeklyOverview ? (
                       <View style={styles.weeklyOverviewSimpleCard}>
                         {weeklyConfig.map((day) => {
-                          const isOff = !day.enabled;
                           const isAllDay =
                             day.enabled && day.mode === "ALL_DAY";
 
-                          const summaryText = isOff
-                            ? "No block today"
+                          const summaryText = !day.enabled
+                            ? "No block"
                             : isAllDay
                               ? "Blocked all day"
-                              : `${formatTime(
-                                  day.startMinutes
-                                )} - ${formatTime(day.endMinutes)}`;
+                              : `${formatTime(day.startMinutes)} - ${formatTime(
+                                day.endMinutes
+                              )}`;
+
+                          const summaryColor = !day.enabled
+                            ? "#64748B"
+                            : isAllDay
+                              ? "#B42318"
+                              : "#1D4ED8";
 
                           return (
                             <View
@@ -935,10 +864,7 @@ export default function WeeklyScheduleScreen() {
                                 weight="medium"
                                 style={[
                                   styles.weeklyOverviewSimpleTime,
-                                  isOff &&
-                                    styles.weeklyOverviewSimpleBlocked,
-                                  isAllDay &&
-                                    styles.weeklyOverviewSimpleBlocked,
+                                  { color: summaryColor },
                                 ]}
                               >
                                 {summaryText}
@@ -956,10 +882,10 @@ export default function WeeklyScheduleScreen() {
                     {weeklyConfig.map((day) => {
                       const dayName = DAYS[day.key].full;
                       const totalHours = calculateDurationHours(day);
-                      const isOff = !day.enabled;
                       const isAllDay = day.enabled && day.mode === "ALL_DAY";
                       const isCustom = day.enabled && day.mode === "CUSTOM";
                       const isExpanded = activeDayKey === day.key;
+                      const colors = getScheduleColors(day);
 
                       return (
                         <View
@@ -967,7 +893,6 @@ export default function WeeklyScheduleScreen() {
                           style={[
                             styles.dayCard,
                             isExpanded && styles.dayCardActive,
-                            isOff && styles.dayCardDisabled,
                           ]}
                         >
                           <Pressable
@@ -977,12 +902,7 @@ export default function WeeklyScheduleScreen() {
                             style={styles.dayCardHeader}
                           >
                             <View style={styles.dayIdentityRow}>
-                              <View
-                                style={[
-                                  styles.dayBadge,
-                                  isOff && styles.dayBadgeDisabled,
-                                ]}
-                              >
+                              <View style={styles.dayBadge}>
                                 <AppText
                                   weight="extraBold"
                                   style={styles.dayBadgeText}
@@ -999,62 +919,23 @@ export default function WeeklyScheduleScreen() {
                                   {dayName}
                                 </AppText>
 
-                                <AppText
-                                  weight="medium"
-                                  style={[
-                                    styles.dayStatus,
-                                    (isOff || isAllDay) &&
-                                      styles.dayStatusBlocked,
-                                  ]}
-                                >
-                                  {getModeLabel(day)}
-                                </AppText>
+                                {day.enabled ? (
+                                  <AppText
+                                    weight="medium"
+                                    style={[
+                                      styles.dayStatus,
+                                      { color: colors.textColor },
+                                    ]}
+                                  >
+                                    {getModeLabel(day)}
+                                  </AppText>
+                                ) : null}
                               </View>
                             </View>
 
                             <View style={styles.dayHeaderRight}>
-                              <Switch
-                                value={day.enabled}
-                                disabled={isOtherAutomaticLimitActive || isSaving}
-                                onValueChange={(value) =>
-                                  toggleDayEnabled(day.key, value)
-                                }
-                                trackColor={{
-                                  false: "#CBD5E1",
-                                  true: "#BFDBFE",
-                                }}
-                                thumbColor={day.enabled ? "#2F6BFF" : "#F8FAFC"}
-                              />
-
-                              <View
-                                style={[
-                                  styles.scheduleModeStatusPill,
-                                  isOff
-                                    ? styles.scheduleModeStatusPillBlocked
-                                    : isAllDay
-                                      ? styles.scheduleModeStatusPillAllDay
-                                      : styles.scheduleModeStatusPillAllowed,
-                                ]}
-                              >
-                                <AppText
-                                  weight="bold"
-                                  style={[
-                                    styles.scheduleModeStatusText,
-                                    isOff
-                                      ? styles.scheduleModeStatusTextBlocked
-                                      : isAllDay
-                                        ? styles.scheduleModeStatusTextAllDay
-                                        : styles.scheduleModeStatusTextAllowed,
-                                  ]}
-                                >
-                                  {getModeLabel(day)}
-                                </AppText>
-                              </View>
-
                               <MaterialCommunityIcons
-                                name={
-                                  isExpanded ? "chevron-up" : "chevron-down"
-                                }
+                                name={isExpanded ? "chevron-up" : "chevron-down"}
                                 size={21}
                                 color="#7D889C"
                               />
@@ -1063,280 +944,347 @@ export default function WeeklyScheduleScreen() {
 
                           {isExpanded ? (
                             <View style={styles.dayExpandedContent}>
-                              <View style={styles.scheduleModeButtonsRow}>
-                                <Pressable
-                                  accessibilityRole="button"
-                                  accessibilityLabel={`Set blocked hours for ${dayName}`}
-                                  disabled={
-                                    isOtherAutomaticLimitActive ||
-                                    isSaving ||
-                                    !day.enabled
-                                  }
-                                  onPress={() =>
-                                    setDayMode(day.key, "CUSTOM")
-                                  }
-                                  style={({ pressed }) => [
-                                    styles.scheduleModeButton,
-                                    day.enabled &&
-                                      day.mode === "CUSTOM" &&
-                                      styles.scheduleModeButtonActive,
-                                    pressed && styles.scheduleModeButtonPressed,
-                                    (isOtherAutomaticLimitActive ||
-                                      isSaving ||
-                                      !day.enabled) && {
-                                      opacity: 0.45,
-                                    },
-                                  ]}
-                                >
-                                  <AppText
-                                    weight="bold"
-                                    style={[
-                                      styles.scheduleModeButtonText,
-                                      day.enabled &&
-                                        day.mode === "CUSTOM" &&
-                                        styles.scheduleModeButtonTextActive,
-                                    ]}
-                                  >
-                                    Blocked hours
-                                  </AppText>
-                                </Pressable>
-
-                                <Pressable
-                                  accessibilityRole="button"
-                                  accessibilityLabel={`Block all day on ${dayName}`}
-                                  disabled={
-                                    isOtherAutomaticLimitActive ||
-                                    isSaving ||
-                                    !day.enabled
-                                  }
-                                  onPress={() =>
-                                    setDayMode(day.key, "ALL_DAY")
-                                  }
-                                  style={({ pressed }) => [
-                                    styles.scheduleModeButton,
-                                    day.enabled &&
-                                      day.mode === "ALL_DAY" &&
-                                      styles.scheduleModeButtonDangerActive,
-                                    pressed && styles.scheduleModeButtonPressed,
-                                    (isOtherAutomaticLimitActive ||
-                                      isSaving ||
-                                      !day.enabled) && {
-                                      opacity: 0.45,
-                                    },
-                                  ]}
-                                >
-                                  <AppText
-                                    weight="bold"
-                                    style={[
-                                      styles.scheduleModeButtonText,
-                                      day.enabled &&
-                                        day.mode === "ALL_DAY" &&
-                                        styles.scheduleModeButtonDangerTextActive,
-                                    ]}
-                                  >
-                                    Blocked all day
-                                  </AppText>
-                                </Pressable>
-                              </View>
-
-                              {isOff ? (
-                                <View style={styles.blockedDayMessage}>
-                                  <AppText
-                                    weight="bold"
-                                    style={styles.blockedDayText}
-                                  >
-                                    No schedule block is active for this day.
-                                  </AppText>
-                                </View>
-                              ) : null}
-
-                              {day.enabled && day.mode === "CUSTOM" ? (
+                              <View
+                                style={{
+                                  borderRadius: 18,
+                                  borderWidth: 1,
+                                  borderColor: "#E2E8F0",
+                                  backgroundColor: "#F8FAFC",
+                                  padding: 14,
+                                  marginBottom: 12,
+                                }}
+                              >
                                 <View
-                                  style={[
-                                    styles.timeGrid,
-                                    isTablet && styles.timeGridTablet,
-                                  ]}
+                                  style={{
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    gap: 12,
+                                  }}
                                 >
-                                  <View style={styles.timeCard}>
-                                    <View style={styles.timeLabelRow}>
-                                      <MaterialCommunityIcons
-                                        name="clock-outline"
-                                        size={17}
-                                        color="#7D889C"
-                                      />
-
-                                      <AppText
-                                        weight="bold"
-                                        style={styles.timeLabel}
-                                      >
-                                        Block starts
-                                      </AppText>
-                                    </View>
-
-                                    <View style={styles.timeValueBox}>
-                                      <Pressable
-                                        accessibilityRole="button"
-                                        accessibilityLabel={`Decrease block start time for ${dayName}`}
-                                        disabled={
-                                          isOtherAutomaticLimitActive ||
-                                          isSaving ||
-                                          !isCustom
-                                        }
-                                        onPress={() =>
-                                          updateTime(
-                                            day.key,
-                                            "startMinutes",
-                                            "decrease"
-                                          )
-                                        }
-                                        style={({ pressed }) => [
-                                          styles.timeAdjustButton,
-                                          pressed &&
-                                            styles.timeAdjustButtonPressed,
-                                          !isCustom && { opacity: 0.35 },
-                                        ]}
-                                      >
-                                        <MaterialCommunityIcons
-                                          name="minus"
-                                          size={18}
-                                          color="#2F6BFF"
-                                        />
-                                      </Pressable>
-
-                                      <AppText
-                                        weight="extraBold"
-                                        style={styles.timeValue}
-                                      >
-                                        {formatTime(day.startMinutes)}
-                                      </AppText>
-
-                                      <Pressable
-                                        accessibilityRole="button"
-                                        accessibilityLabel={`Increase block start time for ${dayName}`}
-                                        disabled={
-                                          isOtherAutomaticLimitActive ||
-                                          isSaving ||
-                                          !isCustom
-                                        }
-                                        onPress={() =>
-                                          updateTime(
-                                            day.key,
-                                            "startMinutes",
-                                            "increase"
-                                          )
-                                        }
-                                        style={({ pressed }) => [
-                                          styles.timeAdjustButton,
-                                          pressed &&
-                                            styles.timeAdjustButtonPressed,
-                                          !isCustom && { opacity: 0.35 },
-                                        ]}
-                                      >
-                                        <MaterialCommunityIcons
-                                          name="plus"
-                                          size={18}
-                                          color="#2F6BFF"
-                                        />
-                                      </Pressable>
-                                    </View>
+                                  <View style={{ flex: 1 }}>
+                                    <AppText
+                                      weight="extraBold"
+                                      style={{
+                                        color: "#0F172A",
+                                        fontSize: 14,
+                                      }}
+                                    >
+                                      Block this day
+                                    </AppText>
                                   </View>
 
-                                  <View style={styles.timeCard}>
-                                    <View style={styles.timeLabelRow}>
-                                      <MaterialCommunityIcons
-                                        name="clock-end"
-                                        size={17}
-                                        color="#7D889C"
-                                      />
-
-                                      <AppText
-                                        weight="bold"
-                                        style={styles.timeLabel}
-                                      >
-                                        Block ends
-                                      </AppText>
-                                    </View>
-
-                                    <View style={styles.timeValueBox}>
-                                      <Pressable
-                                        accessibilityRole="button"
-                                        accessibilityLabel={`Decrease block end time for ${dayName}`}
-                                        disabled={
-                                          isOtherAutomaticLimitActive ||
-                                          isSaving ||
-                                          !isCustom
-                                        }
-                                        onPress={() =>
-                                          updateTime(
-                                            day.key,
-                                            "endMinutes",
-                                            "decrease"
-                                          )
-                                        }
-                                        style={({ pressed }) => [
-                                          styles.timeAdjustButton,
-                                          pressed &&
-                                            styles.timeAdjustButtonPressed,
-                                          !isCustom && { opacity: 0.35 },
-                                        ]}
-                                      >
-                                        <MaterialCommunityIcons
-                                          name="minus"
-                                          size={18}
-                                          color="#2F6BFF"
-                                        />
-                                      </Pressable>
-
-                                      <AppText
-                                        weight="extraBold"
-                                        style={styles.timeValue}
-                                      >
-                                        {formatTime(day.endMinutes)}
-                                      </AppText>
-
-                                      <Pressable
-                                        accessibilityRole="button"
-                                        accessibilityLabel={`Increase block end time for ${dayName}`}
-                                        disabled={
-                                          isOtherAutomaticLimitActive ||
-                                          isSaving ||
-                                          !isCustom
-                                        }
-                                        onPress={() =>
-                                          updateTime(
-                                            day.key,
-                                            "endMinutes",
-                                            "increase"
-                                          )
-                                        }
-                                        style={({ pressed }) => [
-                                          styles.timeAdjustButton,
-                                          pressed &&
-                                            styles.timeAdjustButtonPressed,
-                                          !isCustom && { opacity: 0.35 },
-                                        ]}
-                                      >
-                                        <MaterialCommunityIcons
-                                          name="plus"
-                                          size={18}
-                                          color="#2F6BFF"
-                                        />
-                                      </Pressable>
-                                    </View>
-                                  </View>
-                                </View>
-                              ) : null}
-
-                              <View style={styles.dayFooter}>
-                                <View style={styles.totalHoursPill}>
-                                  <AppText
-                                    weight="bold"
-                                    style={styles.totalHoursText}
-                                  >
-                                    {`Blocked time: ${totalHours} hours`}
-                                  </AppText>
+                                  <Switch
+                                    value={day.enabled}
+                                    disabled={
+                                      isOtherAutomaticLimitActive || isSaving
+                                    }
+                                    onValueChange={(value) =>
+                                      toggleDayEnabled(day.key, value)
+                                    }
+                                    trackColor={{
+                                      false: "#CBD5E1",
+                                      true: "#BFDBFE",
+                                    }}
+                                    thumbColor={
+                                      day.enabled ? "#2F6BFF" : "#F8FAFC"
+                                    }
+                                  />
                                 </View>
                               </View>
+
+                              {day.enabled ? (
+                                <>
+                                  <View style={styles.scheduleModeButtonsRow}>
+                                    <Pressable
+                                      accessibilityRole="button"
+                                      accessibilityLabel={`Set blocked hours for ${dayName}`}
+                                      disabled={
+                                        isOtherAutomaticLimitActive || isSaving
+                                      }
+                                      onPress={() =>
+                                        setDayMode(day.key, "CUSTOM")
+                                      }
+                                      style={({ pressed }) => [
+                                        styles.scheduleModeButton,
+                                        day.mode === "CUSTOM" &&
+                                        styles.scheduleModeButtonActive,
+                                        pressed &&
+                                        styles.scheduleModeButtonPressed,
+                                        (isOtherAutomaticLimitActive ||
+                                          isSaving) && {
+                                          opacity: 0.45,
+                                        },
+                                      ]}
+                                    >
+                                      <AppText
+                                        weight="bold"
+                                        style={[
+                                          styles.scheduleModeButtonText,
+                                          day.mode === "CUSTOM" &&
+                                          styles.scheduleModeButtonTextActive,
+                                        ]}
+                                      >
+                                        Blocked hours
+                                      </AppText>
+                                    </Pressable>
+
+                                    <Pressable
+                                      accessibilityRole="button"
+                                      accessibilityLabel={`Block all day on ${dayName}`}
+                                      disabled={
+                                        isOtherAutomaticLimitActive || isSaving
+                                      }
+                                      onPress={() =>
+                                        setDayMode(day.key, "ALL_DAY")
+                                      }
+                                      style={({ pressed }) => [
+                                        styles.scheduleModeButton,
+                                        day.mode === "ALL_DAY" &&
+                                        styles.scheduleModeButtonDangerActive,
+                                        pressed &&
+                                        styles.scheduleModeButtonPressed,
+                                        (isOtherAutomaticLimitActive ||
+                                          isSaving) && {
+                                          opacity: 0.45,
+                                        },
+                                      ]}
+                                    >
+                                      <AppText
+                                        weight="bold"
+                                        style={[
+                                          styles.scheduleModeButtonText,
+                                          day.mode === "ALL_DAY" &&
+                                          styles.scheduleModeButtonDangerTextActive,
+                                        ]}
+                                      >
+                                        Blocked all day
+                                      </AppText>
+                                    </Pressable>
+                                  </View>
+
+                                  {isCustom ? (
+                                    <View
+                                      style={[
+                                        styles.timeGrid,
+                                        isTablet && styles.timeGridTablet,
+                                      ]}
+                                    >
+                                      <View style={styles.timeCard}>
+                                        <View style={styles.timeLabelRow}>
+                                          <MaterialCommunityIcons
+                                            name="clock-outline"
+                                            size={17}
+                                            color="#7D889C"
+                                          />
+
+                                          <AppText
+                                            weight="bold"
+                                            style={styles.timeLabel}
+                                          >
+                                            Block starts
+                                          </AppText>
+                                        </View>
+
+                                        <View style={styles.timeValueBox}>
+                                          <Pressable
+                                            accessibilityRole="button"
+                                            accessibilityLabel={`Decrease block start time for ${dayName}`}
+                                            disabled={
+                                              isOtherAutomaticLimitActive ||
+                                              isSaving ||
+                                              !isCustom
+                                            }
+                                            onPress={() =>
+                                              updateTime(
+                                                day.key,
+                                                "startMinutes",
+                                                "decrease"
+                                              )
+                                            }
+                                            style={({ pressed }) => [
+                                              styles.timeAdjustButton,
+                                              pressed &&
+                                              styles.timeAdjustButtonPressed,
+                                              !isCustom && { opacity: 0.35 },
+                                            ]}
+                                          >
+                                            <MaterialCommunityIcons
+                                              name="minus"
+                                              size={18}
+                                              color="#2F6BFF"
+                                            />
+                                          </Pressable>
+
+                                          <AppText
+                                            weight="extraBold"
+                                            style={styles.timeValue}
+                                          >
+                                            {formatTime(day.startMinutes)}
+                                          </AppText>
+
+                                          <Pressable
+                                            accessibilityRole="button"
+                                            accessibilityLabel={`Increase block start time for ${dayName}`}
+                                            disabled={
+                                              isOtherAutomaticLimitActive ||
+                                              isSaving ||
+                                              !isCustom
+                                            }
+                                            onPress={() =>
+                                              updateTime(
+                                                day.key,
+                                                "startMinutes",
+                                                "increase"
+                                              )
+                                            }
+                                            style={({ pressed }) => [
+                                              styles.timeAdjustButton,
+                                              pressed &&
+                                              styles.timeAdjustButtonPressed,
+                                              !isCustom && { opacity: 0.35 },
+                                            ]}
+                                          >
+                                            <MaterialCommunityIcons
+                                              name="plus"
+                                              size={18}
+                                              color="#2F6BFF"
+                                            />
+                                          </Pressable>
+                                        </View>
+                                      </View>
+
+                                      <View style={styles.timeCard}>
+                                        <View style={styles.timeLabelRow}>
+                                          <MaterialCommunityIcons
+                                            name="clock-end"
+                                            size={17}
+                                            color="#7D889C"
+                                          />
+
+                                          <AppText
+                                            weight="bold"
+                                            style={styles.timeLabel}
+                                          >
+                                            Block ends
+                                          </AppText>
+                                        </View>
+
+                                        <View style={styles.timeValueBox}>
+                                          <Pressable
+                                            accessibilityRole="button"
+                                            accessibilityLabel={`Decrease block end time for ${dayName}`}
+                                            disabled={
+                                              isOtherAutomaticLimitActive ||
+                                              isSaving ||
+                                              !isCustom
+                                            }
+                                            onPress={() =>
+                                              updateTime(
+                                                day.key,
+                                                "endMinutes",
+                                                "decrease"
+                                              )
+                                            }
+                                            style={({ pressed }) => [
+                                              styles.timeAdjustButton,
+                                              pressed &&
+                                              styles.timeAdjustButtonPressed,
+                                              !isCustom && { opacity: 0.35 },
+                                            ]}
+                                          >
+                                            <MaterialCommunityIcons
+                                              name="minus"
+                                              size={18}
+                                              color="#2F6BFF"
+                                            />
+                                          </Pressable>
+
+                                          <AppText
+                                            weight="extraBold"
+                                            style={styles.timeValue}
+                                          >
+                                            {formatTime(day.endMinutes)}
+                                          </AppText>
+
+                                          <Pressable
+                                            accessibilityRole="button"
+                                            accessibilityLabel={`Increase block end time for ${dayName}`}
+                                            disabled={
+                                              isOtherAutomaticLimitActive ||
+                                              isSaving ||
+                                              !isCustom
+                                            }
+                                            onPress={() =>
+                                              updateTime(
+                                                day.key,
+                                                "endMinutes",
+                                                "increase"
+                                              )
+                                            }
+                                            style={({ pressed }) => [
+                                              styles.timeAdjustButton,
+                                              pressed &&
+                                              styles.timeAdjustButtonPressed,
+                                              !isCustom && { opacity: 0.35 },
+                                            ]}
+                                          >
+                                            <MaterialCommunityIcons
+                                              name="plus"
+                                              size={18}
+                                              color="#2F6BFF"
+                                            />
+                                          </Pressable>
+                                        </View>
+                                      </View>
+                                    </View>
+                                  ) : null}
+                                  {isAllDay ? (
+                                    <View
+                                      style={[
+                                        styles.blockedDayMessage,
+                                        {
+                                          backgroundColor: "#FDECEC",
+                                          borderColor: "#F5B5B5",
+                                        },
+                                      ]}
+                                    >
+                                      <AppText
+                                        weight="bold"
+                                        style={[
+                                          styles.blockedDayText,
+                                          { color: "#B42318" },
+                                        ]}
+                                      >
+                                        Blocked all day
+                                      </AppText>
+
+                                      <AppText
+                                        weight="medium"
+                                        style={[
+                                          styles.blockedDayText,
+                                          {
+                                            color: "#B42318",
+                                            marginTop: 4,
+                                          },
+                                        ]}
+                                      >
+                                        {`From ${formatTime(MIN_MINUTES)} to ${formatTime(END_OF_DAY_MINUTES)}`}
+                                      </AppText>
+                                    </View>
+                                  ) : null}
+                                  <View style={styles.dayFooter}>
+                                    <View style={styles.totalHoursPill}>
+                                      <AppText
+                                        weight="bold"
+                                        style={styles.totalHoursText}
+                                      >
+                                        {`Blocked time: ${totalHours} hours`}
+                                      </AppText>
+                                    </View>
+                                  </View>
+                                </>
+                              ) : null}
                             </View>
                           ) : null}
                         </View>
@@ -1350,6 +1298,86 @@ export default function WeeklyScheduleScreen() {
         </ScrollView>
 
         <View style={styles.footer}>
+          {selectedDevice ? (
+            <View
+              style={{
+                borderRadius: 18,
+                borderWidth: 1,
+                borderColor: isScheduleEnabled ? "#BFD7FF" : "#CBD5E1",
+                backgroundColor: isScheduleEnabled ? "#F8FBFF" : "#F8FAFC",
+                padding: 14,
+                marginBottom: 10,
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <View
+                    style={{
+                      alignSelf: "flex-start",
+                      borderRadius: 999,
+                      paddingHorizontal: 10,
+                      paddingVertical: 4,
+                      backgroundColor: isScheduleEnabled ? "#EAF2FF" : "#E2E8F0",
+                      borderWidth: 1,
+                      borderColor: isScheduleEnabled ? "#BFD7FF" : "#CBD5E1",
+                      marginBottom: 7,
+                    }}
+                  >
+                    <AppText
+                      weight="extraBold"
+                      style={{
+                        color: isScheduleEnabled ? "#1D4ED8" : "#475569",
+                        fontSize: 12,
+                      }}
+                    >
+                      {isScheduleEnabled ? "ON" : "OFF"}
+                    </AppText>
+                  </View>
+
+                  <AppText
+                    weight="extraBold"
+                    style={{
+                      color: isScheduleEnabled ? "#1D4ED8" : "#0F172A",
+                      fontSize: 15,
+                    }}
+                  >
+                    {isScheduleEnabled
+                      ? "Weekly schedule is on"
+                      : "Weekly schedule is off"}
+                  </AppText>
+
+                  <AppText
+                    weight="medium"
+                    style={{
+                      color: "#64748B",
+                      fontSize: 12,
+                      marginTop: 3,
+                    }}
+                  >
+                    {isScheduleEnabled
+                      ? "The blocked days above will be active after saving."
+                      : "Turn on to activate the blocked days above."}
+                  </AppText>
+                </View>
+
+                <Switch
+                  value={isScheduleEnabled}
+                  disabled={isOtherAutomaticLimitActive || isSaving}
+                  onValueChange={setIsScheduleEnabled}
+                  trackColor={{ false: "#CBD5E1", true: "#BFDBFE" }}
+                  thumbColor={isScheduleEnabled ? "#2F6BFF" : "#F8FAFC"}
+                />
+              </View>
+            </View>
+          ) : null}
+
           {hasUnsavedChanges ? (
             <View style={styles.footerUnsavedRow}>
               <AppText weight="bold" style={styles.footerUnsavedText}>
@@ -1374,7 +1402,7 @@ export default function WeeklyScheduleScreen() {
                 isOtherAutomaticLimitActive ||
                 isSaving ||
                 !hasUnsavedChanges) &&
-                styles.primaryActionButtonDisabled,
+              styles.primaryActionButtonDisabled,
             ]}
             onPress={saveSchedule}
           >
