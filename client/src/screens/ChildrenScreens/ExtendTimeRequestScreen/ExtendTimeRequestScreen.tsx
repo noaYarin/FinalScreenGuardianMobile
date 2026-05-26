@@ -123,13 +123,28 @@ export default function ExtendTimeRequestScreen() {
       await DeviceControl.syncPolicyNow();
       const nativeState = await DeviceControl.getRemainingTime();
 
-      const hasActiveLimit =
-        !!nativeState?.limitEnabled &&
+      const limitMode = String(nativeState?.limitMode ?? "NONE");
+      const blockReason = String(nativeState?.blockReason ?? "");
+
+      const isDailyLimitActive =
+        nativeState?.limitEnabled === true &&
+        limitMode === "DAILY" &&
         Number(nativeState?.dailyLimitMinutes ?? 0) > 0;
 
-      if (!hasActiveLimit) {
+      const isDailyLimitReached =
+        blockReason === "DAILY_LIMIT_REACHED";
+
+      if (!isDailyLimitActive) {
         showErrorToast(
-          "No screen-time limit is active right now",
+          "Extra time requests are only available for daily screen-time limits.",
+          "Error"
+        );
+        return;
+      }
+
+      if (!isDailyLimitReached) {
+        showErrorToast(
+          "You can request more time only after your daily limit is reached.",
           "Error"
         );
         return;

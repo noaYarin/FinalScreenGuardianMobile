@@ -11,7 +11,6 @@ import {
   findDevicesByChildId,
   deleteDeviceById,
   resetDailyScreenTime,
-  resetWeeklyScreenTime,
   updateApplicationBlockStatus,
   findDeviceDailyLimitById,
   updateDeviceDailyLimit,
@@ -25,11 +24,18 @@ import {
 import { getChildrenByParentId } from "../dal/parent.dal.js";
 import { getIO, emitPolicyUpdated, emitDeviceStatusUpdated } from "../socketHandler.js";
 import { FORCE_CHILD_LOGOUT } from "../constants/socketEvents.js";
-import { formatJerusalemOffsetIsoNow } from "../utils/time.js";
+import moment from "moment-timezone";
+import {
+  formatJerusalemOffsetIsoNow,
+  isSameJerusalemDay,
+  JERUSALEM_TZ
+} from "../utils/time.js";
 import { LimitMode } from "../constants/limitMode.js";
 import {
   persistDailyUsageSnapshot,
-  resetDailyScreenTimeWithHistory
+  resetDailyScreenTimeWithHistory,
+  resetWeeklyScreenTimeWithHistory,
+  isDeviceWeekResetDue
 } from "./screenTimeHistory.service.js";
 
 // Validates and normalizes a screen-time limit value in minutes before saving it.
@@ -43,44 +49,166 @@ function assertLimitMinutes(value) {
   return n;
 }
 
+// Validates that a time value is in 24-hour HH:mm format. for weekly schedule windows
+function assertHHmm(value) {
+  if (typeof value !== "string") {
+    throw new AppError(CommonErrors.VALIDATION_ERROR);
+  }
 
-function isSameDay(date1, date2) {
-  return (
-    date1.getFullYear() === date2.getFullYear() &&
-    date1.getMonth() === date2.getMonth() &&
-    date1.getDate() === date2.getDate()
-  );
+  const isValid = /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+
+  if (!isValid) {
+    throw new AppError(CommonErrors.VALIDATION_ERROR);
+  }
+
+  return value;
 }
 
-// Checks whether two dates are in the same week, using Sunday as the start of the week.
-function isSameWeek(date1, date2) {
-  const first = new Date(date1);
-  const second = new Date(date2);
+// Converts a HH:mm time string into minutes since midnight. easier to compare the current time with schedule windows.
+function timeToMinutes(value) {
+  const [hours, minutes] = value.split(":").map(Number);
+  return hours * 60 + minutes;
+}
 
-  const firstWeekStart = new Date(first);
-  firstWeekStart.setHours(0, 0, 0, 0);
-  firstWeekStart.setDate(firstWeekStart.getDate() - firstWeekStart.getDay());
+// Normalizes and validates the weekly schedule payload before saving it.
+// The schedule represents blocked usage windows per day.
+// For SCHEDULE mode, isEnabled means this day has an active block window.
+function normalizeWeeklySchedule(value) {
+  if (value === undefined) {
+    return undefined;
+  }
 
-  const secondWeekStart = new Date(second);
-  secondWeekStart.setHours(0, 0, 0, 0);
-  secondWeekStart.setDate(secondWeekStart.getDate() - secondWeekStart.getDay());
+  if (!Array.isArray(value)) {
+    throw new AppError(CommonErrors.VALIDATION_ERROR);
+  }
 
-  return firstWeekStart.getTime() === secondWeekStart.getTime();
+  const seenDays = new Set();
+
+  return value.map((day) => {
+    const dayOfWeek = Number(day?.dayOfWeek);
+
+    if (
+      !Number.isInteger(dayOfWeek) ||
+      dayOfWeek < 0 ||
+      dayOfWeek > 6 ||
+      seenDays.has(dayOfWeek)
+    ) {
+      throw new AppError(CommonErrors.VALIDATION_ERROR);
+    }
+
+    seenDays.add(dayOfWeek);
+
+    const isEnabled = day?.isEnabled === true;
+    const startTime = assertHHmm(day?.startTime);
+    const endTime = assertHHmm(day?.endTime);
+
+    if (startTime === endTime) {
+      throw new AppError(CommonErrors.VALIDATION_ERROR);
+    }
+
+    return {
+      dayOfWeek,
+      isEnabled,
+      startTime,
+      endTime,
+    };
+  });
+}
+
+// Checks whether a specific minute of the day is inside a time window.
+// Supports regular windows like 08:00-21:00 and cross-midnight windows like 22:00-02:00.
+function isMinuteInsideWindow(nowMinutes, startMinutes, endMinutes) {
+  if (startMinutes < endMinutes) {
+    return nowMinutes >= startMinutes && nowMinutes < endMinutes;
+  }
+
+  return nowMinutes >= startMinutes || nowMinutes < endMinutes;
+}
+
+// Checks whether the current time in Asia/Jerusalem is inside a blocked weekly schedule window.
+// The schedule represents blocked usage windows per day.
+function isNowInsideBlockedSchedule(weeklySchedule, now = new Date()) {
+  if (!Array.isArray(weeklySchedule) || weeklySchedule.length === 0) {
+    return false;
+  }
+
+  const current = moment(now).tz(JERUSALEM_TZ);
+  const currentDayOfWeek = current.day();
+  const currentMinutes = current.hours() * 60 + current.minutes();
+
+  const enabledDays = weeklySchedule.filter((day) => day?.isEnabled === true);
+
+  if (enabledDays.length === 0) {
+    return false;
+  }
+
+  const todaySchedule = enabledDays.find(
+    (day) => Number(day.dayOfWeek) === currentDayOfWeek
+  );
+
+  if (!todaySchedule) {
+    return false;
+  }
+
+  const startMinutes = timeToMinutes(todaySchedule.startTime);
+  const endMinutes = timeToMinutes(todaySchedule.endTime);
+
+  return isMinuteInsideWindow(currentMinutes, startMinutes, endMinutes);
+}
+
+// Recalculates the final lock state from specific lock reasons.
+// This keeps isLocked as a derived state instead of treating it as the source of truth.
+function recalculateDeviceLockState({
+  manualLockEnabled,
+  dailyLimitLockActive,
+  weeklyLimitLockActive,
+  scheduleLockActive,
+}) {
+  return (
+    manualLockEnabled === true ||
+    dailyLimitLockActive === true ||
+    weeklyLimitLockActive === true ||
+    scheduleLockActive === true
+  );
 }
 
 // Resets weekly usage if the saved weekly reset date belongs to a previous week.
 async function resetWeeklyScreenTimeIfNeeded(device, deviceId, now) {
-  const lastWeeklyReset = device.screenTime?.lastWeeklyResetAt
-    ? new Date(device.screenTime.lastWeeklyResetAt)
-    : null;
-
-  if (!lastWeeklyReset || !isSameWeek(lastWeeklyReset, now)) {
-    return resetWeeklyScreenTime(deviceId, now);
+  if (!isDeviceWeekResetDue(device, now)) {
+    return device;
   }
 
-  return device;
+  return resetWeeklyScreenTimeWithHistory(deviceId, now);
 }
 
+// Refreshes the persisted schedule lock flag according to the current blocked weekly schedule.
+// Schedule is time-based, so this function recalculates it during sync points such as policy fetch and heartbeat.
+// It writes to the database only when the calculated schedule state is different from the saved one.
+async function refreshScheduleLockIfNeeded(device, deviceId) {
+  const screenTime = device.screenTime ?? {};
+  const limitMode = getEffectiveLimitMode(screenTime);
+
+  if (limitMode !== LimitMode.SCHEDULE || screenTime.isLimitEnabled !== true) {
+    return device;
+  }
+
+  const weeklySchedule = screenTime.weeklySchedule ?? [];
+  const nextScheduleLockActive = isNowInsideBlockedSchedule(weeklySchedule);
+
+  if (device.scheduleLockActive === nextScheduleLockActive) {
+    return device;
+  }
+
+  return updateDeviceById(deviceId, {
+    scheduleLockActive: nextScheduleLockActive,
+    isLocked: recalculateDeviceLockState({
+      manualLockEnabled: device.manualLockEnabled,
+      dailyLimitLockActive: device.dailyLimitLockActive,
+      weeklyLimitLockActive: device.weeklyLimitLockActive,
+      scheduleLockActive: nextScheduleLockActive,
+    }),
+  });
+}
 
 // If an old device has limits enabled but no limitMode yet, it falls back to DAILY.
 function getEffectiveLimitMode(screenTime) {
@@ -100,7 +228,7 @@ function getEffectiveLimitMode(screenTime) {
 
 // Calculates the remaining screen time according to the active limit mode.
 // DAILY uses today's usage and extra minutes, WEEKLY uses accumulated weekly usage.
-// SCHEDULE is not enforced yet, so it currently returns null.
+// SCHEDULE does not have remaining minutes, so it returns null.
 function calculateRemainingMinutes(device) {
   const screenTime = device.screenTime ?? {};
   const limitMode = getEffectiveLimitMode(screenTime);
@@ -356,7 +484,10 @@ export async function lockDevice(parentId, deviceId) {
 
 export async function unlockDevice(parentId, deviceId) {
 
-  const device = await validateDeviceAccess({ deviceId, parentId });
+  let device = await validateDeviceAccess({ deviceId, parentId });
+
+  device = await refreshScheduleLockIfNeeded(device, deviceId);
+
   const updatedDevice = await updateDeviceById(deviceId, {
     manualLockEnabled: false,
     isLocked:
@@ -442,7 +573,7 @@ export async function getDeviceScreenTime(parentId, deviceId) {
     ? new Date(device.screenTime.lastDailyResetAt)
     : null;
 
-  if (!lastReset || !isSameDay(lastReset, now)) {
+  if (!lastReset || !isSameJerusalemDay(lastReset, now)) {
     device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
@@ -454,16 +585,17 @@ export async function getDeviceScreenTime(parentId, deviceId) {
   };
 }
 
-// Update screen-time settings for a specific device
+// Update screen-time settings for a specific device.
+// This function supports one active automatic limit mode at a time:
+// DAILY, WEEKLY, or SCHEDULE. SCHEDULE represents blocked usage windows.
 export async function updateDeviceScreenTime(parentId, deviceId, body) {
-
   const device = await validateDeviceAccess({ deviceId, parentId });
 
   const currentScreenTime = device.screenTime || {};
 
   const nextScreenTime = {
     ...currentScreenTime,
-    ...body
+    ...body,
   };
 
   const allowedLimitModes = Object.values(LimitMode);
@@ -476,11 +608,21 @@ export async function updateDeviceScreenTime(parentId, deviceId, body) {
   }
 
   if (body.dailyLimitMinutes !== undefined) {
-    nextScreenTime.dailyLimitMinutes = assertLimitMinutes(body.dailyLimitMinutes);
+    nextScreenTime.dailyLimitMinutes = assertLimitMinutes(
+      body.dailyLimitMinutes
+    );
   }
 
   if (body.weeklyLimitMinutes !== undefined) {
-    nextScreenTime.weeklyLimitMinutes = assertLimitMinutes(body.weeklyLimitMinutes);
+    nextScreenTime.weeklyLimitMinutes = assertLimitMinutes(
+      body.weeklyLimitMinutes
+    );
+  }
+
+  if (body.weeklySchedule !== undefined) {
+    nextScreenTime.weeklySchedule = normalizeWeeklySchedule(
+      body.weeklySchedule
+    );
   }
 
   if (body.isLimitEnabled === false) {
@@ -494,28 +636,11 @@ export async function updateDeviceScreenTime(parentId, deviceId, body) {
     nextScreenTime.limitMode = LimitMode.DAILY;
   }
 
-
   const patch = {
-    screenTime: nextScreenTime
+    screenTime: nextScreenTime,
   };
 
   const nextLimitMode = getEffectiveLimitMode(nextScreenTime);
-
-  // Only one automatic limit mode can be active at a time.
-  // When switching modes, clear lock flags that do not belong to the selected mode.
-  if (body.isLimitEnabled === true) {
-    if (nextLimitMode !== LimitMode.DAILY) {
-      patch.dailyLimitLockActive = false;
-    }
-
-    if (nextLimitMode !== LimitMode.WEEKLY) {
-      patch.weeklyLimitLockActive = false;
-    }
-
-    if (nextLimitMode !== LimitMode.SCHEDULE) {
-      patch.scheduleLockActive = false;
-    }
-  }
 
   const nextDailyLimitMinutes = Number(nextScreenTime.dailyLimitMinutes ?? 0);
   const nextExtraMinutesToday = Number(nextScreenTime.extraMinutesToday ?? 0);
@@ -524,21 +649,85 @@ export async function updateDeviceScreenTime(parentId, deviceId, body) {
   const nextRemainingMinutes =
     nextDailyLimitMinutes + nextExtraMinutesToday - usedTodayMinutes;
 
-  if (body.isLimitEnabled === false) {
+  if (body.isLimitEnabled === false || nextLimitMode === LimitMode.NONE) {
     patch.screenTime.extraMinutesToday = 0;
+
     patch.dailyLimitLockActive = false;
     patch.weeklyLimitLockActive = false;
     patch.scheduleLockActive = false;
-    patch.isLocked = device.manualLockEnabled === true;
-  } else if (
-    nextLimitMode === LimitMode.DAILY &&
-    nextRemainingMinutes > 0
-  ) {
+
+    patch.isLocked = recalculateDeviceLockState({
+      manualLockEnabled: device.manualLockEnabled,
+      dailyLimitLockActive: false,
+      weeklyLimitLockActive: false,
+      scheduleLockActive: false,
+    });
+  } else if (nextLimitMode === LimitMode.DAILY) {
+    const shouldLockByDailyLimit =
+      nextScreenTime.isLimitEnabled === true &&
+      nextDailyLimitMinutes > 0 &&
+      nextRemainingMinutes <= 0;
+
+    patch.dailyLimitLockActive = shouldLockByDailyLimit;
+    patch.weeklyLimitLockActive = false;
+    patch.scheduleLockActive = false;
+
+    patch.isLocked = recalculateDeviceLockState({
+      manualLockEnabled: device.manualLockEnabled,
+      dailyLimitLockActive: shouldLockByDailyLimit,
+      weeklyLimitLockActive: false,
+      scheduleLockActive: false,
+    });
+  } else if (nextLimitMode === LimitMode.WEEKLY) {
+    const nextWeeklyLimitMinutes = Number(
+      nextScreenTime.weeklyLimitMinutes ?? 0
+    );
+    const usedWeekMinutes = Number(currentScreenTime.usedWeekMinutes ?? 0);
+
+    const shouldLockByWeeklyLimit =
+      nextScreenTime.isLimitEnabled === true &&
+      nextWeeklyLimitMinutes > 0 &&
+      usedWeekMinutes >= nextWeeklyLimitMinutes;
+
     patch.dailyLimitLockActive = false;
-    patch.isLocked =
-      device.manualLockEnabled === true ||
-      device.weeklyLimitLockActive === true ||
-      device.scheduleLockActive === true;
+    patch.weeklyLimitLockActive = shouldLockByWeeklyLimit;
+    patch.scheduleLockActive = false;
+
+    patch.isLocked = recalculateDeviceLockState({
+      manualLockEnabled: device.manualLockEnabled,
+      dailyLimitLockActive: false,
+      weeklyLimitLockActive: shouldLockByWeeklyLimit,
+      scheduleLockActive: false,
+    });
+  } else if (nextLimitMode === LimitMode.SCHEDULE) {
+
+    const weeklySchedule = nextScreenTime.weeklySchedule ?? [];
+
+    const shouldLockBySchedule =
+      nextScreenTime.isLimitEnabled === true &&
+      isNowInsideBlockedSchedule(weeklySchedule);
+
+    patch.dailyLimitLockActive = false;
+    patch.weeklyLimitLockActive = false;
+    patch.scheduleLockActive = shouldLockBySchedule;
+
+    patch.isLocked = recalculateDeviceLockState({
+      manualLockEnabled: device.manualLockEnabled,
+      dailyLimitLockActive: false,
+      weeklyLimitLockActive: false,
+      scheduleLockActive: shouldLockBySchedule,
+    });
+  } else {
+    patch.dailyLimitLockActive = false;
+    patch.weeklyLimitLockActive = false;
+    patch.scheduleLockActive = false;
+
+    patch.isLocked = recalculateDeviceLockState({
+      manualLockEnabled: device.manualLockEnabled,
+      dailyLimitLockActive: false,
+      weeklyLimitLockActive: false,
+      scheduleLockActive: false,
+    });
   }
 
   const updatedDevice = await updateDeviceById(deviceId, patch);
@@ -554,7 +743,7 @@ export async function updateDeviceScreenTime(parentId, deviceId, body) {
       type: NotificationType.SCREEN_TIME_UPDATED,
       severity: NotificationSeverity.INFO,
       title: "Screen Time Limits Updated",
-      description: "The parent updated the screen time settings"
+      description: "The parent updated the screen time settings",
     });
   } catch (err) {
     console.error("notifyChild failed in updateDeviceScreenTime:", err.message);
@@ -612,11 +801,13 @@ export async function getDevicePolicy({ deviceId, childId, parentId }) {
     ? new Date(device.screenTime.lastDailyResetAt)
     : null;
 
-  if (!lastReset || !isSameDay(lastReset, now)) {
+  if (!lastReset || !isSameJerusalemDay(lastReset, now)) {
     device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
   device = await resetWeeklyScreenTimeIfNeeded(device, deviceId, now);
+
+  device = await refreshScheduleLockIfNeeded(device, deviceId);
 
   return {
     deviceId: String(device._id),
@@ -625,6 +816,12 @@ export async function getDevicePolicy({ deviceId, childId, parentId }) {
     platform: device.platform,
     isLocked: device.isLocked,
     isActive: device.isActive,
+    lockState: {
+      manualLockEnabled: device.manualLockEnabled ?? false,
+      dailyLimitLockActive: device.dailyLimitLockActive ?? false,
+      weeklyLimitLockActive: device.weeklyLimitLockActive ?? false,
+      scheduleLockActive: device.scheduleLockActive ?? false
+    },
     screenTime: {
       isLimitEnabled: device.screenTime?.isLimitEnabled ?? false,
       limitMode: getEffectiveLimitMode(device.screenTime),
@@ -773,7 +970,7 @@ export async function getDeviceDailyLimit(parentId, deviceId) {
     ? new Date(device.screenTime.lastDailyResetAt)
     : null;
 
-  if (!lastReset || !isSameDay(lastReset, now)) {
+  if (!lastReset || !isSameJerusalemDay(lastReset, now)) {
     device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
@@ -869,15 +1066,17 @@ export async function getDeviceCurrentStatusForChild({ deviceId, childId, parent
     ? new Date(device.screenTime.lastDailyResetAt)
     : null;
 
-  if (!lastReset || !isSameDay(lastReset, now)) {
+  if (!lastReset || !isSameJerusalemDay(lastReset, now)) {
     device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
   device = await resetWeeklyScreenTimeIfNeeded(device, deviceId, now);
 
+  device = await refreshScheduleLockIfNeeded(device, deviceId);
+
+
   return buildCurrentStatus(device);
 }
-
 
 export async function updateDeviceLocation(deviceId, location, parentId, childId) {
   await validateDeviceAccess({ deviceId, parentId, childId });
@@ -909,21 +1108,17 @@ export async function updateDeviceLocation(deviceId, location, parentId, childId
 
 }
 
-
-// Checks whether weekly usage crossed the weekly limit in this update.
-// This runs only when WEEKLY is the active automatic limit mode.
-function hasCrossedWeeklyLimit(previousStatus, currentStatus, updatedDevice) {
+// Checks whether the weekly limit should lock the device.
+// This handles both crossing the weekly limit now and already being over the limit.
+function hasReachedWeeklyLimit(currentStatus, updatedDevice) {
   return (
     currentStatus.isLimitEnabled &&
     currentStatus.limitMode === LimitMode.WEEKLY &&
     Number(currentStatus.weeklyLimitMinutes ?? 0) > 0 &&
-    previousStatus.remainingMinutes > 0 &&
     currentStatus.remainingMinutes <= 0 &&
-    !updatedDevice.isLocked
+    updatedDevice.weeklyLimitLockActive !== true
   );
 }
-
-
 // Locks the device after the weekly screen-time quota has been reached.
 // It updates the weekly lock flag, pushes policy/status updates, and sends notifications.
 async function enforceWeeklyLimitReached({ deviceId, childName }) {
@@ -1023,7 +1218,7 @@ export async function updateDeviceUsageByChild({
     ? new Date(device.screenTime.lastDailyResetAt)
     : null;
 
-  if (!lastReset || !isSameDay(lastReset, now)) {
+  if (!lastReset || !isSameJerusalemDay(lastReset, now)) {
     device = await resetDailyScreenTimeWithHistory(deviceId, now);
   }
 
@@ -1050,8 +1245,7 @@ export async function updateDeviceUsageByChild({
     currentStatus.isLimitEnabled &&
     isDailyLimitMode &&
     previousStatus.remainingMinutes > 0 &&
-    currentStatus.remainingMinutes <= 0 &&
-    !updatedDevice.isLocked;
+    currentStatus.remainingMinutes <= 0;
 
   let childName = "Your child";
 
@@ -1092,7 +1286,7 @@ export async function updateDeviceUsageByChild({
 
   }
 
-  if (crossedEndedThreshold) {
+  if (crossedEndedThreshold && updatedDevice.dailyLimitLockActive !== true) {
     const lockedDevice = await updateDeviceById(deviceId, {
       dailyLimitLockActive: true,
       isLocked: true
@@ -1141,7 +1335,7 @@ export async function updateDeviceUsageByChild({
     return buildCurrentStatus(lockedDevice);
   }
 
-  if (hasCrossedWeeklyLimit(previousStatus, currentStatus, updatedDevice)) {
+  if (hasReachedWeeklyLimit(currentStatus, updatedDevice)) {
     const lockedDevice = await enforceWeeklyLimitReached({
       deviceId,
       childName,
@@ -1164,7 +1358,7 @@ export async function handleDeviceHeartbeat({
     throw new AppError(CommonErrors.VALIDATION_ERROR);
   }
 
-  const device = await findDeviceById(deviceId);
+  let device = await findDeviceById(deviceId);
 
   if (!device) {
     throw new AppError(CommonErrors.DEVICE_NOT_FOUND);
@@ -1182,14 +1376,30 @@ export async function handleDeviceHeartbeat({
     throw new AppError(CommonErrors.DEVICE_NOT_ACTIVE);
   }
 
+  const now = new Date();
+
+  const lastReset = device.screenTime?.lastDailyResetAt
+    ? new Date(device.screenTime.lastDailyResetAt)
+    : null;
+
+  if (!lastReset || !isSameJerusalemDay(lastReset, now)) {
+    device = await resetDailyScreenTimeWithHistory(deviceId, now);
+  }
+
+  device = await resetWeeklyScreenTimeIfNeeded(device, deviceId, now);
+
   const wasAccessibilityEnabled = device.accessibilityEnabled;
   const wasUsageAccessEnabled = device.usageAccessEnabled;
 
-  const updatedDevice = await updateDeviceHeartbeat(deviceId, {
-    lastSeenAt: new Date(),
+  let updatedDevice = await updateDeviceHeartbeat(deviceId, {
+    lastSeenAt: now,
     accessibilityEnabled,
     usageAccessEnabled
   });
+
+  updatedDevice = await refreshScheduleLockIfNeeded(updatedDevice, deviceId);
+
+  pushPolicyUpdate(updatedDevice);
 
   pushDeviceStatusUpdate(updatedDevice);
 

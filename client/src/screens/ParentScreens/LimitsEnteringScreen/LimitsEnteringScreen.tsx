@@ -30,25 +30,25 @@ const LIMIT_SECTIONS: LimitSection[] = [
       {
         key: "daily",
         label: "Daily Limits",
-        description: "Set usage duration by day.",
+        description: "Limit total screen time per day.",
         accessibilityLabel: "Go to daily limits screen",
         icon: "clock-time-four-outline",
         route: "/Parent/dailyTimeLimits",
       },
       {
-        key: "Weekly",
+        key: "weekly",
         label: "Weekly Limits",
-        description: "Set usage duration by week.",
+        description: "Limit total screen time across the week.",
         accessibilityLabel: "Go to weekly limits screen",
-        icon: "clock-time-four-outline",
+        icon: "calendar-week-outline",
         route: "/Parent/weeklyLimits",
       },
       {
-        key: "breaks",
-        label: "Breaks Between Sessions",
-        description: "Set rest time between usage sessions.",
-        accessibilityLabel: "Go to breaks between sessions screen",
-        icon: "timer-sand",
+        key: "schedule",
+        label: "Weekly Schedule",
+        description: "Block screen time during specific days and hours.",
+        accessibilityLabel: "Go to weekly schedule limits screen",
+        icon: "calendar-clock-outline",
         route: "/Parent/routineLimits",
       },
     ],
@@ -61,7 +61,7 @@ const LIMIT_SECTIONS: LimitSection[] = [
         key: "blockedApps",
         label: "Blocked Apps",
         description: "Manage apps that should not be allowed.",
-        accessibilityLabel: "Blocked apps feature coming soon",
+        accessibilityLabel: "Go to app blocking screen",
         icon: "cellphone-lock",
         route: "/Parent/appBlocking",
       },
@@ -88,9 +88,26 @@ export default function LimitsScreen() {
             </AppText>
 
             <AppText weight="medium" style={styles.introSubtitle}>
-              Set screen time, breaks, and other restrictions in a clean and
-              structured way.
+              Choose a limit type to manage screen time, schedules, or blocked apps.
             </AppText>
+
+            <View style={styles.activeLimitInfoBox}>
+              <View style={styles.activeLimitInfoHeader}>
+                <MaterialCommunityIcons
+                  name="information-outline"
+                  size={18}
+                  color="#2563EB"
+                />
+
+                <AppText weight="extraBold" style={styles.activeLimitInfoTitle}>
+                  Automatic limits
+                </AppText>
+              </View>
+
+              <AppText weight="medium" style={styles.activeLimitInfoText}>
+                Only one automatic limit can be active per device at a time.
+              </AppText>
+            </View>
           </View>
 
           {LIMIT_SECTIONS.map((section) => (
@@ -115,6 +132,7 @@ export default function LimitsScreen() {
                         styles.rowButton,
                         !isLast && styles.rowDivider,
                         pressed && isPressable && styles.rowPressed,
+                        !isPressable && { opacity: 0.45 },
                       ]}
                     >
                       <View style={styles.rowContent}>
@@ -144,7 +162,7 @@ export default function LimitsScreen() {
                                 style={[
                                   styles.rowDescription,
                                   !isPressable &&
-                                    styles.rowDescriptionDisabled,
+                                  styles.rowDescriptionDisabled,
                                 ]}
                               >
                                 {item.description}

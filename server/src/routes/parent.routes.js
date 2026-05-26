@@ -10,6 +10,7 @@ import {
 import { requireParent } from "../middlewares/requireParent.js";
 import {
   getChildScreenTimeReportsController,
+  getParentAnalyticsReportController,
   getParentHomeSummaryController
 } from "../controllers/parent.controller.js";
 
@@ -29,6 +30,14 @@ router.get(
   authJwt,
   requireParent,
   getChildScreenTimeReportsController
+);
+
+// GET /api/v1/parent/children/:childId/analytics-report?from=YYYY-MM-DD&to=YYYY-MM-DD
+router.get(
+  "/children/:childId/analytics-report",
+  authJwt,
+  requireParent,
+  getParentAnalyticsReportController
 );
 
 // GET /api/v1/parent/children/:childId

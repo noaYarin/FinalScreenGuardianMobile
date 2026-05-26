@@ -22,6 +22,7 @@ import { getMyChildrenThunk } from "@/src/redux/thunks/childrenThunks";
 import { fetchParentNotificationsThunk } from "@/src/redux/thunks/notificationThunks";
 import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
 import InfoHint from "../../../components/InfoHint/InfoHint";
+import type { HomeSummaryChild } from "@/src/api/parent";
 
 type ChildCard = {
   id: string;
@@ -30,6 +31,8 @@ type ChildCard = {
   isLocked: boolean;
   usedText: string | null;
   limitText: string | null;
+  activeLimitLabel: string;
+  lockReasonLabel: string;
   avatarUri: string | null;
 };
 
@@ -59,7 +62,6 @@ export default function HomeParentScreen() {
     ).length;
   });
 
-
   useEffect(() => {
     dispatch(fetchParentHomeSummaryThunk());
     dispatch(getMyChildrenThunk());
@@ -74,13 +76,54 @@ export default function HomeParentScreen() {
 
   const parentName = "Parent";
 
-  const formatMinutes = (minutes: number | null) => {
+  const formatMinutes = (minutes: number | null | undefined) => {
     if (minutes == null) return null;
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
+
+    const safeMinutes = Math.max(0, Math.floor(Number(minutes)));
+    const h = Math.floor(safeMinutes / 60);
+    const m = safeMinutes % 60;
+
     return `${h.toString().padStart(2, "0")}:${m
       .toString()
       .padStart(2, "0")}`;
+  };
+
+  const getActiveLimitLabel = (child: HomeSummaryChild) => {
+    if (!child.isLimitEnabled || child.limitMode === "NONE") {
+      return "No active limit";
+    }
+
+    if (child.limitMode === "DAILY") {
+      return "Daily limit active";
+    }
+
+    if (child.limitMode === "WEEKLY") {
+      const used = formatMinutes(child.usedWeekMinutes);
+      const limit = formatMinutes(child.weeklyLimitMinutes);
+
+      if (used && limit) {
+        return `Weekly limit active · ${used} / ${limit}`;
+      }
+
+      return "Weekly limit active";
+    }
+
+    if (child.limitMode === "SCHEDULE") {
+      return "Weekly schedule active";
+    }
+
+    return "Screen time limit active";
+  };
+
+  const getLockReasonLabel = (child: HomeSummaryChild) => {
+    const reasons: string[] = [];
+
+    if (child.manualLockEnabled) reasons.push("By parent");
+    if (child.dailyLimitLockActive) reasons.push("Daily limit");
+    if (child.weeklyLimitLockActive) reasons.push("Weekly limit");
+    if (child.scheduleLockActive) reasons.push("Schedule");
+
+    return reasons.length > 0 ? reasons.join(" + ") : "Locked";
   };
 
   const getStatusStyles = (status: ChildCard["status"]) => {
@@ -102,24 +145,39 @@ export default function HomeParentScreen() {
         return {
           avatarBg: styles.avatarGood,
           timeColor: styles.timeGood,
-          subtitle: "Daily screen time",
+          subtitle: "Today screen time",
         };
     }
   };
 
   const childCards: ChildCard[] = useMemo(() => {
-    return children.map((child) => ({
-      id: String(child.childId),
-      name: child.name ?? "",
-      status: child.status ?? "good",
-      isLocked: child.isLocked === true,
-      usedText: formatMinutes(child.usedTodayMinutes),
-      limitText:
+    return children.map((child) => {
+      const dailyLimitWithExtra =
         child.dailyLimitMinutes == null
           ? null
-          : formatMinutes(child.dailyLimitMinutes),
-      avatarUri: getChildProfileImageUri(child.img),
-    }));
+          : Number(child.dailyLimitMinutes) + Number(child.extraMinutesToday ?? 0);
+
+      return {
+        id: String(child.childId),
+        name: child.name ?? "",
+        status: child.status ?? "good",
+        isLocked: child.isLocked === true,
+
+        // Home screen stays a daily overview.
+        usedText: formatMinutes(child.usedTodayMinutes),
+
+        // "Out of" is shown only for daily limits.
+        // Weekly/schedule are shown in activeLimitLabel instead.
+        limitText:
+          child.limitMode === "DAILY" && dailyLimitWithExtra != null
+            ? formatMinutes(dailyLimitWithExtra)
+            : null,
+
+        activeLimitLabel: getActiveLimitLabel(child),
+        lockReasonLabel: getLockReasonLabel(child),
+        avatarUri: getChildProfileImageUri(child.img),
+      };
+    });
   }, [children]);
 
   const onPressFullWatch = () => router.push("/Parent/(tabs)/children" as Href);
@@ -178,9 +236,8 @@ export default function HomeParentScreen() {
                   <AppText style={styles.sectionSub}>
                     {isRefreshing
                       ? "Refreshing..."
-                      : "Daily screen time overview"}
+                      : "Screen time overview"}
                   </AppText>
-
                 </View>
               </View>
             </View>
@@ -244,10 +301,15 @@ export default function HomeParentScreen() {
                         <View style={styles.cardEdge}>
                           {c.isLocked ? (
                             <>
-                              <AppText weight="extraBold" style={[styles.timeMain, styles.timeBad]}>
+                              <AppText
+                                weight="extraBold"
+                                style={[styles.timeMain, styles.timeBad]}
+                              >
                                 Locked
                               </AppText>
-                              <AppText style={styles.timeSub}>By parent</AppText>
+                              <AppText style={styles.timeSub}>
+                                {c.lockReasonLabel}
+                              </AppText>
                             </>
                           ) : (
                             <>
@@ -259,7 +321,9 @@ export default function HomeParentScreen() {
                               </AppText>
 
                               <AppText style={styles.timeSub}>
-                                {c.limitText ? `Out of ${c.limitText}` : "No limit"}
+                                {c.limitText
+                                  ? `Out of ${c.limitText}`
+                                  : c.activeLimitLabel}
                               </AppText>
                             </>
                           )}

@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
-
+import EmptyStateCard from "@/src/components/EmptyStateCard/EmptyStateCard";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import ChildDeviceSelector from "../../../components/ChildDeviceSelector/ChildDeviceSelector";
@@ -263,8 +263,8 @@ export default function AppBlockingScreen() {
                   mode === "all"
                     ? "All"
                     : mode === "blocked"
-                    ? "Blocked"
-                    : "Allowed";
+                      ? "Blocked"
+                      : "Allowed";
 
                 return (
                   <Pressable
@@ -300,14 +300,11 @@ export default function AppBlockingScreen() {
               </AppText>
             </View>
           ) : !selectedDevice ? (
-            <View style={styles.stateCard}>
-              <AppText weight="extraBold" style={styles.emptyTitle}>
-                No device selected
-              </AppText>
-              <AppText weight="medium" style={styles.stateText}>
-                Choose a child and device to manage app blocking.
-              </AppText>
-            </View>
+            <EmptyStateCard
+              icon="cellphone-link-off"
+              title="No device selected"
+              subtitle="Choose a child and device to manage app blocking."
+            />
           ) : totalCount === 0 ? (
             <View style={styles.stateCard}>
               <AppText weight="extraBold" style={styles.emptyTitle}>
@@ -319,14 +316,11 @@ export default function AppBlockingScreen() {
               </AppText>
             </View>
           ) : apps.length === 0 ? (
-            <View style={styles.stateCard}>
-              <AppText weight="extraBold" style={styles.emptyTitle}>
-                No matching apps
-              </AppText>
-              <AppText weight="medium" style={styles.stateText}>
-                Try changing the search or filter.
-              </AppText>
-            </View>
+            <EmptyStateCard
+              icon="magnify-close"
+              title="No matching apps"
+              subtitle="Try changing the search or filter."
+            />
           ) : (
             <View style={styles.appsList}>
               {apps.map((app) => {
@@ -409,8 +403,8 @@ export default function AppBlockingScreen() {
                         {isUpdating
                           ? "Saving..."
                           : app.isBlocked
-                          ? "Allow"
-                          : "Block"}
+                            ? "Allow"
+                            : "Block"}
                       </AppText>
                     </Pressable>
                   </View>

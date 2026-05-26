@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams, type Href } from "expo-router";
 
 import ChildSelector from "@/src/components/ChildSelector/ChildSelector";
 import AppText from "@/src/components/AppText/AppText";
@@ -11,7 +11,6 @@ import { fetchDevicesByChild } from "@/src/redux/thunks/deviceThunks";
 import { fetchParentHomeSummaryThunk } from "@/src/redux/thunks/parentHomeThunks";
 import {
   getChildScreenTimeReports,
-  type HomeSummaryChild,
   type ScreenTimeUsageReport,
 } from "@/src/api/parent";
 import { store } from "@/src/redux/store";
@@ -19,13 +18,11 @@ import {
   setReportsSelectedChildId,
   setReportsTimeRange,
 } from "@/src/redux/slices/reports-slice";
-
+import EmptyStateCard from "@/src/components/EmptyStateCard/EmptyStateCard";
 import {
+  buildEmptyUsageReport,
   buildReportsDatasetFromReport,
-  buildUsageReportFromSnapshot,
-  mergeSnapshotWithHomeSummary,
   pickRepresentativeDevice,
-  screenTimeSnapshotFromDevice,
 } from "./buildReportsDataset";
 import ReportsContent from "@/src/components/ReportsScreen/ReportsContent";
 import ReportsMetricRow from "@/src/components/ReportsScreen/ReportsMetricRow";
@@ -34,7 +31,6 @@ import { showErrorToast } from "@/src/utils/appToast";
 
 function buildFallbackReport(
   devicesByChild: RootState["devices"]["byChildId"],
-  childrenSummary: HomeSummaryChild[],
   childId: string
 ): ScreenTimeUsageReport | null {
   const devices = devicesByChild[childId] ?? [];
@@ -43,25 +39,17 @@ function buildFallbackReport(
   if (!device) {
     return {
       days: [],
+      weeks: [],
       weeklyTotalMinutes: 0,
+      monthlyTotalMinutes: 0,
       dailyAverageMinutes: 0,
+      monthlyAverageMinutes: 0,
       topApp: null,
       hasLinkedDevice: false,
     };
   }
 
-  const fromDevice = screenTimeSnapshotFromDevice(device);
-  if (!fromDevice) {
-    return null;
-  }
-
-  const homeSummary = childrenSummary.find(
-    (child) => String(child.childId) === String(childId)
-  );
-
-  return buildUsageReportFromSnapshot(
-    mergeSnapshotWithHomeSummary(fromDevice, homeSummary)
-  );
+  return buildEmptyUsageReport();
 }
 
 export default function ParentReportsScreen() {
@@ -145,7 +133,6 @@ export default function ParentReportsScreen() {
       const state = store.getState();
       const fallback = buildFallbackReport(
         state.devices.byChildId,
-        state.parentHome.childrenSummary ?? [],
         effectiveChildId
       );
 
@@ -179,7 +166,11 @@ export default function ParentReportsScreen() {
     return buildReportsDatasetFromReport(selectedTimeRange, usageReport);
   }, [selectedTimeRange, usageReport]);
 
-  const hasUsageData = (usageReport?.weeklyTotalMinutes ?? 0) > 0;
+  const hasUsageData =
+    (usageReport?.weeklyTotalMinutes ?? 0) > 0 ||
+    (usageReport?.monthlyTotalMinutes ?? 0) > 0 ||
+    (usageReport?.days?.some((day) => day.hasData) ?? false) ||
+    (usageReport?.weeks?.some((week) => week.hasData) ?? false);
 
   if (!effectiveChildId) {
     return <View style={styles.screen} />;
@@ -206,15 +197,11 @@ export default function ParentReportsScreen() {
                 dispatch(setReportsSelectedChildId(childId))
               }
             />
-            <View style={styles.emptyStateCard}>
-              <AppText weight="bold" style={styles.emptyStateTitle}>
-                No device connected
-              </AppText>
-              <AppText style={styles.emptyStateText}>
-                Connect the child's device to start tracking screen time and view
-                reports.
-              </AppText>
-            </View>
+            <EmptyStateCard
+              icon="cellphone-link-off"
+              title="No device connected"
+              subtitle="Connect the child's device to start tracking screen time and view reports."
+            />
           </View>
         </ScrollView>
       </View>
@@ -241,6 +228,20 @@ export default function ParentReportsScreen() {
           dataset={dataset}
           selectedTimeRange={selectedTimeRange}
           onSelectTimeRange={(range) => dispatch(setReportsTimeRange(range))}
+          bottomSlot={
+            <Pressable
+              style={styles.generateReportBtn}
+              onPress={() =>
+                router.push(
+                  `/Parent/generateReport?childId=${encodeURIComponent(effectiveChildId)}` as Href
+                )
+              }
+            >
+              <AppText weight="bold" style={styles.generateReportBtnText}>
+                Generate full report
+              </AppText>
+            </Pressable>
+          }
           topSlot={
             <>
               <ChildSelector
@@ -253,14 +254,11 @@ export default function ParentReportsScreen() {
                 <AppText style={styles.hintText}>{loadError}</AppText>
               ) : null}
               {!hasUsageData ? (
-                <View style={styles.emptyStateCard}>
-                  <AppText weight="bold" style={styles.emptyStateTitle}>
-                    No usage recorded yet
-                  </AppText>
-                  <AppText style={styles.emptyStateText}>
-                    Screen time appears here after the child device syncs usage.
-                  </AppText>
-                </View>
+                <EmptyStateCard
+                  icon="chart-line"
+                  title="No usage recorded yet"
+                  subtitle="Screen time appears here after the child device syncs usage."
+                />
               ) : null}
             </>
           }

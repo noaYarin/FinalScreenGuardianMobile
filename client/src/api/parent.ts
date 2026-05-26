@@ -1,4 +1,5 @@
 import { api } from "./request";
+import type { LimitMode } from "./device";
 
 type Child = {
   _id: string;
@@ -19,14 +20,31 @@ type Child = {
 export type HomeSummaryChild = {
   childId: string;
   name: string;
-  img?: string;
+  img?: string | null;
   deviceId: string | null;
   deviceName: string | null;
+
+  limitMode: LimitMode;
+  isLimitEnabled: boolean;
+
   usedTodayMinutes: number | null;
+  usedWeekMinutes: number | null;
+
   dailyLimitMinutes: number | null;
+  weeklyLimitMinutes: number | null;
+  extraMinutesToday: number | null;
+
+  usedMinutes: number | null;
+  limitMinutes: number | null;
   remainingMinutes: number | null;
+
   status: "good" | "warn" | "bad";
+
   isLocked: boolean;
+  manualLockEnabled: boolean;
+  dailyLimitLockActive: boolean;
+  weeklyLimitLockActive: boolean;
+  scheduleLockActive: boolean;
 };
 
 const URL = "/api/v1/parent";
@@ -84,12 +102,24 @@ export type ScreenTimeReportDay = {
   dateKey: string;
   date: string;
   usedMinutes: number;
+  hasData?: boolean;
+};
+
+export type ScreenTimeReportWeek = {
+  weekLabel: string;
+  weekStartKey: string;
+  weekEndKey: string;
+  usedMinutes: number;
+  hasData?: boolean;
 };
 
 export type ScreenTimeUsageReport = {
   days: ScreenTimeReportDay[];
+  weeks?: ScreenTimeReportWeek[];
   weeklyTotalMinutes: number;
+  monthlyTotalMinutes?: number;
   dailyAverageMinutes: number;
+  monthlyAverageMinutes?: number;
   topApp: string | null;
   hasLinkedDevice: boolean;
 };
@@ -101,6 +131,49 @@ export async function getChildScreenTimeReports(
     `${URL}/children/${encodeURIComponent(childId)}/screen-time-reports`,
     { requireAuth: true, role: "PARENT" }
   );
+}
+
+export type ParentAnalyticsReportIndicators = {
+  totalMinutes: number;
+  dailyAverageMinutes: number;
+  limitExceededDays: number;
+  tasksApprovedCount: number;
+  extensionRequestsCount: number;
+};
+
+export type ParentAnalyticsReport = {
+  childId: string;
+  childName: string;
+  deviceId: string | null;
+  hasLinkedDevice: boolean;
+  fromKey: string;
+  toKey: string;
+  fromLabel: string;
+  toLabel: string;
+  generatedAtLabel: string;
+  executiveSummary: string;
+  indicators: ParentAnalyticsReportIndicators;
+  trendPercent: number | null;
+};
+
+export async function getParentAnalyticsReport(
+  childId: string,
+  fromKey: string,
+  toKey: string
+): Promise<ParentAnalyticsReport> {
+  const query = new URLSearchParams({ from: fromKey, to: toKey }).toString();
+  const data = await api.get<
+    ParentAnalyticsReport & { kpis?: ParentAnalyticsReportIndicators }
+  >(
+    `${URL}/children/${encodeURIComponent(childId)}/analytics-report?${query}`,
+    { requireAuth: true, role: "PARENT" }
+  );
+
+  const { kpis, ...report } = data;
+  return {
+    ...report,
+    indicators: data.indicators ?? kpis!,
+  };
 }
 export async function deleteChild(
   childId: string

@@ -24,17 +24,6 @@ object DevicePolicySyncHelper {
      * This method is shared by:
      * - HTTP policy sync
      * - future socket-based policy updates
-     *
-     * Expected payload shape:
-     * {
-     *   "isLocked": true/false,
-     *   "screenTime": {
-     *      "isLimitEnabled": true/false,
-     *      "dailyLimitMinutes": number,
-     *      "extraMinutesToday": number
-     *   }
-     * }
-     *
      * Important:
      * If the device was removed while it was offline, the server will no longer
      * return a valid policy for it. In that case, fetchAndSavePolicy detects a
@@ -42,16 +31,35 @@ object DevicePolicySyncHelper {
      * instead of keeping stale policy values.
      */
    fun applyPolicyData(context: Context, data: JSONObject) {
-    val screenTime = data.optJSONObject("screenTime") ?: JSONObject()
+   val screenTime = data.optJSONObject("screenTime") ?: JSONObject()
+val lockState = data.optJSONObject("lockState") ?: JSONObject()
 
-    val isLocked = data.optBoolean("isLocked", false)
-    val isLimitEnabled = screenTime.optBoolean("isLimitEnabled", false)
+val isLocked = data.optBoolean("isLocked", false)
+val isLimitEnabled = screenTime.optBoolean("isLimitEnabled", false)
 
-    val dailyLimitMinutesRaw = screenTime.optInt("dailyLimitMinutes", 0)
+val limitMode = screenTime.optString(
+    "limitMode",
+    PolicyStore.LIMIT_MODE_NONE
+)
+
+val manualLockEnabled = lockState.optBoolean("manualLockEnabled", false)
+val dailyLimitLockActive = lockState.optBoolean("dailyLimitLockActive", false)
+val weeklyLimitLockActive = lockState.optBoolean("weeklyLimitLockActive", false)
+val scheduleLockActive = lockState.optBoolean("scheduleLockActive", false)
+
+val dailyLimitMinutesRaw = screenTime.optInt("dailyLimitMinutes", 0)
     val dailyLimitMinutes = max(0, min(dailyLimitMinutesRaw, MAX_MINUTES_PER_DAY))
 
     val extraMinutesRaw = screenTime.optInt("extraMinutesToday", 0)
     val extraMinutesToday = max(0, min(extraMinutesRaw, MAX_MINUTES_PER_DAY))
+
+    val weeklyLimitMinutesRaw = screenTime.optInt("weeklyLimitMinutes", 0)
+    val weeklyLimitMinutes = max(0, weeklyLimitMinutesRaw)
+
+    val usedWeekMinutesRaw = screenTime.optInt("usedWeekMinutes", 0)
+    val usedWeekMinutes = max(0, usedWeekMinutesRaw)
+
+    val weeklySchedule = screenTime.optJSONArray("weeklySchedule") ?: JSONArray()
 
     val blockedApps = mutableListOf<String>()
     val applications = data.optJSONArray("applications") ?: JSONArray()
@@ -65,17 +73,35 @@ object DevicePolicySyncHelper {
             blockedApps.add(packageName)
         }
     }
+PolicyStore.setServerLocked(context, isLocked)
 
-    PolicyStore.setServerLocked(context, isLocked)
-    PolicyStore.setLimitEnabled(context, isLimitEnabled)
-    PolicyStore.setDailyLimit(context, dailyLimitMinutes)
-    PolicyStore.setExtraMinutes(context, extraMinutesToday)
-    PolicyStore.setBlockedApps(context, blockedApps)
+PolicyStore.setManualLockEnabled(context, manualLockEnabled)
+PolicyStore.setDailyLimitLockActive(context, dailyLimitLockActive)
+PolicyStore.setWeeklyLimitLockActive(context, weeklyLimitLockActive)
+PolicyStore.setScheduleLockActive(context, scheduleLockActive)
 
-    Log.d(
-        TAG,
-        "Policy applied: locked=$isLocked limitEnabled=$isLimitEnabled daily=$dailyLimitMinutes extra=$extraMinutesToday blockedApps=${blockedApps.size}"
-    )
+PolicyStore.setLimitEnabled(context, isLimitEnabled)
+PolicyStore.setLimitMode(context, limitMode)
+PolicyStore.setDailyLimit(context, dailyLimitMinutes)
+PolicyStore.setExtraMinutes(context, extraMinutesToday)
+PolicyStore.setWeeklyLimit(context, weeklyLimitMinutes)
+PolicyStore.setUsedWeek(context, usedWeekMinutes)
+PolicyStore.setWeeklySchedule(context, weeklySchedule)
+
+PolicyStore.setBlockedApps(context, blockedApps)
+
+val shouldLock = PolicyStore.shouldLockDevice(context)
+val blockReason = PolicyStore.resolveBlockReason(context)
+
+if (shouldLock && blockReason.isNotBlank()) {
+    PolicyStore.setBlockReason(context, blockReason)
+} else {
+    PolicyStore.clearBlockReason(context)
+}
+
+Log.d(
+    TAG,
+"Policy applied: locked=$isLocked limitEnabled=$isLimitEnabled mode=$limitMode daily=$dailyLimitMinutes extra=$extraMinutesToday weekly=$weeklyLimitMinutes usedWeek=$usedWeekMinutes scheduleDays=${weeklySchedule.length()} manualLock=$manualLockEnabled dailyLock=$dailyLimitLockActive weeklyLock=$weeklyLimitLockActive scheduleLock=$scheduleLockActive blockedApps=${blockedApps.size}")
 }
 
     fun fetchAndSavePolicy(

@@ -62,6 +62,19 @@ export const styles = StyleSheet.create({
     color: REPORTS_COLORS.mutedText,
     textAlign: "center",
   },
+
+  generateReportBtn: {
+    marginTop: 8,
+    backgroundColor: REPORTS_COLORS.primary,
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+
+  generateReportBtnText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+  },
 });
 
 export const timeTabsStyles = StyleSheet.create({

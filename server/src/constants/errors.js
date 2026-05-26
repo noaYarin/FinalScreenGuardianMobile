@@ -69,6 +69,11 @@ export const Request = {
   DEVICE_NOT_OWNED: { status: 403, code: "FORBIDDEN", message: "Device does not belong to this child/parent" },
   REQUEST_ALREADY_PENDING: { status: 409, code: "REQUEST_ALREADY_PENDING", message: "There is already a pending request for this device" },
   INVALID_REQUEST_STATUS: { status: 400, code: "VALIDATION_ERROR", message: "Invalid request status" },
+  EXTENSION_ONLY_DAILY_LIMIT: {
+    status: 400,
+    code: "EXTENSION_ONLY_DAILY_LIMIT",
+    message: "Extension requests can only be approved while a daily limit is active"
+  }
 };
 
 

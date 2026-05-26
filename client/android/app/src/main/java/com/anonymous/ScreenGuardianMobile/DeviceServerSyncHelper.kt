@@ -184,7 +184,7 @@ fun sendUsageIfChanged(context: Context, minDeltaMinutes: Int = 1) {
         val usageChangedEnough =
             last == null || kotlin.math.abs(current - last) >= minDeltaMinutes
 
-        // Near the daily limit, sync usage more aggressively so warning/lock events are not delayed.
+        // Near the active  limit, sync usage more aggressively so warning/lock events are not delayed.
         val nearLimit =
             limitEnabled && remaining in 0..5
 

@@ -60,7 +60,7 @@ export const styles = StyleSheet.create({
     gap: 4,
   },
 
- heroTitle: {
+  heroTitle: {
     fontSize: 22,
     color: "#ffffff",
   },
@@ -462,7 +462,288 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
   },
   editorHintBottom: {
-  marginTop: 14,
-  marginBottom: 10,
-},
+    marginTop: 14,
+    marginBottom: 10,
+  },
+  screen: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+  },
+  scheduleToggleCard: {
+    marginTop: 16,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+
+  scheduleToggleTextWrap: {
+    flex: 1,
+  },
+
+  scheduleToggleTitle: {
+    fontSize: 15,
+    color: "#172033",
+    marginBottom: 3,
+  },
+
+  scheduleToggleSubtitle: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: "#6B7280",
+  },
+
+  unsavedChangesBox: {
+    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#FFF7ED",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#FED7AA",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+
+  unsavedChangesText: {
+    flex: 1,
+    fontSize: 12.5,
+    color: "#B45309",
+  },
+
+  savedChangesBox: {
+    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#ECFDF3",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#BBF7D0",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+
+  savedChangesText: {
+    flex: 1,
+    fontSize: 12.5,
+    color: "#1F7A3D",
+  },
+
+  weeklyOverviewSection: {
+    marginBottom: 14,
+  },
+
+  weeklyOverviewToggle: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+
+  weeklyOverviewTogglePressed: {
+    opacity: 0.85,
+  },
+
+  weeklyOverviewToggleLeft: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  weeklyOverviewToggleText: {
+    fontSize: 14,
+    color: "#172033",
+  },
+
+  weeklyOverviewCard: {
+    marginTop: 10,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    padding: 14,
+  },
+
+  weeklyOverviewHeader: {
+    marginBottom: 10,
+  },
+
+  weeklyOverviewTitle: {
+    fontSize: 16,
+    color: "#172033",
+    marginBottom: 3,
+  },
+
+  weeklyOverviewSubtitle: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: "#6B7280",
+  },
+
+  weeklyOverviewRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    paddingVertical: 9,
+    borderTopWidth: 1,
+    borderTopColor: "#F1F5F9",
+  },
+
+  weeklyOverviewDayWrap: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+  },
+
+  weeklyOverviewDayBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: 11,
+    backgroundColor: "#EFF6FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  weeklyOverviewDayBadgeBlocked: {
+    backgroundColor: "#FEF2F2",
+  },
+
+  weeklyOverviewDayBadgeAllDay: {
+    backgroundColor: "#ECFDF3",
+  },
+
+  weeklyOverviewDayBadgeText: {
+    fontSize: 12,
+    color: "#2F6BFF",
+  },
+
+  weeklyOverviewDayBadgeTextBlocked: {
+    color: "#B42318",
+  },
+
+  weeklyOverviewDayBadgeTextAllDay: {
+    color: "#1F7A3D",
+  },
+
+  weeklyOverviewDayName: {
+    fontSize: 13.5,
+    color: "#172033",
+  },
+
+  weeklyOverviewStatusPill: {
+    maxWidth: "58%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#EFF6FF",
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+  },
+
+  weeklyOverviewStatusPillBlocked: {
+    backgroundColor: "#FEF2F2",
+    borderColor: "#FECACA",
+  },
+
+  weeklyOverviewStatusPillAllDay: {
+    backgroundColor: "#ECFDF3",
+    borderColor: "#BBF7D0",
+  },
+
+  weeklyOverviewStatusText: {
+    fontSize: 11.5,
+    color: "#2F6BFF",
+  },
+
+  weeklyOverviewStatusTextBlocked: {
+    color: "#B42318",
+  },
+
+  weeklyOverviewStatusTextAllDay: {
+    color: "#1F7A3D",
+  },
+
+  dayHeaderRight: {
+    alignItems: "flex-end",
+    gap: 8,
+  },
+
+  dayExpandedContent: {
+    borderTopWidth: 1,
+    borderTopColor: "#E2E8F0",
+    padding: 14,
+    backgroundColor: "#F8FAFC",
+  },
+
+  dayStatusAllowed: {
+    color: "#1F7A3D",
+  },
+
+  dayStatusBlocked: {
+    color: "#B42318",
+  },
+
+  scheduleModeStatusPillAllDay: {
+    backgroundColor: "#ECFDF3",
+    borderColor: "#BBF7D0",
+  },
+
+  scheduleModeStatusTextAllDay: {
+    color: "#1F7A3D",
+  },
+
+  scheduleModeButtonSuccessActive: {
+    backgroundColor: "#ECFDF3",
+    borderColor: "#BBF7D0",
+  },
+
+  scheduleModeButtonSuccessTextActive: {
+    color: "#1F7A3D",
+  },
+
+  footer: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 18,
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 1,
+    borderTopColor: "#E2E8F0",
+  },
+
+  footerUnsavedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginBottom: 8,
+  },
+
+  footerUnsavedText: {
+    fontSize: 12.5,
+    color: "#B45309",
+  },
+
+  primaryActionButtonDisabled: {
+    opacity: 0.45,
+  },
 });

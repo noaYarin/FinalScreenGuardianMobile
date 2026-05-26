@@ -79,10 +79,14 @@ export default function ChildReportsScreen() {
 
     try {
       const result = await DeviceControl.getRemainingTime();
-      const dailyLimitMinutes = Boolean(result.limitEnabled)
-        ? Number(result.dailyLimitMinutes ?? 0) +
-          Number(result.extraMinutes ?? 0)
-        : null;
+
+      const limitMode = String(result.limitMode || "NONE");
+      const isLimitEnabled = Boolean(result.limitEnabled);
+
+      const dailyLimitMinutes =
+        isLimitEnabled && limitMode === "DAILY"
+          ? Number(result.dailyLimitMinutes ?? 0) + Number(result.extraMinutes ?? 0)
+          : null;
 
       setChildSnapshot({
         usedTodayMinutes: Number(result.usedTodayMinutes) || 0,

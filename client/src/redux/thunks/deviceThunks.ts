@@ -56,19 +56,29 @@ function normalizeDevice(raw: unknown): Device {
     name: rawDevice.name != null ? String(rawDevice.name) : "",
     type: rawDevice.type != null ? String(rawDevice.type) : "",
     platform: rawDevice.platform != null ? String(rawDevice.platform) : "",
-    isLocked: Boolean(rawDevice.isLocked),
-    isActive: Boolean(rawDevice.isActive),
+
+    isLocked: rawDevice.isLocked === true,
+    isActive: rawDevice.isActive !== false,
+
+    manualLockEnabled: rawDevice.manualLockEnabled === true,
+    dailyLimitLockActive: rawDevice.dailyLimitLockActive === true,
+    weeklyLimitLockActive: rawDevice.weeklyLimitLockActive === true,
+    scheduleLockActive: rawDevice.scheduleLockActive === true,
+
     location,
+
     parentId:
       rawDevice.parentId != null ? String(rawDevice.parentId) : "",
     childId: rawDevice.childId != null ? String(rawDevice.childId) : "",
+
     applications: Array.isArray(rawDevice.applications)
       ? (rawDevice.applications as Device["applications"])
       : [],
+
     screenTime:
       screenTime != null && typeof screenTime === "object"
         ? (screenTime as Device["screenTime"])
-        : {}
+        : {},
   };
 }
 

@@ -6,10 +6,14 @@ import {
   ActivityIndicator,
   Switch,
 } from "react-native";
-import { showErrorToast, showSuccessToast, showInfoToast } from "@/src/utils/appToast";
+import {
+  showErrorToast,
+  showSuccessToast,
+  showInfoToast,
+} from "@/src/utils/appToast";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
-
+import AutomaticLimitUnavailableCard from "@/src/components/AutomaticLimitUnavailableCard/AutomaticLimitUnavailableCard";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
 import AppText from "../../../components/AppText/AppText";
@@ -23,7 +27,6 @@ import {
   updateDeviceScreenTimeThunk,
 } from "@/src/redux/thunks/deviceThunks";
 import InfoHint from "../../../components/InfoHint/InfoHint";
-
 
 type ScreenLimitCard = {
   id: string;
@@ -150,6 +153,21 @@ export default function DailyTimeLimitsScreen() {
     )
     : "";
 
+  const activeLimitMode =
+    selectedDevice?.screenTime?.isLimitEnabled === true
+      ? selectedDevice.screenTime?.limitMode ?? "DAILY"
+      : "NONE";
+
+  const isOtherAutomaticLimitActive =
+    activeLimitMode === "WEEKLY" || activeLimitMode === "SCHEDULE";
+
+  const otherAutomaticLimitLabel =
+    activeLimitMode === "WEEKLY"
+      ? "Weekly Limits"
+      : activeLimitMode === "SCHEDULE"
+        ? "Weekly Schedule"
+        : null;
+
   const selectedLimits: ScreenLimitCard[] = useMemo(() => {
     if (!selectedDevice) return [];
 
@@ -172,6 +190,13 @@ export default function DailyTimeLimitsScreen() {
 
   const handleEditPress = (limitId: string) => {
     if (!selectedDevice) return;
+
+    if (isOtherAutomaticLimitActive) {
+      showInfoToast(
+        `Daily Limits are unavailable while ${otherAutomaticLimitLabel} are active. Turn it off first.`
+      );
+      return;
+    }
 
     const currentMinutes =
       limitId === "daily"
@@ -198,7 +223,9 @@ export default function DailyTimeLimitsScreen() {
   };
 
   const updateLimitByStep = (limitId: string, deltaHours: number) => {
-    if (!selectedDevice || !selectedChildId) return;
+    if (!selectedDevice || !selectedChildId || isOtherAutomaticLimitActive) {
+      return;
+    }
 
     const isEnabled = tempLimitEnabled[limitId] ?? false;
     if (!isEnabled) return;
@@ -220,6 +247,14 @@ export default function DailyTimeLimitsScreen() {
   const handleSavePress = async (limitId: string) => {
     if (!selectedDevice || !selectedChildId) return;
 
+    if (isOtherAutomaticLimitActive) {
+      showErrorToast(
+        `Daily Limits cannot be enabled while ${otherAutomaticLimitLabel} are active.`,
+        "Limit unavailable"
+      );
+      return;
+    }
+
     const nextMinutes = tempLimits[limitId];
     const nextEnabled = tempLimitEnabled[limitId];
 
@@ -237,8 +272,7 @@ export default function DailyTimeLimitsScreen() {
         })
       ).unwrap();
 
-      showInfoToast(
-        "The new limit was saved and sent to the child device.");
+      showInfoToast("The new limit was saved and sent to the child device.");
       setEditingCardId(null);
 
       setTempLimits((prev) => {
@@ -322,7 +356,8 @@ export default function DailyTimeLimitsScreen() {
             </AppText>
 
             <AppText weight="medium" style={styles.heroSubtitle}>
-              Choose a child and device, then set or update the daily screen-time limit.
+              Choose a child and device, then set or update the daily screen-time
+              limit.
             </AppText>
           </View>
 
@@ -344,6 +379,14 @@ export default function DailyTimeLimitsScreen() {
               setTempLimitEnabled({});
             }}
           />
+
+          {selectedDevice && isOtherAutomaticLimitActive ? (
+            <AutomaticLimitUnavailableCard
+              title="Daily Limits unavailable"
+              activeLimitLabel={otherAutomaticLimitLabel}
+              targetLimitLabel="Daily Limits"
+            />
+          ) : null}
 
           {isLoading && (
             <View style={styles.emptyState}>
@@ -371,6 +414,7 @@ export default function DailyTimeLimitsScreen() {
                 </AppText>
               </View>
             )}
+
           {!isLoading &&
             !devicesError &&
             selectedChildId &&
@@ -394,6 +438,7 @@ export default function DailyTimeLimitsScreen() {
                 subtitle="No daily screen-time limit was set for this device yet."
               />
             )}
+
           {selectedLimits.length > 0 && (
             <View style={styles.cardsList}>
               {selectedLimits.map((limitCard) => {
@@ -415,7 +460,10 @@ export default function DailyTimeLimitsScreen() {
                     ? Math.min(limitCard.currentHours / effectiveMaxHours, 1)
                     : 0;
 
-                const canDecrease = isEnabled && effectiveMaxHours > MIN_HOURS;
+                const canDecrease =
+                  isEnabled &&
+                  effectiveMaxHours > MIN_HOURS &&
+                  !isOtherAutomaticLimitActive;
 
                 return (
                   <View key={limitCard.id} style={styles.limitCard}>
@@ -484,7 +532,6 @@ export default function DailyTimeLimitsScreen() {
                       />
                     </View>
 
-
                     <View style={styles.actionsRow}>
                       <View
                         style={[
@@ -525,11 +572,13 @@ export default function DailyTimeLimitsScreen() {
                         <View style={styles.editButtonWrap}>
                           <Pressable
                             onPress={() => handleEditPress(limitCard.id)}
+                            disabled={isOtherAutomaticLimitActive}
                             accessibilityRole="button"
                             accessibilityLabel="Edit daily limit"
                             style={({ pressed }) => [
                               styles.editButton,
                               pressed && styles.editButtonPressed,
+                              isOtherAutomaticLimitActive && { opacity: 0.45 },
                             ]}
                           >
                             <AppText weight="bold" style={styles.editButtonText}>
@@ -549,27 +598,28 @@ export default function DailyTimeLimitsScreen() {
                             <AppText weight="bold" style={styles.editorTitle}>
                               Edit Daily Limit
                             </AppText>
-
                           </View>
-
 
                           <View style={styles.switchRow}>
                             <View style={styles.switchTextWrap}>
-
                               <AppText weight="medium" style={styles.switchHint}>
-                                {isEnabled ? "Daily limit is on" : " Daily limit is off"}
-
+                                {isEnabled
+                                  ? "Daily limit is on"
+                                  : "Daily limit is off"}
                               </AppText>
                             </View>
 
                             <Switch
                               value={isEnabled}
-                              onValueChange={(value) =>
+                              onValueChange={(value) => {
+                                if (isOtherAutomaticLimitActive) return;
+
                                 setTempLimitEnabled((prev) => ({
                                   ...prev,
                                   [limitCard.id]: value,
-                                }))
-                              }
+                                }));
+                              }}
+                              disabled={isOtherAutomaticLimitActive}
                               accessibilityLabel="Toggle daily limit"
                             />
                           </View>
@@ -577,11 +627,11 @@ export default function DailyTimeLimitsScreen() {
                           <View
                             style={[
                               styles.editorControlsRow,
-                              !isEnabled && { opacity: 0.5 },
+                              (!isEnabled || isOtherAutomaticLimitActive) && {
+                                opacity: 0.5,
+                              },
                             ]}
                           >
-
-
                             <Pressable
                               onPress={() =>
                                 updateLimitByStep(limitCard.id, -STEP_HOURS)
@@ -634,26 +684,32 @@ export default function DailyTimeLimitsScreen() {
                               onPress={() =>
                                 updateLimitByStep(limitCard.id, STEP_HOURS)
                               }
-                              disabled={!isEnabled}
+                              disabled={!isEnabled || isOtherAutomaticLimitActive}
                               accessibilityRole="button"
                               accessibilityLabel="Increase by five minutes"
                               style={({ pressed }) => [
                                 styles.stepButton,
                                 styles.stepButtonPrimary,
                                 pressed && styles.stepButtonPressed,
-                                !isEnabled && styles.stepButtonDisabled,
+                                (!isEnabled || isOtherAutomaticLimitActive) &&
+                                styles.stepButtonDisabled,
                               ]}
                             >
                               <MaterialCommunityIcons
                                 name="plus"
                                 size={18}
-                                color={!isEnabled ? "#A8B3C7" : "#FFFFFF"}
+                                color={
+                                  !isEnabled || isOtherAutomaticLimitActive
+                                    ? "#A8B3C7"
+                                    : "#FFFFFF"
+                                }
                               />
                               <AppText
                                 weight="bold"
                                 style={[
                                   styles.stepButtonTextPrimary,
-                                  !isEnabled && styles.stepButtonTextDisabled,
+                                  (!isEnabled || isOtherAutomaticLimitActive) &&
+                                  styles.stepButtonTextDisabled,
                                 ]}
                               >
                                 5
@@ -663,12 +719,14 @@ export default function DailyTimeLimitsScreen() {
 
                           <Pressable
                             onPress={() => handleSavePress(limitCard.id)}
+                            disabled={isOtherAutomaticLimitActive}
                             accessibilityRole="button"
                             accessibilityLabel="Save edited limit"
                             style={({ pressed }) => [
                               styles.saveButtonStrong,
                               styles.saveButtonStrongBottom,
                               pressed && styles.saveButtonStrongPressed,
+                              isOtherAutomaticLimitActive && { opacity: 0.45 },
                             ]}
                           >
                             <MaterialCommunityIcons
@@ -683,7 +741,6 @@ export default function DailyTimeLimitsScreen() {
                               Save
                             </AppText>
                           </Pressable>
-
                         </View>
                       )}
                     </View>

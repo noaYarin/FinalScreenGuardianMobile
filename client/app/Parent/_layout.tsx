@@ -10,6 +10,7 @@ export default function ParentRootLayout() {
         headerShadowVisible: false,
         headerBackButtonDisplayMode: "minimal",
         contentStyle: {
+          flex: 1,
           backgroundColor: COLORS.light.background,
         },
         headerStyle: {
@@ -72,6 +73,20 @@ export default function ParentRootLayout() {
         name="systemAlerts"
         options={{
           title: "System Alerts",
+        }}
+      />
+
+      <Stack.Screen
+        name="generateReport"
+        options={{
+          title: "Generate report",
+        }}
+      />
+
+      <Stack.Screen
+        name="analyticsReport"
+        options={{
+          title: "Usage report",
         }}
       />
     </Stack>

@@ -3,6 +3,7 @@ import { DayScheduleSchema } from "./daySchedule.schema.js";
 import { LimitMode } from "../constants/limitMode.js";
 
 import { DailyUsageHistoryEntrySchema } from "./dailyUsageHistoryEntry.schema.js";
+import { WeeklyUsageHistoryEntrySchema } from "./weeklyUsageHistoryEntry.schema.js";
 
 export const ScreenTimeSchema = new mongoose.Schema(
     {
@@ -33,6 +34,12 @@ export const ScreenTimeSchema = new mongoose.Schema(
             type: [DailyUsageHistoryEntrySchema],
             default: []
         },
+        // For weekly usage history, we store the start and end keys of the week
+        weeklyUsageHistory: {
+            type: [WeeklyUsageHistoryEntrySchema],
+            default: []
+        },
+        // For weekly schedule, we store the schedule for each day of the week
         weeklySchedule: {
             type: [DayScheduleSchema],
             default: []
