@@ -1,11 +1,12 @@
 import { Router } from "express";
-import { authJwt } from "../middleware/authJwt.js";
-import { requireChild } from "../middleware/requireChild.js";
+import { authJwt } from "../middlewares/authJwt.js";
+import { requireChild } from "../middlewares/requireChild.js";
 import {
   getChildBadgesController,
   getChildBadgeProgressController,
   unlockChildBadgeController,
 } from "../controllers/badge.controller.js";
+
 
 const router = Router();
 
