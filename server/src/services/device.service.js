@@ -1116,7 +1116,15 @@ export async function getDeviceCurrentStatusForChild({ deviceId, childId, parent
   device = await refreshScheduleLockIfNeeded(device, deviceId);
 
 
-  return buildCurrentStatus(device);
+  const screenTime = device.screenTime ?? {};
+
+  return {
+    ...buildCurrentStatus(device),
+    dailyUsageHistory: screenTime.dailyUsageHistory ?? [],
+    weeklyUsageHistory: screenTime.weeklyUsageHistory ?? [],
+    lastDailyResetAt: screenTime.lastDailyResetAt ?? null,
+    lastWeeklyResetAt: screenTime.lastWeeklyResetAt ?? null,
+  };
 }
 
 export async function updateDeviceLocation(deviceId, location, parentId, childId) {
