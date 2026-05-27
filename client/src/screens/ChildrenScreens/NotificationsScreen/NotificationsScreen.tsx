@@ -20,7 +20,7 @@ import {
   markAllChildNotificationsReadThunk,
 } from "@/src/redux/thunks/notificationThunks";
 
-type NotificationType = "all" | "time" | "reward" | "task";
+type NotificationType = "all" | "time" | "reward" | "task" | "badge";
 
 type NotificationItem = {
   id: string;
@@ -35,12 +35,23 @@ type NotificationItem = {
 const FILTERS: { id: NotificationType; label: string }[] = [
   { id: "all", label: "All" },
   { id: "time", label: "Time" },
-  { id: "reward", label: "Rewards" },
   { id: "task", label: "Tasks" },
+  { id: "reward", label: "Rewards" },
+  { id: "badge", label: "Badges" },
 ];
 
-function mapNotificationType(type: string): Exclude<NotificationType, "all"> {
-  const normalized = String(type).toUpperCase();
+function isBadgeNotification(notification: Notification) {
+  const normalized = String(notification.type).toUpperCase();
+  if (normalized.includes("BADGE")) return true;
+  if (normalized !== "ACHIEVEMENT_UNLOCKED") return false;
+
+  return notification.data?.badgeId != null;
+}
+
+function mapNotificationType(
+  notification: Notification
+): Exclude<NotificationType, "all"> {
+  const normalized = String(notification.type).toUpperCase();
 
   if (
     normalized.includes("SCREEN_TIME") ||
@@ -49,6 +60,10 @@ function mapNotificationType(type: string): Exclude<NotificationType, "all"> {
     normalized.includes("EXTENSION_REQUEST")
   ) {
     return "time";
+  }
+
+  if (isBadgeNotification(notification)) {
+    return "badge";
   }
 
   if (
@@ -67,21 +82,28 @@ function mapNotificationType(type: string): Exclude<NotificationType, "all"> {
 }
 
 function getNotificationIcon(
-  type: string
+  notification: Notification,
+  category: Exclude<NotificationType, "all">
 ): keyof typeof MaterialCommunityIcons.glyphMap {
-  const normalized = String(type).toUpperCase();
+  const normalized = String(notification.type).toUpperCase();
 
-  if (normalized.includes("TASK_APPROVED")) return "check-circle-outline";
-  if (normalized.includes("TASK")) return "clipboard-check-outline";
-  if (normalized.includes("ACHIEVEMENT")) return "trophy";
-  if (normalized.includes("REWARD") || normalized.includes("COIN")) {
-    return "star-circle";
+  switch (category) {
+    case "badge":
+      return "medal-outline";
+    case "task":
+      if (normalized.includes("TASK_APPROVED")) return "check-circle-outline";
+      return "clipboard-check-outline";
+    case "reward":
+      if (normalized.includes("ACHIEVEMENT")) return "trophy";
+      return "star-circle";
+    case "time":
+      if (normalized.includes("LOCK")) return "lock-outline";
+      if (normalized.includes("EXTENSION")) return "clock-plus-outline";
+      if (normalized.includes("SCREEN_TIME")) return "timer-sand";
+      return "bell-ring-outline";
+    default:
+      return "bell-ring-outline";
   }
-  if (normalized.includes("LOCK")) return "lock-outline";
-  if (normalized.includes("EXTENSION")) return "clock-plus-outline";
-  if (normalized.includes("SCREEN_TIME")) return "timer-sand";
-
-  return "bell-ring-outline";
 }
 
 function getTimeLabel(createdAt?: string) {
@@ -123,13 +145,15 @@ function getTimeLabel(createdAt?: string) {
 }
 
 function mapNotificationToItem(notification: Notification): NotificationItem {
+  const type = mapNotificationType(notification);
+
   return {
     id: String(notification._id),
-    type: mapNotificationType(notification.type),
+    type,
     title: notification.title || "New notification",
     message: notification.description || "",
     timeLabel: getTimeLabel(notification.createdAt),
-    icon: getNotificationIcon(notification.type),
+    icon: getNotificationIcon(notification, type),
     isNew: !notification.isRead,
   };
 }
