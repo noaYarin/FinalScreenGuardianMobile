@@ -636,7 +636,12 @@ export default function HomeScreen() {
               onPress={() => router.push("/Child/achievements" as Href)}
             />
 
-            <Tile iconName={ICON.goals} label="Goals" colorKey="goals" disabled />
+            <Tile
+              iconName={ICON.goals}
+              label="Goals"
+              colorKey="goals"
+              onPress={() => router.push("/Child/goals" as Href)}
+            />
 
             <Tile
               iconName={ICON.charts}
