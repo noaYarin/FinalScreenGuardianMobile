@@ -16,7 +16,6 @@ import {
   getJerusalemDateKey,
   getJerusalemWeekDateKeys,
   getJerusalemWeekStartKey,
-  isSameJerusalemDay,
   JERUSALEM_TZ,
 } from "../utils/time.js";
 
@@ -28,6 +27,9 @@ function getBadgeConfig(badgeId) {
   return badges.find((b) => Number(b.id) === Number(badgeId));
 }
 
+// Day without usage is not considered for the badge
+const minUsageMinutes = 1;
+
 function getDayMinutes(history, dateKey) {
   const entry = history.find((item) => item.dateKey === dateKey);
   return entry ? Number(entry.usedMinutes) || 0 : 0;
@@ -38,6 +40,15 @@ function getWeekMinutesByStartKey(history, weekStartKey) {
   return entry ? Number(entry.usedMinutes) || 0 : 0;
 }
 
+function hasScreenTimeUsage(minutes) {
+  return Number(minutes) >= minUsageMinutes;
+}
+
+function dayCountsForBadge(history, dateKey, maxMinutes) {
+  const minutes = getDayMinutes(history, dateKey);
+  return hasScreenTimeUsage(minutes) && minutes <= maxMinutes;
+}
+
 function getYesterdayDateKey(todayKey) {
   return moment
     .tz(todayKey, "YYYY-MM-DD", JERUSALEM_TZ)
@@ -45,25 +56,16 @@ function getYesterdayDateKey(todayKey) {
     .format("YYYY-MM-DD");
 }
 
-function getPreviousWeekStartKey(now) {
-  const todayKey = getJerusalemDateKey(now);
-  return getJerusalemWeekStartKey(
-    moment.tz(todayKey, "YYYY-MM-DD", JERUSALEM_TZ).subtract(1, "day").toDate()
-  );
+function isJerusalemSunday(now = new Date()) {
+  return moment(now).tz(JERUSALEM_TZ).day() === 0;
 }
 
-// weekStartKey is sunday so the function returns the date of sunday in the last week
-function getWeekStartKeyBefore(weekStartKey) {
+// Given a Sunday dateKey, returns the Sunday from exactly one week earlier
+function getSundayDateKeyOneWeekBefore(sundayDateKey) {
   return moment
-    .tz(weekStartKey, "YYYY-MM-DD", JERUSALEM_TZ)
+    .tz(sundayDateKey, "YYYY-MM-DD", JERUSALEM_TZ)
     .subtract(7, "days")
     .format("YYYY-MM-DD");
-}
-
-function isWeekJustReset(screenTime, now) {
-  const lastWeeklyResetAt = screenTime.lastWeeklyResetAt;
-  if (!lastWeeklyResetAt) return false;
-  return isSameJerusalemDay(new Date(lastWeeklyResetAt), now);
 }
 
 function countCompletedDaysUnderLimit(
@@ -77,7 +79,7 @@ function countCompletedDaysUnderLimit(
 
   for (const dateKey of weekKeys) {
     if (dateKey >= todayKey) continue;
-    if (getDayMinutes(dailyUsageHistory, dateKey) <= maxMinutes) {
+    if (dayCountsForBadge(dailyUsageHistory, dateKey, maxMinutes)) {
       count += 1;
     }
   }
@@ -96,7 +98,11 @@ function isBadgeCompleteAfterMidnight(badgeId, screenTime, now = new Date()) {
   switch (config.rule) {
     case "single_day": {
       const yesterdayKey = getYesterdayDateKey(todayKey);
-      return getDayMinutes(dailyUsageHistory, yesterdayKey) <= config.maxMinutes;
+      const yesterdayMinutes = getDayMinutes(dailyUsageHistory, yesterdayKey);
+      return (
+        hasScreenTimeUsage(yesterdayMinutes) &&
+        yesterdayMinutes <= config.maxMinutes
+      );
     }
 
     case "days_in_week":
@@ -110,32 +116,42 @@ function isBadgeCompleteAfterMidnight(badgeId, screenTime, now = new Date()) {
       );
 
     case "weekly_total": {
-      if (!isWeekJustReset(screenTime, now)) return false;
-      const prevWeekStartKey = getPreviousWeekStartKey(now);
+      if (!isJerusalemSunday(now)) return false;
+      const endedWeekStartKey = getSundayDateKeyOneWeekBefore(
+        getJerusalemWeekStartKey(now)
+      );
+      const endedWeekMinutes = getWeekMinutesByStartKey(
+        weeklyUsageHistory,
+        endedWeekStartKey
+      );
       return (
-        getWeekMinutesByStartKey(weeklyUsageHistory, prevWeekStartKey) <=
-        config.maxMinutes
+        hasScreenTimeUsage(endedWeekMinutes) &&
+        endedWeekMinutes <= config.maxMinutes
       );
     }
 
     case "beat_last_week": {
-      if (!isWeekJustReset(screenTime, now)) return false;
-      const prevWeekStartKey = getPreviousWeekStartKey(now);
-      const beforePrevWeekStartKey = getWeekStartKeyBefore(prevWeekStartKey);
-      const hasPriorWeek = weeklyUsageHistory.some(
-        (entry) => entry.weekStartKey === beforePrevWeekStartKey
+      if (!isJerusalemSunday(now)) return false;
+      const endedWeekStartKey = getSundayDateKeyOneWeekBefore(
+        getJerusalemWeekStartKey(now)
       );
-      if (!hasPriorWeek) return false;
+      const weekBeforeEndedStartKey =
+        getSundayDateKeyOneWeekBefore(endedWeekStartKey);
 
-      const prevWeekMinutes = getWeekMinutesByStartKey(
+      const endedWeekMinutes = getWeekMinutesByStartKey(
         weeklyUsageHistory,
-        prevWeekStartKey
+        endedWeekStartKey
       );
-      const beforePrevWeekMinutes = getWeekMinutesByStartKey(
+      const weekBeforeEndedMinutes = getWeekMinutesByStartKey(
         weeklyUsageHistory,
-        beforePrevWeekStartKey
+        weekBeforeEndedStartKey
       );
-      return prevWeekMinutes < beforePrevWeekMinutes;
+
+      return (
+        hasScreenTimeUsage(endedWeekMinutes) &&
+        hasScreenTimeUsage(weekBeforeEndedMinutes) &&
+        endedWeekMinutes < weekBeforeEndedMinutes
+      );
     }
 
     default:
@@ -199,6 +215,11 @@ async function unlockBadgeIfEligible({
 // Check badge completion after midnight
 async function evaluateBadgesAfterMidnight({ parentId, childId }) {
   let completedBadgeIds = await getCompletedBadgeIdsDal(parentId, childId);
+
+  if (completedBadgeIds === null) {
+    throw new AppError(CommonErrors.CHILD_NOT_FOUND);
+  }
+
   const device = await findActiveDeviceForChild(childId);
 
   if (device) {
@@ -273,6 +294,11 @@ export async function unlockChildBadgeService({
 
   if (existingIds.includes(numericBadgeId)) {
     return { success: true, completedBadgeIds: existingIds };
+  }
+
+  const currentBadgeId = getCurrentBadgeId(existingIds);
+  if (numericBadgeId !== currentBadgeId) {
+    throw new AppError(CommonErrors.VALIDATION_ERROR);
   }
 
   const completedBadgeIds = await unlockBadgeIfEligible({
