@@ -40,6 +40,33 @@ export const styles = StyleSheet.create({
     elevation: 2,
   },
 
+  stateMessage: {
+    fontSize: 15,
+    color: COLORS.textMuted,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+
+  errorCard: {
+    backgroundColor: "#FFF1F2",
+    borderColor: "#FECDD3",
+  },
+
+  errorTitle: {
+    fontSize: 18,
+    color: COLORS.text,
+    textAlign: "center",
+    lineHeight: 24,
+  },
+
+  errorSubtitle: {
+    fontSize: 14,
+    color: COLORS.textMuted,
+    textAlign: "center",
+    lineHeight: 20,
+    paddingHorizontal: 8,
+  },
+
   heroEyebrow: {
     fontSize: 12,
     color: COLORS.accent,

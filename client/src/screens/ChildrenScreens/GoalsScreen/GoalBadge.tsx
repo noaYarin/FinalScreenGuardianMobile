@@ -2,7 +2,7 @@ import React from "react";
 import { View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import type { ChildGoal } from "@/data/childGoals";
+import type { ChildGoal } from "@/src/api/badge";
 import AppText from "@/src/components/AppText/AppText";
 import { styles, LOCKED_BADGE_COLORS } from "./styles";
 

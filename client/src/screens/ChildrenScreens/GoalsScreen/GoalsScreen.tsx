@@ -1,11 +1,12 @@
 import React, { useMemo } from "react";
-import { View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import { badges, type ChildGoal } from "@/data/childGoals";
+import type { ChildGoal } from "@/src/api/badge";
 import ScreenLayout from "@/src/layouts/ScreenLayout/ScreenLayout";
 import AppText from "@/src/components/AppText/AppText";
 import GoalBadge from "./GoalBadge";
+import { useChildBadges } from "@/src/hooks/useChildBadges";
 import { styles } from "./styles";
 
 const LOCKED_PREVIEW_COUNT = 6;
@@ -78,21 +79,53 @@ function BadgeGrid({
 }
 
 export default function GoalsScreen() {
-  const currentGoal = useMemo(() => getCurrentGoal(badges), []);
-  const completedBadges = useMemo(() => getCompletedGoals(badges), []);
-  const upcomingLocked = useMemo(() => getUpcomingLockedGoals(badges), []);
-  const earnedCount = useMemo(() => getEarnedCount(badges), []);
+  const { badgeList, isLoading, error } = useChildBadges();
+  const currentGoal = useMemo(() => getCurrentGoal(badgeList), [badgeList]);
+  const completedBadges = useMemo(() => getCompletedGoals(badgeList), [badgeList]);
+  const upcomingLocked = useMemo(
+    () => getUpcomingLockedGoals(badgeList),
+    [badgeList]
+  );
+  const earnedCount = useMemo(() => getEarnedCount(badgeList), [badgeList]);
+  const allBadgesCompleted =
+    !isLoading && !error && badgeList.length > 0 && !currentGoal;
 
   return (
     <ScreenLayout>
       <View style={styles.page}>
+        {isLoading ? (
+          <View style={styles.heroCard}>
+            <ActivityIndicator size="large" color="#2563EB" />
+            <AppText weight="medium" style={styles.stateMessage}>
+              Loading badges...
+            </AppText>
+          </View>
+        ) : null}
+
+        {error ? (
+          <View
+            style={[styles.heroCard, styles.errorCard]}
+            accessibilityRole="alert"
+            accessibilityLabel="Could not load badges. Leave and open this screen again"
+          >
+            <AppText weight="extraBold" style={styles.errorTitle}>
+              Couldn't load your badges
+            </AppText>
+            <AppText weight="medium" style={styles.errorSubtitle}>
+              Leave this screen and come back to try again.
+            </AppText>
+          </View>
+        ) : null}
+
+        {!isLoading && !error ? (
+          <>
         <View style={styles.summaryPill}>
           <MaterialCommunityIcons name="medal-outline" size={16} color="#2563EB" />
           <AppText weight="medium" style={styles.summaryPillText}>
             Badges earned
           </AppText>
           <AppText weight="extraBold" style={styles.summaryPillValue}>
-            {earnedCount}/{badges.length}
+            {earnedCount}/{badgeList.length}
           </AppText>
         </View>
 
@@ -119,7 +152,7 @@ export default function GoalsScreen() {
               {currentGoal.description}
             </AppText>
           </View>
-        ) : (
+        ) : allBadgesCompleted ? (
           <View
             style={[styles.heroCard, styles.heroCompleteCard]}
             accessibilityRole="summary"
@@ -133,7 +166,7 @@ export default function GoalsScreen() {
               Amazing work — new challenges are coming soon.
             </AppText>
           </View>
-        )}
+        ) : null}
 
         {upcomingLocked.length > 0 ? (
           <>
@@ -159,6 +192,8 @@ export default function GoalsScreen() {
             </View>
 
             <BadgeGrid items={completedBadges} variant="earned" />
+          </>
+        ) : null}
           </>
         ) : null}
       </View>
