@@ -42,13 +42,13 @@ const ICON = {
   level: "shield-star",
   coins: "circle-multiple",
   time: "clock-outline",
-  apps: "apps",
+  apps: "view-grid-outline",
   extend: "clock-plus-outline",
   shop: "shopping-outline",
   tasks: "clipboard-check-outline",
-  achievements: "trophy",
+  achievements: "trophy-outline",
   goals: "target",
-  charts: "chart-donut",
+  charts: "chart-donut-variant",
   bulb: "lightbulb-on-outline",
   chatbot: "chat-processing-outline",
   help: "help-circle-outline",
@@ -764,7 +764,7 @@ export default function HomeScreen() {
             <Tile
               iconName={ICON.charts}
               label="Charts"
-              colorKey="help"
+              colorKey="reports"
               onPress={() => router.push("/Child/reports" as Href)}
             />
 
@@ -778,7 +778,7 @@ export default function HomeScreen() {
             <Tile
               iconName={ICON.settings}
               label="Settings"
-              colorKey="help"
+              colorKey="settings"
               onPress={() => router.push("/Child/settings" as Href)}
             />
           </View>
@@ -798,7 +798,7 @@ export default function HomeScreen() {
               <View style={styles.panicIconBadge}>
                 <MaterialCommunityIcons
                   name={ICON.panic}
-                  size={18}
+                  size={24}
                   color="#fff"
                 />
               </View>

@@ -2,14 +2,14 @@ import { StyleSheet } from "react-native";
 
 export const TILE_COLORS = {
   apps: { bg: "#EAF2FF", badge: "#CFE3FF", icon: "#2F6DEB", border: "#D6E6FF" },
-  extend: { bg: "#EAF2FF", badge: "#CFE3FF", icon: "#2F6DEB", border: "#D6E6FF" },
-  shop: { bg: "#FFF3DD", badge: "#FFE1A8", icon: "#B46B00", border: "#FFE6BA" },
+  extend: { bg: "#E0F7FA", badge: "#B2EBF2", icon: "#00838F", border: "#B2DFDB" },
+  shop: { bg: "#FAE8FF", badge: "#F3E8FF", icon: "#C026D3", border: "#F0ABFC" },
   tasks: { bg: "#E9FFF3", badge: "#C9F5DE", icon: "#0F8A5F", border: "#D7F7E8" },
   achievements: { bg: "#F3EDFF", badge: "#E0D2FF", icon: "#6D28D9", border: "#E7DBFF" },
   goals: { bg: "#FFEAF0", badge: "#FFC9D8", icon: "#D81B60", border: "#FFD6E2" },
-  encouragement: { bg: "#FFEFF0", badge: "#FFD0D4", icon: "#E11D48", border: "#FFD9DC" },
-  ideas: { bg: "#EEFFF4", badge: "#CFF7DD", icon: "#16A34A", border: "#DAF9E6" },
-  help: { bg: "#EAF2FF", badge: "#CFE3FF", icon: "#2563EB", border: "#D6E6FF" },
+  reports: { bg: "#FFF4E6", badge: "#FFE0B2", icon: "#E65100", border: "#FFCC80" },
+  ideas: { bg: "#FFFBEB", badge: "#FEF3C7", icon: "#CA8A04", border: "#FDE68A" },
+  settings: { bg: "#F1F5F9", badge: "#E2E8F0", icon: "#475569", border: "#CBD5E1" },
 } as const;
 
 export const styles = StyleSheet.create({
@@ -409,10 +409,6 @@ export const styles = StyleSheet.create({
   },
 
   panicIconBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.22)",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
