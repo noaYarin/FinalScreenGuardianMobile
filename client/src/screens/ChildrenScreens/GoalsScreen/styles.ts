@@ -1,17 +1,19 @@
 import { StyleSheet } from "react-native";
 
 export const COLORS = {
-  screenBg: "#EEF4FC",
   white: "#FFFFFF",
   text: "#0F172A",
   textMuted: "#64748B",
-  progressTrack: "#E2E8F0",
-  progressFill: "#3B82F6",
-  goalCompletedBg: "#FFF4E6",
-  goalCompletedBorder: "#A67C52",
-  goalActiveBg: "#FFFFFF",
-  goalActiveBorder: "#CBD5E1",
+  accent: "#2563EB",
+  heroBorder: "#E2E8F0",
   shadow: "#0F172A",
+};
+
+export const LOCKED_BADGE_COLORS = {
+  border: "#CBD5E1",
+  icon: "#94A3B8",
+  lockBorder: "#E2E8F0",
+  lockIcon: "#94A3B8",
 };
 
 export const styles = StyleSheet.create({
@@ -19,151 +21,215 @@ export const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 560,
     alignSelf: "center",
-    gap: 14,
+    gap: 18,
+    paddingBottom: 8,
   },
 
-  subHeader: {
-    alignItems: "center",
-    paddingVertical: 4,
-    gap: 4,
-  },
-
-  subHeaderEmoji: {
-    fontSize: 28,
-    lineHeight: 34,
-  },
-
-  subHeaderTitle: {
-    fontSize: 22,
-    color: COLORS.text,
-    textAlign: "center",
-  },
-
-  subHeaderSubtitle: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-    textAlign: "center",
-  },
-
-  progressCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 20,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+  heroCard: {
+    borderRadius: 24,
+    paddingVertical: 22,
+    paddingHorizontal: 18,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: COLORS.heroBorder,
+    alignItems: "center",
+    gap: 12,
     shadowColor: COLORS.shadow,
     shadowOpacity: 0.08,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
     elevation: 2,
-    gap: 10,
   },
 
-  progressHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+  heroEyebrow: {
+    fontSize: 12,
+    color: COLORS.accent,
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
+    textAlign: "center",
   },
 
-  progressLabel: {
-    fontSize: 16,
+  heroTitle: {
+    fontSize: 22,
     color: COLORS.text,
-    textAlign: "left",
+    textAlign: "center",
+    lineHeight: 28,
   },
 
-  progressPercent: {
-    fontSize: 18,
-    color: "#2563EB",
-  },
-
-  progressTrack: {
-    height: 12,
-    borderRadius: 999,
-    backgroundColor: COLORS.progressTrack,
-    overflow: "hidden",
-  },
-
-  progressFill: {
-    height: "100%",
-    borderRadius: 999,
-    backgroundColor: COLORS.progressFill,
-  },
-
-  goalsList: {
-    gap: 12,
-  },
-
-  goalCard: {
-    borderRadius: 18,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    borderWidth: 1.5,
-    shadowColor: COLORS.shadow,
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 1,
-  },
-
-  goalCardCompleted: {
-    backgroundColor: COLORS.goalCompletedBg,
-    borderColor: COLORS.goalCompletedBorder,
-  },
-
-  goalCardActive: {
-    backgroundColor: COLORS.goalActiveBg,
-    borderColor: COLORS.goalActiveBorder,
-  },
-
-  goalCardRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-
-  goalTextBlock: {
-    flex: 1,
-    gap: 6,
-  },
-
-  goalTitle: {
-    fontSize: 16,
-    color: COLORS.text,
+  heroDescription: {
+    fontSize: 15,
+    color: COLORS.textMuted,
+    textAlign: "center",
     lineHeight: 22,
+    paddingHorizontal: 8,
+  },
+
+  heroCompleteCard: {
+    backgroundColor: "#F0FDF4",
+    borderColor: "#BBF7D0",
+  },
+
+  heroCompleteTitle: {
+    fontSize: 20,
+    color: "#14532D",
+    textAlign: "center",
+  },
+
+  heroCompleteSubtitle: {
+    fontSize: 14,
+    color: "#166534",
+    textAlign: "center",
+    lineHeight: 20,
+  },
+
+  sectionHeader: {
+    gap: 4,
+    paddingHorizontal: 2,
+  },
+
+  sectionTitle: {
+    fontSize: 18,
+    color: COLORS.text,
     textAlign: "left",
   },
 
-  goalDescription: {
+  sectionSubtitle: {
     fontSize: 13,
     color: COLORS.textMuted,
+    textAlign: "left",
     lineHeight: 18,
-    textAlign: "left",
   },
 
-  goalProgress: {
-    fontSize: 14,
-    color: "#2563EB",
-    textAlign: "left",
+  badgeGrid: {
+    gap: 14,
   },
 
-  checkboxCompleted: {
-    width: 28,
-    height: 28,
-    borderRadius: 999,
-    backgroundColor: "#FDE8C8",
-    borderWidth: 1.5,
-    borderColor: COLORS.goalCompletedBorder,
+  badgeGridRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "flex-start",
+    gap: 20,
+  },
+
+  badgeGridItem: {
+    width: 96,
+    alignItems: "center",
+  },
+
+  badgeWrap: {
+    alignItems: "center",
+    gap: 8,
+    alignSelf: "center",
+  },
+
+  badgeWrapHero: {
     alignItems: "center",
     justifyContent: "center",
   },
 
-  checkboxEmpty: {
-    width: 28,
-    height: 28,
-    borderRadius: 999,
+  badgeShell: {
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  badgeCircle: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "transparent",
+    overflow: "hidden",
+  },
+
+  badgeCircleLocked: {
+    opacity: 0.9,
+  },
+
+  badgeIconLocked: {
+    opacity: 0.75,
+  },
+
+  lockBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
     borderWidth: 2,
-    borderColor: "#94A3B8",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2,
+  },
+
+  lockBadgeHero: {
+    top: 0,
+    right: 0,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 2.5,
+  },
+
+  earnedBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2,
+  },
+
+  earnedBadgeHero: {
+    top: 0,
+    right: 0,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 2.5,
+  },
+
+  badgeCaption: {
+    alignItems: "center",
+    paddingHorizontal: 2,
+    minHeight: 28,
+  },
+
+  badgeTitle: {
+    fontSize: 11,
+    color: COLORS.text,
+    textAlign: "center",
+    lineHeight: 14,
+  },
+
+  badgeTitleLocked: {
+    color: COLORS.textMuted,
+  },
+
+  summaryPill: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     backgroundColor: COLORS.white,
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+
+  summaryPillText: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+  },
+
+  summaryPillValue: {
+    fontSize: 13,
+    color: COLORS.accent,
   },
 });
