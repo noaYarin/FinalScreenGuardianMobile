@@ -9,7 +9,6 @@ export default function NotificationsRoute() {
           title: "Notifications",
           headerTitleAlign: "center",
           headerShadowVisible: false,
-          headerBackVisible: false,
         }}
       />
       <NotificationsScreen />
