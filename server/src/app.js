@@ -13,6 +13,7 @@ import childRoutes from "./routes/child.routes.js";
 import auditRoutes from "./routes/audit.route.js";
 import taskRoutes from "./routes/task.routes.js";
 import achievementsRoutes from "./routes/achievements.routes.js";
+import badgeRoutes from "./routes/badge.routes.js";
 import rewardRoutes from "./routes/reward.routes.js";
 
 const app = express();
@@ -34,6 +35,7 @@ app.use("/api/v1/child", childRoutes);
 app.use("/api/v1/audit", auditRoutes);
 app.use("/api/v1/tasks", taskRoutes);
 app.use("/api/v1/achievements", achievementsRoutes);
+app.use("/api/v1/badges", badgeRoutes);
 app.use(errorHandler);
 
 export default app;

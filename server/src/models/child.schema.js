@@ -31,6 +31,7 @@ export const ChildSchema = new mongoose.Schema(
       default: [],
     },
     avatar: { type: AvatarSchema, default: () => ({}) },
+    completedBadgeIds: { type: [Number], default: [] },
   },
 
   { timestamps: true }
