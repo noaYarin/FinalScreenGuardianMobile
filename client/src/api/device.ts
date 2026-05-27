@@ -264,6 +264,35 @@ export type AppUsageStat = {
   lastTimeUsed?: number;
 };
 
+export type DailyUsageHistoryEntry = {
+  dateKey: string;
+  usedMinutes: number;
+};
+
+export type WeeklyUsageHistoryEntry = {
+  weekStartKey: string;
+  usedMinutes: number;
+};
+
+export type DeviceScreenTimeSnapshot = {
+  usedTodayMinutes: number;
+  usedWeekMinutes: number;
+  dailyUsageHistory: DailyUsageHistoryEntry[];
+  weeklyUsageHistory: WeeklyUsageHistoryEntry[];
+};
+
+export async function apiGetDeviceScreenTimeSnapshot(
+  deviceId: string
+): Promise<DeviceScreenTimeSnapshot> {
+  return api.get<DeviceScreenTimeSnapshot>(
+    `${URL}/${encodeURIComponent(deviceId)}/current-status`,
+    {
+      requireAuth: true,
+      role: "CHILD",
+    }
+  );
+}
+
 export async function apiSyncAppUsage(
   deviceId: string,
   usageStats: AppUsageStat[]
