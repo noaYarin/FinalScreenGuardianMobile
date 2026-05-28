@@ -460,7 +460,7 @@ export async function lockDevice(parentId, deviceId) {
       type: NotificationType.DEVICE_LOCKED,
       severity: NotificationSeverity.WARNING,
       title: "Device Locked",
-      description: "The parent locked the device"
+      description: `${updatedDevice.name ?? "Your device"} was locked by your parent.`,
     });
   } catch (err) {
     console.error("notifyChild failed in lockDevice:", err.message);
@@ -507,7 +507,7 @@ export async function unlockDevice(parentId, deviceId) {
       type: NotificationType.DEVICE_UNLOCKED,
       severity: NotificationSeverity.INFO,
       title: "Device Unlocked",
-      description: "The parent unlocked the device"
+      description: `${updatedDevice.name ?? "Your device"} was unlocked by your parent.`,
     });
   } catch (err) {
     console.error("notifyChild failed in unlockDevice:", err.message);
@@ -736,14 +736,25 @@ export async function updateDeviceScreenTime(parentId, deviceId, body) {
 
   pushDeviceStatusUpdate(updatedDevice);
 
+  const updatedLimitMode = getEffectiveLimitMode(updatedDevice.screenTime);
+
+  const screenTimeDescription =
+    updatedLimitMode === LimitMode.DAILY
+      ? `Your daily screen-time limit was updated to ${Number(updatedDevice.screenTime?.dailyLimitMinutes ?? 0)} minutes.`
+      : updatedLimitMode === LimitMode.WEEKLY
+        ? `Your weekly screen-time limit was updated to ${Number(updatedDevice.screenTime?.weeklyLimitMinutes ?? 0)} minutes.`
+        : updatedLimitMode === LimitMode.SCHEDULE
+          ? "Your weekly screen-time routine was updated."
+          : "Screen-time limits were turned off.";
+
   try {
     await notifyChild({
       parentId,
       childId: device.childId,
       type: NotificationType.SCREEN_TIME_UPDATED,
       severity: NotificationSeverity.INFO,
-      title: "Screen Time Limits Updated",
-      description: "The parent updated the screen time settings",
+      title: "Screen Time Updated",
+      description: screenTimeDescription,
     });
   } catch (err) {
     console.error("notifyChild failed in updateDeviceScreenTime:", err.message);
@@ -941,7 +952,7 @@ export async function blockApplication(parentId, deviceId, packageName) {
     childId: device.childId,
     type: NotificationType.APPLICATION_BLOCKED,
     severity: NotificationSeverity.WARNING,
-    title: "App blocked",
+    title: "App Blocked",
     description: `${app.name ?? packageName} was blocked by your parent`,
     data: {
       deviceId: String(device._id),
@@ -1000,7 +1011,7 @@ export async function unblockApplication(parentId, deviceId, packageName) {
     childId: device.childId,
     type: NotificationType.APPLICATION_UNBLOCKED,
     severity: NotificationSeverity.INFO,
-    title: "App unlocked",
+    title: "App Unlocked",
     description: `${app.name ?? packageName} is now available`,
     data: {
       deviceId: String(device._id),
@@ -1223,11 +1234,7 @@ async function enforceWeeklyLimitReached({ deviceId, childName }) {
       type: NotificationType.DEVICE_LOCKED,
       severity: NotificationSeverity.CRITICAL,
       title: "Weekly Screen Time Limit Reached",
-      description: `${childName} reached the weekly screen time limit and the device has been locked.`,
-      data: {
-        link: "/Parent/child-stats",
-        childId: String(lockedDevice.childId),
-      },
+      description: `${childName} reached the weekly screen-time limit. ${lockedDevice.name ?? "The device"} was locked automatically.`,
     });
   } catch (err) {
     console.error(
@@ -1387,9 +1394,8 @@ export async function updateDeviceUsageByChild({
         childId: lockedDevice.childId,
         type: NotificationType.DEVICE_LOCKED,
         severity: NotificationSeverity.CRITICAL,
-        title: "Device Locked",
-        description: `Screen time for ${childName} has ended and the device has been locked.`,
-        data: { link: "/Parent/child-stats", childId: String(lockedDevice.childId) }
+        title: "Daily Screen Time Limit Reached",
+        description: `${childName} reached the daily screen-time limit. ${lockedDevice.name ?? "The device"} was locked automatically.`,
       });
     } catch (err) {
       console.error("notifyParent failed in updateDeviceUsageByChild (ended)", err.message);
@@ -1402,7 +1408,7 @@ export async function updateDeviceUsageByChild({
         type: NotificationType.SCREEN_TIME_ENDED,
         severity: NotificationSeverity.WARNING,
         title: "Time's Up",
-        description: "You have reached your daily screen time limit"
+        description: "You reached your daily screen-time limit. You can ask your parent for more time.",
       });
     } catch (err) {
       console.error("notifyChild failed in updateDeviceUsageByChild (ended)", err.message);
@@ -1433,6 +1439,18 @@ export async function updateDeviceUsageByChild({
   return currentStatus;
 }
 
+function buildProtectionNotificationData(device, reason, accessibilityEnabled, usageAccessEnabled) {
+  return {
+    deviceId: String(device._id),
+    deviceName: device.name ?? "Child device",
+    childId: String(device.childId),
+    parentId: String(device.parentId),
+    reason,
+    accessibilityEnabled,
+    usageAccessEnabled,
+  };
+}
+
 export async function handleDeviceHeartbeat({
   deviceId,
   childId,
@@ -1443,6 +1461,15 @@ export async function handleDeviceHeartbeat({
   if (typeof accessibilityEnabled !== "boolean" || typeof usageAccessEnabled !== "boolean") {
     throw new AppError(CommonErrors.VALIDATION_ERROR);
   }
+
+  console.log("HEARTBEAT RECEIVED:", {
+    deviceId,
+    childId,
+    parentId,
+    accessibilityEnabled,
+    usageAccessEnabled,
+    time: new Date().toISOString(),
+  });
 
   let device = await findDeviceById(deviceId);
 
@@ -1498,7 +1525,14 @@ export async function handleDeviceHeartbeat({
         type: NotificationType.BYPASS_ATTEMPT,
         severity: NotificationSeverity.WARNING,
         title: "Device Setup Incomplete",
-        description: "Accessibility service is not enabled, so device locking and blocking may not work correctly."
+        description:
+          `${updatedDevice.name ?? "Child device"} is missing Accessibility permission. App blocking and device locking may not work until it is enabled.`,
+        data: buildProtectionNotificationData(
+          updatedDevice,
+          "ACCESSIBILITY_DISABLED_INITIAL",
+          accessibilityEnabled,
+          usageAccessEnabled
+        ),
       });
     } catch (err) {
       console.error("notifyParent failed in handleDeviceHeartbeat (initial accessibility):", err.message);
@@ -1514,7 +1548,14 @@ export async function handleDeviceHeartbeat({
         type: NotificationType.BYPASS_ATTEMPT,
         severity: NotificationSeverity.WARNING,
         title: "Device Setup Incomplete",
-        description: "Usage access is not enabled, so screen-time usage and remaining time may not update correctly."
+        description:
+          `${updatedDevice.name ?? "Child device"} is missing Usage Access permission. Screen-time tracking and remaining time may not update correctly.`,
+        data: buildProtectionNotificationData(
+          updatedDevice,
+          "USAGE_ACCESS_DISABLED_INITIAL",
+          accessibilityEnabled,
+          usageAccessEnabled
+        ),
       });
     } catch (err) {
       console.error("notifyParent failed in handleDeviceHeartbeat (initial usage):", err.message);
@@ -1530,7 +1571,14 @@ export async function handleDeviceHeartbeat({
         type: NotificationType.BYPASS_ATTEMPT,
         severity: NotificationSeverity.CRITICAL,
         title: "Protection Disabled",
-        description: "Accessibility service was turned off, so device locking and blocking may no longer work correctly."
+        description:
+          `${updatedDevice.name ?? "Child device"} had Accessibility turned off. App blocking and device locking may no longer work correctly.`,
+        data: buildProtectionNotificationData(
+          updatedDevice,
+          "ACCESSIBILITY_DISABLED",
+          accessibilityEnabled,
+          usageAccessEnabled
+        ),
       });
     } catch (err) {
       console.error("notifyParent failed in handleDeviceHeartbeat (accessibility):", err.message);
@@ -1546,7 +1594,14 @@ export async function handleDeviceHeartbeat({
         type: NotificationType.BYPASS_ATTEMPT,
         severity: NotificationSeverity.WARNING,
         title: "Limited Protection",
-        description: "Usage access was turned off, so screen-time usage and remaining time may no longer update correctly."
+        description:
+          `${updatedDevice.name ?? "Child device"} had Usage Access turned off. Screen-time tracking and remaining time may no longer update correctly.`,
+        data: buildProtectionNotificationData(
+          updatedDevice,
+          "USAGE_ACCESS_DISABLED",
+          accessibilityEnabled,
+          usageAccessEnabled
+        ),
       });
     } catch (err) {
       console.error("notifyParent failed in handleDeviceHeartbeat (usage):", err.message);
@@ -1660,13 +1715,13 @@ export async function reportBlockedApplicationAttempt({
     childId,
     type: NotificationType.BYPASS_ATTEMPT,
     severity: NotificationSeverity.WARNING,
-    title: "Blocked app attempt",
-    description: `${app.name ?? packageName} was opened but blocked`,
+    title: "Blocked App Attempt",
+    description: `${app.name ?? packageName} was opened on ${device.name ?? "the child device"}, but it was blocked.`,
     data: {
       deviceId: String(deviceId),
       packageName,
       appName: app.name ?? packageName,
-      link: "/Parent/systemAlerts",
+      reason: "APP_BLOCKED_ATTEMPT",
     },
   });
 
