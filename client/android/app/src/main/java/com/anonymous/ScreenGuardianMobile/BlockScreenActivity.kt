@@ -40,6 +40,8 @@ class BlockScreenActivity : AppCompatActivity() {
     private lateinit var hintText: TextView
     private lateinit var timeDetailsText: TextView
     private lateinit var iconText: TextView
+    private var currentBlockReason: String = ""
+    private var currentBlockedPackageName: String = ""
 
     private var isMonitoring = false // prevent multiple loops
 
@@ -101,8 +103,8 @@ class BlockScreenActivity : AppCompatActivity() {
 
     private fun updateUIFromIntent(intent: Intent) {
         val blockReason = intent.getStringExtra("blockReason") ?: ""
-        val limitMode = intent.getStringExtra("limitMode") ?: PolicyStore.LIMIT_MODE_NONE
-
+        currentBlockReason = blockReason
+        currentBlockedPackageName = intent.getStringExtra("blockedPackageName") ?: ""
         val usedToday = intent.getIntExtra("usedTodayMinutes", 0)
         val dailyLimit = intent.getIntExtra("dailyLimitMinutes", 0)
         val extraMinutes = intent.getIntExtra("extraMinutes", 0)
@@ -197,18 +199,31 @@ class BlockScreenActivity : AppCompatActivity() {
         checkUnlockLoop()
     }
 
-    private fun checkUnlockLoop() {
-        window.decorView.postDelayed({
-            if (!isMonitoring) return@postDelayed
+private fun checkUnlockLoop() {
+    window.decorView.postDelayed({
+        if (!isMonitoring) return@postDelayed
 
-            if (!PolicyStore.shouldLockDevice(this)) {
+        if (currentBlockReason == "APP_BLOCKED") {
+            val isStillBlocked =
+                currentBlockedPackageName.isNotBlank() &&
+                    PolicyStore.isAppBlocked(this, currentBlockedPackageName)
+
+            if (!isStillBlocked) {
                 finish()
                 return@postDelayed
             }
 
             checkUnlockLoop()
-        }, 1000)
-    }
+            return@postDelayed
+        }
 
+        if (!PolicyStore.shouldLockDevice(this)) {
+            finish()
+            return@postDelayed
+        }
+
+        checkUnlockLoop()
+    }, 1000)
+}
 
 }

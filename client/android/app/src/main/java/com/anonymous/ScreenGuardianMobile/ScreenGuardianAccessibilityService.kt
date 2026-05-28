@@ -68,6 +68,7 @@ class ScreenGuardianAccessibilityService : AccessibilityService() {
         // Prevent opening multiple lock screens in a very short time
         private const val LOCK_DEBOUNCE_MS = 2000L
 
+        private const val BLOCKED_APP_REPORT_DEBOUNCE_MS = 5 * 60_000L
         
      // Checks whether this accessibility service is currently enabled in Android settings
      fun isServiceEnabled(context: Context): Boolean {
@@ -92,6 +93,9 @@ class ScreenGuardianAccessibilityService : AccessibilityService() {
     private val handler = Handler(Looper.getMainLooper())
 
     private var lastLockTime = 0L
+
+    private var lastBlockedAppReportPackage: String? = null
+    private var lastBlockedAppReportTime: Long = 0L
 
     // Keep the last foreground package so we can re-evaluate lock after sync/socket updates
     private var lastForegroundPackage: String? = null
@@ -275,6 +279,23 @@ Log.d(
             return
         }
 
+// Report a blocked app attempt to the server only once per app within the debounce window.
+
+        if (isBlockedApp && currentPackage != null) {
+    val shouldReport =
+        lastBlockedAppReportPackage != currentPackage ||
+            now - lastBlockedAppReportTime >= BLOCKED_APP_REPORT_DEBOUNCE_MS
+
+    if (shouldReport) {
+        lastBlockedAppReportPackage = currentPackage
+        lastBlockedAppReportTime = now
+
+        DeviceServerSyncHelper.reportBlockedAppAttempt(
+            applicationContext,
+            currentPackage
+        )
+    }
+}
         // Debounce repeated launches
         if (now - lastLockTime < LOCK_DEBOUNCE_MS) {
             Log.d(TAG, "Skipping lock (debounce)")
@@ -303,6 +324,8 @@ Log.d(
 
             putExtra("usedWeekMinutes", usedWeek)
             putExtra("weeklyLimitMinutes", weeklyLimit)
+
+            putExtra("blockedPackageName", currentPackage)
         }
 
         Log.d(TAG, "Opening BlockScreenActivity")

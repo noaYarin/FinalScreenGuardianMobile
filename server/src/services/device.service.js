@@ -927,13 +927,14 @@ export async function blockApplication(parentId, deviceId, packageName) {
   }
 
   pushPolicyUpdate(updatedDevice);
-console.log("BLOCK APPLICATION AUDIT POINT:", {
-  parentId,
-  childId: device.childId,
-  packageName,
-  appName: app.name,
-  actionType: AuditActionType.BLOCK_APPLICATION,
-});
+  pushDeviceStatusUpdate(updatedDevice);
+  console.log("BLOCK APPLICATION AUDIT POINT:", {
+    parentId,
+    childId: device.childId,
+    packageName,
+    appName: app.name,
+    actionType: AuditActionType.BLOCK_APPLICATION,
+  });
   await sendAuditLog({
     parentId,
     childId: device.childId,
@@ -974,6 +975,7 @@ export async function unblockApplication(parentId, deviceId, packageName) {
   }
 
   pushPolicyUpdate(updatedDevice);
+  pushDeviceStatusUpdate(updatedDevice);
 
   await sendAuditLog({
     parentId,
@@ -1596,4 +1598,47 @@ export async function syncApplicationUsageByChild({
   pushDeviceStatusUpdate(updatedDevice);
 
   return updatedDevice.applications ?? [];
+}
+
+export async function reportBlockedApplicationAttempt({
+  deviceId,
+  packageName,
+  childId,
+  parentId,
+}) {
+  const device = await validateDeviceAccess({
+    deviceId,
+    parentId,
+    childId,
+  });
+
+  const app = device.applications?.find(
+    (application) => application.packageName === packageName
+  );
+
+  if (!app) {
+    throw new AppError(CommonErrors.APP_NOT_FOUND);
+  }
+
+  await notifyParent({
+    parentId,
+    childId,
+    type: NotificationType.BYPASS_ATTEMPT,
+    severity: NotificationSeverity.WARNING,
+    title: "Blocked app attempt",
+    description: `${app.name ?? packageName} was opened but blocked`,
+    data: {
+      deviceId: String(deviceId),
+      packageName,
+      appName: app.name ?? packageName,
+      link: "/Parent/systemAlerts",
+    },
+  });
+
+  return {
+    deviceId: String(deviceId),
+    packageName,
+    appName: app.name ?? packageName,
+    reported: true,
+  };
 }
