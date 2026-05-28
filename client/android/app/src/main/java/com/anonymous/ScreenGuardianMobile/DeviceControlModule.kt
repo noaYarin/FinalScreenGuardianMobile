@@ -387,4 +387,14 @@ fun getAppUsageStats(promise: Promise) {
         promise.reject("GET_APP_USAGE_STATS_ERROR", e.message, e)
     }
 }
+
+@ReactMethod
+fun syncProtectionStatus(promise: Promise) {
+    try {
+        DeviceServerSyncHelper.sendHeartbeat(reactApplicationContext)
+        promise.resolve(true)
+    } catch (e: Exception) {
+        promise.reject("SYNC_PROTECTION_STATUS_ERROR", e.message, e)
+    }
+}
 }
