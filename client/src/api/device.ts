@@ -2,6 +2,22 @@ import { api } from "./request";
 
 const URL = "/api/v1/devices";
 
+export type ScreenTimeReportDay = {
+  weekdayLabel: string;
+  dateKey: string;
+  date: string;
+  usedMinutes: number;
+  hasData?: boolean;
+};
+
+export type ScreenTimeReportWeek = {
+  weekLabel: string;
+  weekStartKey: string;
+  weekEndKey: string;
+  usedMinutes: number;
+  hasData?: boolean;
+};
+
 export type LimitMode = "NONE" | "DAILY" | "WEEKLY" | "SCHEDULE";
 
 export type Device = {
@@ -275,10 +291,16 @@ export type WeeklyUsageHistoryEntry = {
 };
 
 export type DeviceScreenTimeSnapshot = {
+  isLimitEnabled?: boolean;
+  limitMode?: LimitMode;
+  dailyLimitMinutes?: number;
+  extraMinutesToday?: number;
   usedTodayMinutes: number;
   usedWeekMinutes: number;
   dailyUsageHistory: DailyUsageHistoryEntry[];
   weeklyUsageHistory: WeeklyUsageHistoryEntry[];
+  days?: ScreenTimeReportDay[];
+  weeks?: ScreenTimeReportWeek[];
 };
 
 export async function apiGetDeviceScreenTimeSnapshot(

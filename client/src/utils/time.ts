@@ -25,3 +25,13 @@ export function formatJerusalemWeekStartLabel(dateKey: string): string {
 
   return jerusalemDayFromKey(dateKey).format("D/M");
 }
+
+// Returns Sunday–Saturday date keys for the Jerusalem week containing the given date.
+export function getJerusalemWeekDateKeys(date: Date = new Date()): string[] {
+  const today = jerusalemMoment(date).startOf("day");
+  const sunday = today.clone().subtract(today.day(), "days");
+
+  return Array.from({ length: 7 }, (_, index) =>
+    getJerusalemDateKey(sunday.clone().add(index, "days").toDate())
+  );
+}

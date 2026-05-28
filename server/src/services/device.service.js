@@ -32,6 +32,7 @@ import {
 } from "../utils/time.js";
 import { LimitMode } from "../constants/limitMode.js";
 import {
+  buildScreenTimeUsageReport,
   persistDailyUsageSnapshot,
   resetDailyScreenTimeWithHistory,
   resetWeeklyScreenTimeWithHistory,
@@ -1165,11 +1166,14 @@ export async function getDeviceCurrentStatusForChild({ deviceId, childId, parent
 
 
   const screenTime = device.screenTime ?? {};
+  const usageReport = buildScreenTimeUsageReport(device, now);
 
   return {
     ...buildCurrentStatus(device),
     dailyUsageHistory: screenTime.dailyUsageHistory ?? [],
     weeklyUsageHistory: screenTime.weeklyUsageHistory ?? [],
+    days: usageReport.days,
+    weeks: usageReport.weeks,
     lastDailyResetAt: screenTime.lastDailyResetAt ?? null,
     lastWeeklyResetAt: screenTime.lastWeeklyResetAt ?? null,
   };
