@@ -58,7 +58,7 @@
     "tile_shop": "Shop",
     "tile_tasks": "Tasks",
     "tile_achievements": "Achievements",
-    "tile_goals": "Goals",
+    "tile_goals": "Badges",
     "tile_reports": "Activity Reports",
     "tile_ideas": "Ideas",
     "tile_help": "Help",
@@ -80,8 +80,8 @@
     "alert_desc": "An alert was sent to your parents."
   },
   "goals": {
-    "title": "Goals",
-    "weekly_title": "Weekly Goals",
+    "title": "Badges",
+    "weekly_title": "Weekly Badges",
     "subtitle": "Let’s see how you're doing!",
     "total_progress": "Overall Progress",
     "goal_less_than_2h": "Use less than 2 hours per day",
@@ -90,8 +90,8 @@
     "days_5_7": "5/7 days",
     "days_6_7": "6/7 days",
     "days_2_5": "2/5 days",
-    "completed_a11y": "Goal completed",
-    "not_completed_a11y": "Goal not completed"
+    "completed_a11y": "Badge completed",
+    "not_completed_a11y": "Badge not completed"
   },
   "store": {
     "title": "Store",
@@ -278,12 +278,12 @@
   "achievements": {
     "title": "Achievements",
     "heading": "My Achievements",
-    "subtitle": "Keep reaching goals and unlock new rewards",
+    "subtitle": "Keep earning badges and unlock new rewards",
     "back_a11y": "Go back",
     "menu_a11y": "Open menu",
     "points": "Points",
     "completed": "Completed",
-    "goals_completed": "Goals completed",
+    "goals_completed": "Badges completed",
     "saved_time": "Time saved",
     "streak_days": "Streak days",
     "hours_short": "h",
