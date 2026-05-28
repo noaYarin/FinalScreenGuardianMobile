@@ -12,38 +12,15 @@ package com.screenguardianmobile
  * - Register all React Native packages used by the app.
  * - Manually register custom native packages such as DeviceControlPackage.
  * - Load the React Native engine when the application starts.
- * - Integrate Expo lifecycle handling with the Android application lifecycle.
- *
- * Architecture notes:
- * - This class extends Application and implements ReactApplication.
- * - ReactNativeHost defines how the React Native environment is created.
- * - PackageList(this).packages loads auto-linked packages.
- * - Custom packages that are not auto-linked must be added manually.
- *
- * Custom native integration:
- * - DeviceControlPackage is manually added here so React Native can access
- *   the custom native module DeviceControlModule from JavaScript.
- *
- * New Architecture:
- * - Supports React Native New Architecture through BuildConfig flags.
- * - Sets the release level dynamically based on the build configuration.
- *
- * Expo integration:
- * - Uses ReactNativeHostWrapper and ApplicationLifecycleDispatcher
- *   to support Expo modules and lifecycle events correctly.
- *
- * Lifecycle behavior:
- * - onCreate() initializes the React Native runtime.
- * - onConfigurationChanged() forwards configuration changes
- *   (such as orientation / locale changes) to Expo modules.
+ * - Integrate Expo lifecycle handling with Expo modules and lifecycle events correctly.
  */
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Application
+import android.os.Build
 import android.content.Context
 import android.content.res.Configuration
-import android.os.Build
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
@@ -60,44 +37,75 @@ import expo.modules.ReactNativeHostWrapper
 class MainApplication : Application(), ReactApplication {
 
   override val reactNativeHost: ReactNativeHost = ReactNativeHostWrapper(
-      this,
-      object : DefaultReactNativeHost(this) {
-        override fun getPackages(): List<ReactPackage> =
-            PackageList(this).packages.apply {
-            // Manually register our custom native package
-            add(DeviceControlPackage())
-            }
+    this,
+    object : DefaultReactNativeHost(this) {
+      override fun getPackages(): List<ReactPackage> =
+        PackageList(this).packages.apply {
+          // Manually register our custom native package
+          add(DeviceControlPackage())
+        }
 
-          override fun getJSMainModuleName(): String = ".expo/.virtual-metro-entry"
+      override fun getJSMainModuleName(): String = ".expo/.virtual-metro-entry"
 
-          override fun getUseDeveloperSupport(): Boolean = BuildConfig.DEBUG
+      override fun getUseDeveloperSupport(): Boolean = BuildConfig.DEBUG
 
-          override val isNewArchEnabled: Boolean = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED
-      }
+      override val isNewArchEnabled: Boolean = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED
+    }
   )
 
   override val reactHost: ReactHost
     get() = ReactNativeHostWrapper.createReactHost(applicationContext, reactNativeHost)
 
-  private fun ensureDefaultNotificationChannel() {
+  private fun ensureNotificationChannels() {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-    val channelId = getString(R.string.default_notification_channel_id)
-    val channelName = getString(R.string.default_notification_channel_name)
+
     val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    val existing = manager.getNotificationChannel(channelId)
-    if (existing != null) return
-    val channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_DEFAULT)
-    manager.createNotificationChannel(channel)
+
+    val defaultChannelId = getString(R.string.default_notification_channel_id)
+    val defaultChannelName = getString(R.string.default_notification_channel_name)
+
+    if (manager.getNotificationChannel(defaultChannelId) == null) {
+      val defaultChannel = NotificationChannel(
+        defaultChannelId,
+        defaultChannelName,
+        NotificationManager.IMPORTANCE_DEFAULT
+      ).apply {
+        description = "General app notifications"
+        enableVibration(true)
+      }
+
+      manager.createNotificationChannel(defaultChannel)
+    }
+
+    val sosChannelId = "sos_alerts"
+
+    if (manager.getNotificationChannel(sosChannelId) == null) {
+      val sosChannel = NotificationChannel(
+        sosChannelId,
+        "SOS alerts",
+        NotificationManager.IMPORTANCE_HIGH
+      ).apply {
+        description = "Urgent SOS alerts from your child"
+        enableVibration(true)
+        vibrationPattern = longArrayOf(0, 500, 250, 500, 250, 800)
+        lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+      }
+
+      manager.createNotificationChannel(sosChannel)
+    }
   }
 
   override fun onCreate() {
     super.onCreate()
-    ensureDefaultNotificationChannel()
+
+    ensureNotificationChannels()
+
     DefaultNewArchitectureEntryPoint.releaseLevel = try {
       ReleaseLevel.valueOf(BuildConfig.REACT_NATIVE_RELEASE_LEVEL.uppercase())
     } catch (e: IllegalArgumentException) {
       ReleaseLevel.STABLE
     }
+
     loadReactNative(this)
     ApplicationLifecycleDispatcher.onApplicationCreate(this)
   }

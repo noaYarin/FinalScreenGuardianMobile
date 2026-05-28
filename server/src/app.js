@@ -15,6 +15,7 @@ import taskRoutes from "./routes/task.routes.js";
 import achievementsRoutes from "./routes/achievements.routes.js";
 import badgeRoutes from "./routes/badge.routes.js";
 import rewardRoutes from "./routes/reward.routes.js";
+import sosRoutes from "./routes/sos.routes.js";
 
 const app = express();
 // Maximum allowed characters 
@@ -36,6 +37,7 @@ app.use("/api/v1/audit", auditRoutes);
 app.use("/api/v1/tasks", taskRoutes);
 app.use("/api/v1/achievements", achievementsRoutes);
 app.use("/api/v1/badges", badgeRoutes);
+app.use("/api/v1/sos", sosRoutes);
 app.use(errorHandler);
 
 export default app;

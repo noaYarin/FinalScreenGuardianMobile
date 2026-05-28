@@ -7,7 +7,7 @@ import { showInfoToast } from "@/src/utils/appToast";
 import { RootSiblingParent } from "react-native-root-siblings";
 import { registerFcmNotificationTapHandlers, shouldBlockDefaultRedirect } from "@/src/notifications/fcmNavigation";
 import { useAndroidPostNotificationsPermission } from "@/src/hooks/useAndroidPostNotificationsPermission";
-
+import { Alert } from "react-native";
 import { COLORS } from "@/constants/theme";
 import Initializer from "../src/components/Initializer";
 import {
@@ -224,29 +224,47 @@ function AppStack() {
         }
       );
 
-      const unsubscribeNotifications = onEvent(
-        NOTIFICATION_CREATED,
-        (data: any) => {
-          const type = String(data?.type ?? "").toUpperCase();
+const unsubscribeNotifications = onEvent(
+  NOTIFICATION_CREATED,
+  (data: any) => {
+    const type = String(data?.type ?? "").toUpperCase();
 
-          dispatch(addNotificationFromSocket(data));
+    dispatch(addNotificationFromSocket(data));
 
-          if (type === "EXTENSION_REQUEST_CREATED") {
-            dispatch(bumpPendingRequestsRefreshKey());
-          }
+    if (type === "EXTENSION_REQUEST_CREATED") {
+      dispatch(bumpPendingRequestsRefreshKey());
+    }
 
-          if (type === "TASK_PENDING_APPROVAL") {
-            dispatch(getParentTasksThunk());
-          }
+    if (type === "TASK_PENDING_APPROVAL") {
+      dispatch(getParentTasksThunk());
+    }
 
-          if (type === "REWARD_REDEEMED") {
-            dispatch(getParentRewardsThunk());
-          }
+    if (type === "REWARD_REDEEMED") {
+      dispatch(getParentRewardsThunk());
+    }
 
-          showToastFromSocketNotification(data);
-        }
+    if (type === "SOS_TRIGGERED") {
+      Alert.alert(
+        data?.title || "Urgent SOS Alert",
+        data?.description || "Your child sent an SOS alert.",
+        [
+          {
+            text: "Open alerts",
+            onPress: () => router.push("/Parent/systemAlerts" as Href),
+          },
+          {
+            text: "Close",
+            style: "cancel",
+          },
+        ]
       );
 
+      return;
+    }
+
+    showToastFromSocketNotification(data);
+  }
+);
       return () => {
         if (unsubscribeLocation) unsubscribeLocation();
         if (unsubscribeDeviceStatus) unsubscribeDeviceStatus();

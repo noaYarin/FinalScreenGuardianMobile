@@ -179,16 +179,21 @@ export async function notifyParent({
   }
 
   try {
-    await sendNotification(
+    const pushResult = await sendNotification(
       parentId,
       title,
       description,
       normalizePushDataForFcm(normalizedData)
     );
-  } catch (err) {
-    console.error("push send failed in notifyParent", err.message);
-  }
 
+    console.log("[Push] notifyParent result:", pushResult);
+  } catch (err) {
+    console.error("[Push] send failed in notifyParent:", {
+      message: err.message,
+      code: err.code,
+      stack: err.stack,
+    });
+  }
   return notification;
 }
 
