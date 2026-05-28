@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { View, Pressable, ActivityIndicator, ScrollView } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { router, type Href } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
@@ -196,7 +195,7 @@ export default function IdeasScreen() {
 
   return (
     <ScreenLayout scrollable={false}>
-      <LinearGradient colors={["#E6F0FF", "#F3F7FF"]} style={s.bg}>
+      <View style={s.bg}>
         <View style={s.content}>
           <ScrollView
             style={s.scroll}
@@ -309,7 +308,7 @@ export default function IdeasScreen() {
             </View>
           </Pressable>
         </View>
-      </LinearGradient>
+      </View>
     </ScreenLayout>
   );
 }
