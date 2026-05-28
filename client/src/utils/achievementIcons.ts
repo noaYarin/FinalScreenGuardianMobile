@@ -21,20 +21,14 @@ export function getAchievementIconByKey(key?: string): AchievementIconName {
     case "saved_100_coins":
       return "cash-multiple";
 
-    case "first_day_under_limit":
-      return "clock-check-outline";
-
-    case "three_days_under_limit":
-      return "calendar-check-outline";
-
     case "first_extension_request":
       return "message-text-clock-outline";
 
     case "first_goal_completed":
       return "target";
 
-    case "perfect_week":
-      return "calendar-star";
+    case "all_goals_completed":
+      return "trophy-award";
 
     case "avatar_level_2":
       return "shield-star-outline";

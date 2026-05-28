@@ -184,7 +184,7 @@ export default function AchievementsScreen() {
             </AppText>
 
             <AppText weight="medium" style={styles.heroSubtitle}>
-              Keep reaching goals and unlock new rewards!
+              Complete activities and unlock new achievements!
             </AppText>
           </View>
 
@@ -311,9 +311,8 @@ export default function AchievementsScreen() {
                 <Pressable
                   key={item.id}
                   accessibilityRole="button"
-                  accessibilityLabel={`${item.title} ${
-                    isUnlocked ? "unlocked" : "locked"
-                  }`}
+                  accessibilityLabel={`${item.title} ${isUnlocked ? "unlocked" : "locked"
+                    }`}
                   style={({ pressed }) => [
                     styles.achievementCard,
                     isUnlocked
@@ -324,7 +323,7 @@ export default function AchievementsScreen() {
                     isNewUnlock && styles.achievementCardNewToday,
                     pressed && styles.achievementCardPressed,
                   ]}
-                  onPress={() => {}}
+                  onPress={() => { }}
                 >
                   <View style={styles.achievementInner}>
                     <View

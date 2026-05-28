@@ -15,26 +15,110 @@ import { NOTIFICATION_CREATED } from "../constants/socketEvents.js";
 import { sendNotification } from "./pushNotification.service.js";
 import ParentModel from "../models/parent.model.js";
 
-function normalizePushData({ notification, childId, type, severity, data }) {
-  const base = {
-    notificationId: String(notification._id),
-    type,
-    severity,
-    childId: childId != null ? String(childId) : undefined,
-  };
+function includesAny(value, keywords) {
+  return keywords.some((keyword) => value.includes(keyword));
+}
 
+function isAppNotification(type) {
+  return (
+    type.includes("APPLICATION") ||
+    type.startsWith("APP_") ||
+    type.includes("_APP_")
+  );
+}
+
+function getDefaultNotificationLink(type, targetRole) {
+  const normalizedType = String(type ?? "").toUpperCase();
+
+  if (targetRole === TargetRole.CHILD) {
+    if (isAppNotification(normalizedType)) {
+      return "/Child/apps";
+    }
+
+    if (includesAny(normalizedType, ["TASK"])) {
+      return "/Child/tasks";
+    }
+
+    if (includesAny(normalizedType, ["PRIZE", "REWARD", "STORE"])) {
+      return "/Child/store";
+    }
+
+    if (includesAny(normalizedType, ["GOAL"])) {
+      return "/Child/goals";
+    }
+
+    if (includesAny(normalizedType, ["ACHIEVEMENT", "AVATAR", "COIN"])) {
+      return "/Child/achievements";
+    }
+
+    return null;
+  }
+
+  if (targetRole === TargetRole.PARENT) {
+    if (includesAny(normalizedType, ["EXTENSION_REQUEST", "REQUEST"])) {
+      return "/Parent/extensionRequests";
+    }
+
+    if (includesAny(normalizedType, ["TASK"])) {
+      return "/Parent/tasks";
+    }
+
+    if (includesAny(normalizedType, ["PRIZE", "REWARD", "STORE"])) {
+      return "/Parent/rewards";
+    }
+
+    return null;
+  }
+
+  return null;
+}
+
+function normalizeNotificationData({
+  notificationId,
+  childId,
+  type,
+  severity,
+  data,
+  targetRole,
+}) {
   const provided = data && typeof data === "object" ? data : {};
+
+  const defaultLink = getDefaultNotificationLink(type, targetRole);
+
   const rawLink =
     typeof provided.link === "string" && provided.link.trim()
       ? provided.link.trim()
-      : "/Parent/systemAlerts";
-  const link = rawLink.startsWith("/") ? rawLink : `/${rawLink}`;
+      : defaultLink;
+
+  const link =
+    typeof rawLink === "string" && rawLink.trim()
+      ? rawLink.startsWith("/")
+        ? rawLink
+        : `/${rawLink}`
+      : null;
 
   return {
+    reason: provided.reason ?? type,
     ...provided,
-    ...base,
+    notificationId: notificationId ? String(notificationId) : undefined,
+    type,
+    severity,
+    childId: childId != null ? String(childId) : undefined,
     link,
   };
+}
+
+function normalizePushDataForFcm(data) {
+  const safeData = data && typeof data === "object" ? data : {};
+
+  return Object.fromEntries(
+    Object.entries(safeData)
+      .filter(([, value]) => value !== undefined && value !== null)
+      .map(([key, value]) => [
+        key,
+        typeof value === "string" ? value : JSON.stringify(value),
+      ])
+  );
 }
 
 export async function notifyParent({
@@ -46,6 +130,14 @@ export async function notifyParent({
   description,
   data,
 }) {
+  const normalizedDataBeforeCreate = normalizeNotificationData({
+    childId,
+    type,
+    severity,
+    data,
+    targetRole: TargetRole.PARENT,
+  });
+
   const notification = await createNotification({
     parentId,
     childId,
@@ -54,13 +146,33 @@ export async function notifyParent({
     severity,
     title,
     description,
-    data: data && typeof data === "object" ? data : {},
+    data: normalizedDataBeforeCreate,
   });
+
+  const normalizedData = normalizeNotificationData({
+    notificationId: notification._id,
+    childId,
+    type,
+    severity,
+    data: normalizedDataBeforeCreate,
+    targetRole: TargetRole.PARENT,
+  });
+
+  const socketNotification = {
+    ...(typeof notification.toObject === "function"
+      ? notification.toObject()
+      : notification),
+    data: normalizedData,
+  };
 
   try {
     const io = getIO();
+
     if (io && parentId) {
-      io.to(`parent_${parentId}`).emit(NOTIFICATION_CREATED, notification);
+      io.to(`parent_${parentId}`).emit(
+        NOTIFICATION_CREATED,
+        socketNotification
+      );
     }
   } catch (err) {
     console.error("socket emit failed in notifyParent", err.message);
@@ -71,7 +183,7 @@ export async function notifyParent({
       parentId,
       title,
       description,
-      normalizePushData({ notification, childId, type, severity, data })
+      normalizePushDataForFcm(normalizedData)
     );
   } catch (err) {
     console.error("push send failed in notifyParent", err.message);
@@ -80,7 +192,6 @@ export async function notifyParent({
   return notification;
 }
 
-// Creates a child notification and emits it to the child socket room with optional extra data.
 export async function notifyChild({
   parentId,
   childId,
@@ -90,6 +201,14 @@ export async function notifyChild({
   description,
   data,
 }) {
+  const normalizedDataBeforeCreate = normalizeNotificationData({
+    childId,
+    type,
+    severity,
+    data,
+    targetRole: TargetRole.CHILD,
+  });
+
   const notification = await createNotification({
     parentId,
     childId,
@@ -98,7 +217,16 @@ export async function notifyChild({
     severity,
     title,
     description,
-    data: data && typeof data === "object" ? data : {},
+    data: normalizedDataBeforeCreate,
+  });
+
+  const normalizedData = normalizeNotificationData({
+    notificationId: notification._id,
+    childId,
+    type,
+    severity,
+    data: normalizedDataBeforeCreate,
+    targetRole: TargetRole.CHILD,
   });
 
   try {
@@ -109,10 +237,13 @@ export async function notifyChild({
         ...(typeof notification.toObject === "function"
           ? notification.toObject()
           : notification),
-        data: data && typeof data === "object" ? data : {},
+        data: normalizedData,
       };
 
-      io.to(`child_${childId}`).emit(NOTIFICATION_CREATED, socketNotification);
+      io.to(`child_${childId}`).emit(
+        NOTIFICATION_CREATED,
+        socketNotification
+      );
     }
   } catch (err) {
     console.error("socket emit failed in notifyChild", err.message);
@@ -121,17 +252,17 @@ export async function notifyChild({
   return notification;
 }
 
-
 export async function getParentNotifications(parentId, page = 1, limit = 10) {
   const skip = (page - 1) * limit;
 
-  const { notifications, total, unreadCount } = await findNotificationsWithPagination(parentId, skip, limit);
+  const { notifications, total, unreadCount } =
+    await findNotificationsWithPagination(parentId, skip, limit);
 
   return {
     notifications,
     total,
     pages: Math.ceil(total / limit),
-    unreadCount
+    unreadCount,
   };
 }
 
@@ -146,13 +277,17 @@ export async function readAllNotifications(parentId) {
 }
 
 export async function deleteParentNotification(parentId, notificationId) {
-  const deleted = await deleteNotificationByIdForParent(parentId, notificationId);
+  const deleted = await deleteNotificationByIdForParent(
+    parentId,
+    notificationId
+  );
+
   if (!deleted) {
     throw new AppError(CommonErrors.NOT_FOUND);
   }
+
   return { success: true };
 }
-
 
 export async function getChildNotifications(
   parentId,
@@ -179,11 +314,16 @@ export async function readAllChildNotifications(parentId, childId) {
   return { success: true };
 }
 
-
 export async function registerParentFcmToken(parentId, fcmToken) {
-  const updated = await ParentModel.findByIdAndUpdate(parentId, { fcmToken }, { new: false });
+  const updated = await ParentModel.findByIdAndUpdate(
+    parentId,
+    { fcmToken },
+    { new: false }
+  );
+
   if (!updated) {
     throw new AppError(CommonErrors.NOT_FOUND);
   }
+
   return { success: true };
 }

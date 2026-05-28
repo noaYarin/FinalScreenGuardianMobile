@@ -14,7 +14,7 @@ import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import ChildDeviceSelector from "../../../components/ChildDeviceSelector/ChildDeviceSelector";
 import { styles } from "./styles";
-
+import { showErrorToast, showSuccessToast } from "@/src/utils/appToast";
 import { getMyChildrenThunk } from "../../../redux/thunks/childrenThunks";
 import {
   fetchDevicesByChild,
@@ -154,6 +154,11 @@ export default function AppBlockingScreen() {
   const handleToggleApp = async (packageName: string, nextBlocked: boolean) => {
     if (!selectedChildId || !selectedDeviceId) return;
 
+    const appName =
+      selectedDevice?.applications?.find(
+        (app) => app.packageName === packageName
+      )?.name ?? packageName;
+
     try {
       setUpdatingPackageName(packageName);
 
@@ -165,6 +170,20 @@ export default function AppBlockingScreen() {
           isBlocked: nextBlocked,
         })
       ).unwrap();
+
+      showSuccessToast(
+        nextBlocked
+          ? `${appName} was blocked successfully`
+          : `${appName} was unblocked successfully`,
+        nextBlocked ? "App blocked" : "App unblocked"
+      );
+    } catch {
+      showErrorToast(
+        nextBlocked
+          ? `Could not block ${appName}.`
+          : `Could not unblock ${appName}.`,
+        "Action failed"
+      );
     } finally {
       setUpdatingPackageName(null);
     }

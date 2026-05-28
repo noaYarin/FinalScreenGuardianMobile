@@ -7,7 +7,7 @@ import {
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
-
+import { Href, useRouter } from "expo-router";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
@@ -86,6 +86,12 @@ function pickIcon(
       return "gift-outline";
     case "REWARD_REDEEMED":
       return "gift-open-outline";
+    case "BYPASS_ATTEMPT":
+      return "shield-alert-outline";
+    case "APPLICATION_BLOCKED":
+      return "cellphone-lock";
+    case "APPLICATION_UNBLOCKED":
+      return "cellphone-check";
     default:
       return toAlertSeverity(severity) === "critical"
         ? "shield-alert-outline"
@@ -100,10 +106,24 @@ function formatCreatedAt(createdAt?: string) {
   return d.toLocaleString();
 }
 
+function getNotificationLink(notification: Notification): Href | null {
+  const rawLink = notification.data?.link;
+
+  if (typeof rawLink !== "string" || !rawLink.trim()) {
+    return null;
+  }
+
+  const link = rawLink.trim();
+
+  return (link.startsWith("/") ? link : `/${link}`) as Href;
+}
+
 const FILTERS: AlertFilter[] = ["all", "unread", "critical"];
 
 export default function SystemAlertsScreen() {
   const dispatch = useDispatch<AppDispatch>();
+
+  const router = useRouter();
 
   const { items, pagination, status } = useSelector(
     (state: RootState) => state.notifications
@@ -169,6 +189,31 @@ export default function SystemAlertsScreen() {
     [dispatch]
   );
 
+  const handleOpenNotification = useCallback(
+    async (notification: Notification) => {
+      if (!notification.isRead) {
+        try {
+          await dispatch(
+            markParentNotificationReadThunk({
+              notificationId: String(notification._id),
+            })
+          ).unwrap();
+        } catch {
+          showErrorToast("Could not mark the notification as read.", "Error");
+        }
+      }
+
+      const link = getNotificationLink(notification);
+
+      if (!link) {
+        return;
+      }
+
+      router.replace(link);
+    },
+    [dispatch, router]
+  );
+  
   const handleLoadMore = useCallback(async () => {
     if (
       isFetchingMore ||
@@ -336,15 +381,7 @@ export default function SystemAlertsScreen() {
 
             <View style={styles.alertCardInnerColumn}>
               <Pressable
-                onPress={() => {
-                  if (!item.isRead) {
-                    dispatch(
-                      markParentNotificationReadThunk({
-                        notificationId: String(item._id),
-                      })
-                    );
-                  }
-                }}
+                onPress={() => handleOpenNotification(item)}
                 accessibilityRole="button"
                 accessibilityLabel={String(item.title || "Open alert")}
                 style={({ pressed }) => [
