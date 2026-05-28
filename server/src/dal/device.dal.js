@@ -317,6 +317,8 @@ export async function findDeviceStatusById(deviceId) {
       "screenTime.dailyLimitMinutes": 1,
       "screenTime.extraMinutesToday": 1,
       "screenTime.usedTodayMinutes": 1,
+      "screenTime.dailyUsageHistory": 1,
+      "screenTime.weeklyUsageHistory": 1,
       "screenTime.lastDailyResetAt": 1,
       "screenTime.weeklyLimitMinutes": 1,
       "screenTime.usedWeekMinutes": 1,

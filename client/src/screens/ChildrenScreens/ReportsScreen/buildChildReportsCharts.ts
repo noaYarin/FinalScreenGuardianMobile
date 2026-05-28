@@ -1,11 +1,13 @@
+import type { ScreenTimeReportDay } from "@/src/api/device";
 import { CHILD_MOOD_COLORS } from "@/src/components/ReportsScreen/childReportsTheme";
+import { getJerusalemDateKey } from "@/src/utils/time";
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export type ScreenTimeSnapshot = {
+export type ChildScreenTimeInput = {
   usedTodayMinutes: number;
-  usedWeekMinutes: number;
   dailyLimitMinutes: number | null;
+  days: ScreenTimeReportDay[];
 };
 
 export type ChildDayStatus = {
@@ -33,6 +35,7 @@ export type ChildReportsChartsData = {
   isLimitReached: boolean;
 };
 
+// Clamps usage to zero and to the daily limit when one exists.
 function capUsedMinutes(
   usedMinutes: number,
   dailyLimitMinutes: number | null
@@ -44,7 +47,8 @@ function capUsedMinutes(
   return Math.min(Math.max(0, usedMinutes), dailyLimitMinutes);
 }
 
-function formatDuration(minutes: number) {
+// Formats minutes as a short duration label.
+export function formatChildReportDuration(minutes: number) {
   const safeMinutes = Math.max(0, Math.round(minutes));
   const hours = Math.floor(safeMinutes / 60);
   const mins = safeMinutes % 60;
@@ -60,6 +64,7 @@ function formatDuration(minutes: number) {
   return `${hours}h ${mins}m`;
 }
 
+// Picks emoji, color, and message for one day row.
 function getDayDisplay(
   usedMinutes: number,
   dailyLimitMinutes: number | null
@@ -82,7 +87,6 @@ function getDayDisplay(
     };
   }
 
-
   return {
     color: CHILD_MOOD_COLORS.good,
     emoji: "😊",
@@ -90,9 +94,10 @@ function getDayDisplay(
   };
 }
 
-function buildTodayDonut(snapshot: ScreenTimeSnapshot) {
-  const limit = snapshot.dailyLimitMinutes;
-  const used = capUsedMinutes(snapshot.usedTodayMinutes, limit);
+// Builds the today donut from live usage and the daily limit.
+function buildTodayDonut(input: ChildScreenTimeInput) {
+  const limit = input.dailyLimitMinutes;
+  const used = capUsedMinutes(input.usedTodayMinutes, limit);
 
   if (limit == null || limit <= 0) {
     if (used <= 0) {
@@ -110,7 +115,7 @@ function buildTodayDonut(snapshot: ScreenTimeSnapshot) {
     return {
       slices: [{ value: used, color: CHILD_MOOD_COLORS.donutUsed, label: "Used" }],
       centerLabel: "Used today",
-      centerValue: formatDuration(used),
+      centerValue: formatChildReportDuration(used),
       donutNote: null,
       isLimitReached: false,
     };
@@ -128,7 +133,7 @@ function buildTodayDonut(snapshot: ScreenTimeSnapshot) {
         },
       ],
       centerLabel: "Limit reached",
-      centerValue: formatDuration(used),
+      centerValue: formatChildReportDuration(used),
       donutNote:
         "Your daily limit is full. Only your parent can add more time.",
       isLimitReached: true,
@@ -149,34 +154,23 @@ function buildTodayDonut(snapshot: ScreenTimeSnapshot) {
       },
     ],
     centerLabel: "Left today",
-    centerValue: formatDuration(remaining),
+    centerValue: formatChildReportDuration(remaining),
     donutNote: "Limits are set by your parent and stay on this device.",
     isLimitReached: false,
   };
 }
 
-function buildWeekDays(snapshot: ScreenTimeSnapshot): ChildDayStatus[] {
-  const todayIndex = new Date().getDay();
-  const dailyLimit = snapshot.dailyLimitMinutes;
-  const usedToday = snapshot.usedTodayMinutes;
-  const minutesBeforeToday = Math.max(
-    snapshot.usedWeekMinutes - usedToday,
-    0
-  );
-  const minutesPerPastDay =
-    todayIndex > 0 ? minutesBeforeToday / todayIndex : 0;
+// Builds week rows from the same daily report days the parent screen uses.
+function buildWeekDays(input: ChildScreenTimeInput): ChildDayStatus[] {
+  const todayKey = getJerusalemDateKey();
+  const dailyLimit = input.dailyLimitMinutes;
+  const reportDays = input.days.length > 0 ? input.days : buildEmptyWeekDays();
 
-  const baseDays = WEEKDAYS.map((label, index) => {
-    const isFuture = index > todayIndex;
-    let rawMinutes = 0;
-
-    if (index === todayIndex) {
-      rawMinutes = usedToday;
-    } else if (index < todayIndex) {
-      rawMinutes = minutesPerPastDay;
-    }
-
-    const usedMinutes = capUsedMinutes(Math.round(rawMinutes), dailyLimit);
+  const baseDays = reportDays.map((day, index) => {
+    const label = WEEKDAY_LABELS[index] ?? day.weekdayLabel;
+    const isFuture = Boolean(day.dateKey && day.dateKey > todayKey);
+    const isToday = day.dateKey === todayKey;
+    const usedMinutes = capUsedMinutes(Math.round(day.usedMinutes), dailyLimit);
 
     if (isFuture) {
       return {
@@ -198,7 +192,7 @@ function buildWeekDays(snapshot: ScreenTimeSnapshot): ChildDayStatus[] {
       color: display.color,
       emoji: display.emoji,
       message: display.message,
-      isToday: index === todayIndex,
+      isToday,
       isFuture: false,
     };
   });
@@ -217,7 +211,8 @@ function buildWeekDays(snapshot: ScreenTimeSnapshot): ChildDayStatus[] {
     if (
       day.isFuture ||
       day.usedMinutes <= 0 ||
-      day.usedMinutes !== bestMinutes     ) {
+      day.usedMinutes !== bestMinutes
+    ) {
       return day;
     }
 
@@ -230,13 +225,25 @@ function buildWeekDays(snapshot: ScreenTimeSnapshot): ChildDayStatus[] {
   });
 }
 
-export function buildChildChartsFromSnapshot(
-  snapshot: ScreenTimeSnapshot
+// Returns an empty Sun–Sat row set when the server sends no day breakdown yet.
+function buildEmptyWeekDays(): ScreenTimeReportDay[] {
+  return WEEKDAY_LABELS.map((weekdayLabel) => ({
+    weekdayLabel,
+    dateKey: "",
+    date: "",
+    usedMinutes: 0,
+    hasData: false,
+  }));
+}
+
+// Turns DB screen-time data into child report chart props.
+export function buildChildChartsFromScreenTime(
+  input: ChildScreenTimeInput
 ): ChildReportsChartsData {
-  const donut = buildTodayDonut(snapshot);
+  const donut = buildTodayDonut(input);
 
   return {
-    weekDays: buildWeekDays(snapshot),
+    weekDays: buildWeekDays(input),
     donutSlices: donut.slices,
     donutCenterLabel: donut.centerLabel,
     donutCenterValue: donut.centerValue,
@@ -244,5 +251,3 @@ export function buildChildChartsFromSnapshot(
     isLimitReached: donut.isLimitReached,
   };
 }
-
-export { formatDuration as formatChildReportDuration };

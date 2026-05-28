@@ -20,8 +20,12 @@ export async function getChildScreenTimeReportsController(req, res, next) {
   try {
     const parentId = req.user.parentId;
     const { childId } = req.params;
+    const deviceId =
+      typeof req.query.deviceId === "string" && req.query.deviceId.trim()
+        ? req.query.deviceId.trim()
+        : null;
 
-    const data = await getChildScreenTimeReports(parentId, childId);
+    const data = await getChildScreenTimeReports(parentId, childId, deviceId);
 
     res.status(200).json({ ok: true, data });
   } catch (err) {
