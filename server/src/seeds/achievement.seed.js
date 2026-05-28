@@ -106,10 +106,10 @@ const achievementsSeed = [
   // Requires full weekly-goals tracking and a reliable weekly summary/check.
   // Socket can notify the app after unlock, but the backend still needs the weekly completion logic.
   {
-    key: "perfect_week",
-    title: "Perfect Week",
-    description: "Completed all weekly goals",
-    icon: "achievement_perfect_week.png",
+    key: "all_goals_completed",
+    title: "Goal Master",
+    description: "Completed all goals",
+    icon: "achievement_all_goals.png",
     xpReward: 80,
   },
 

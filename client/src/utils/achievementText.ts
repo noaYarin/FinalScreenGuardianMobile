@@ -16,20 +16,14 @@ export function getLockedAchievementHint(key?: string, fallback?: string) {
     case "saved_100_coins":
       return "Save 100 coins to unlock this badge.";
 
-    case "first_day_under_limit":
-      return "Stay within your daily screen-time limit to unlock this badge.";
-
-    case "three_days_under_limit":
-      return "Stay within your daily limit for 3 days to unlock this badge.";
-
     case "first_extension_request":
       return "Send your first screen-time request to unlock this badge.";
 
     case "first_goal_completed":
       return "Complete your first weekly goal to unlock this badge.";
 
-    case "perfect_week":
-      return "Complete all weekly goals to unlock this badge.";
+    case "all_goals_completed":
+      return "trophy-award";
 
     case "avatar_level_2":
       return "Reach avatar level 2 to unlock this badge.";
