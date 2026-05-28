@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { router, useFocusEffect, useLocalSearchParams, type Href } from "expo-router";
 
-import ChildSelector from "@/src/components/ChildSelector/ChildSelector";
+import ChildDeviceSelector from "@/src/components/ChildDeviceSelector/ChildDeviceSelector";
 import AppText from "@/src/components/AppText/AppText";
 import type { AppDispatch, RootState } from "@/src/redux/store/types";
 import { getMyChildrenThunk } from "@/src/redux/thunks/childrenThunks";
@@ -28,6 +28,9 @@ import ReportsContent from "@/src/components/ReportsScreen/ReportsContent";
 import ReportsMetricRow from "@/src/components/ReportsScreen/ReportsMetricRow";
 import { styles } from "./styles";
 import { showErrorToast } from "@/src/utils/appToast";
+import type { Device } from "@/src/api/device";
+
+const EMPTY_DEVICES: Device[] = [];
 
 function buildFallbackReport(
   devicesByChild: RootState["devices"]["byChildId"],
@@ -61,6 +64,7 @@ export default function ParentReportsScreen() {
   );
   const [isReportLoading, setIsReportLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [selectedDeviceId, setSelectedDeviceId] = useState("");
 
   const childrenList = useSelector(
     (state: RootState) => state.children.childrenList ?? []
@@ -79,6 +83,14 @@ export default function ParentReportsScreen() {
       : null;
 
   const effectiveChildId = selectedChildId;
+
+  const devicesForChild = useSelector((state: RootState) => {
+    if (!effectiveChildId) {
+      return EMPTY_DEVICES;
+    }
+
+    return state.devices.byChildId[effectiveChildId] ?? EMPTY_DEVICES;
+  });
 
   useEffect(() => {
     dispatch(getMyChildrenThunk());
@@ -106,6 +118,32 @@ export default function ParentReportsScreen() {
     }
   }, [childrenList, selectedChildId, dispatch]);
 
+  useEffect(() => {
+    if (!effectiveChildId) {
+      return;
+    }
+
+    dispatch(fetchDevicesByChild(effectiveChildId));
+  }, [dispatch, effectiveChildId]);
+
+  const firstDeviceId =
+    devicesForChild.length > 0 ? String(devicesForChild[0]._id) : "";
+
+  useEffect(() => {
+    if (!firstDeviceId) {
+      setSelectedDeviceId((current) => (current === "" ? current : ""));
+      return;
+    }
+
+    setSelectedDeviceId((current) => {
+      const hasSelection = devicesForChild.some(
+        (device) => String(device._id) === String(current)
+      );
+
+      return hasSelection ? current : firstDeviceId;
+    });
+  }, [devicesForChild, firstDeviceId]);
+
   const loadUsageReport = useCallback(async () => {
     if (!effectiveChildId) {
       setUsageReport(null);
@@ -126,8 +164,17 @@ export default function ParentReportsScreen() {
       setLoadError("Could not load reports");
     }
 
+    if (!selectedDeviceId) {
+      setUsageReport(null);
+      setIsReportLoading(false);
+      return;
+    }
+
     try {
-      const report = await getChildScreenTimeReports(effectiveChildId);
+      const report = await getChildScreenTimeReports(
+        effectiveChildId,
+        selectedDeviceId
+      );
       setUsageReport(report);
     } catch (error) {
       const state = store.getState();
@@ -146,7 +193,7 @@ export default function ParentReportsScreen() {
     } finally {
       setIsReportLoading(false);
     }
-  }, [dispatch, effectiveChildId]);
+  }, [dispatch, effectiveChildId, selectedDeviceId]);
 
   useEffect(() => {
     void loadUsageReport();
@@ -191,11 +238,15 @@ export default function ParentReportsScreen() {
       <View style={styles.screen}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
-            <ChildSelector
+            <ChildDeviceSelector
               selectedChildId={effectiveChildId}
-              onSelectChild={(childId) =>
-                dispatch(setReportsSelectedChildId(childId))
-              }
+              onSelectChild={(childId) => {
+                dispatch(setReportsSelectedChildId(childId));
+                setSelectedDeviceId("");
+              }}
+              selectedDeviceId={selectedDeviceId}
+              onSelectDevice={setSelectedDeviceId}
+              showDevices
             />
             <EmptyStateCard
               icon="cellphone-link-off"
@@ -244,11 +295,15 @@ export default function ParentReportsScreen() {
           }
           topSlot={
             <>
-              <ChildSelector
+              <ChildDeviceSelector
                 selectedChildId={effectiveChildId}
-                onSelectChild={(childId) =>
-                  dispatch(setReportsSelectedChildId(childId))
-                }
+                onSelectChild={(childId) => {
+                  dispatch(setReportsSelectedChildId(childId));
+                  setSelectedDeviceId("");
+                }}
+                selectedDeviceId={selectedDeviceId}
+                onSelectDevice={setSelectedDeviceId}
+                showDevices
               />
               {loadError ? (
                 <AppText style={styles.hintText}>{loadError}</AppText>
