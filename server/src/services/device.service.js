@@ -935,6 +935,24 @@ export async function blockApplication(parentId, deviceId, packageName) {
     appName: app.name,
     actionType: AuditActionType.BLOCK_APPLICATION,
   });
+
+  await notifyChild({
+    parentId,
+    childId: device.childId,
+    type: NotificationType.APPLICATION_BLOCKED,
+    severity: NotificationSeverity.WARNING,
+    title: "App blocked",
+    description: `${app.name ?? packageName} was blocked by your parent`,
+    data: {
+      deviceId: String(device._id),
+      deviceName: device.name ?? "Child device",
+      packageName,
+      appName: app.name ?? packageName,
+      reason: "APPLICATION_BLOCKED",
+      link: "/Child/apps",
+    },
+  });
+
   await sendAuditLog({
     parentId,
     childId: device.childId,
@@ -976,6 +994,23 @@ export async function unblockApplication(parentId, deviceId, packageName) {
 
   pushPolicyUpdate(updatedDevice);
   pushDeviceStatusUpdate(updatedDevice);
+
+  await notifyChild({
+    parentId,
+    childId: device.childId,
+    type: NotificationType.APPLICATION_UNBLOCKED,
+    severity: NotificationSeverity.INFO,
+    title: "App unlocked",
+    description: `${app.name ?? packageName} is now available`,
+    data: {
+      deviceId: String(device._id),
+      deviceName: device.name ?? "Child device",
+      packageName,
+      appName: app.name ?? packageName,
+      reason: "APPLICATION_UNBLOCKED",
+      link: "/Child/apps",
+    },
+  });
 
   await sendAuditLog({
     parentId,
