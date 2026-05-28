@@ -1,7 +1,6 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
+import React, { useCallback, useLayoutEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  NativeModules,
   Pressable,
   ScrollView,
   View,
@@ -9,35 +8,74 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useFocusEffect, type Href } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
-import type { AppDispatch, RootState } from "@/src/redux/store/types";
-import { setReportsSelectedChildId } from "@/src/redux/slices/reports-slice";
 import {
-  buildChildChartsFromSnapshot,
-  type ScreenTimeSnapshot,
+  apiGetDeviceScreenTimeSnapshot,
+  type DeviceScreenTimeSnapshot,
+} from "@/src/api/device";
+import type { RootState } from "@/src/redux/store/types";
+import { buildReportDaysFromHistory } from "@/src/utils/screenTimeHistory";
+import {
+  buildChildChartsFromScreenTime,
+  type ChildScreenTimeInput,
 } from "./buildChildReportsCharts";
 import ChildReportsContent from "@/src/components/ReportsScreen/ChildReportsContent";
 import ReportsMetricRow from "@/src/components/ReportsScreen/ReportsMetricRow";
 import { styles } from "../../ParentScreens/ReportsScreen/styles";
 
-const { DeviceControl } = NativeModules;
+// Maps the API snapshot into chart input with the effective daily limit.
+function screenTimeInputFromSnapshot(
+  snapshot: DeviceScreenTimeSnapshot
+): ChildScreenTimeInput {
+  const isLimitEnabled = snapshot.isLimitEnabled === true;
+  const limitMode = String(snapshot.limitMode ?? "NONE");
+  const dailyLimitMinutes =
+    isLimitEnabled && limitMode === "DAILY"
+      ? Number(snapshot.dailyLimitMinutes ?? 0) +
+        Number(snapshot.extraMinutesToday ?? 0)
+      : null;
+
+  const usedTodayMinutes = Number(snapshot.usedTodayMinutes ?? 0);
+  const daysFromHistory = buildReportDaysFromHistory(
+    snapshot.dailyUsageHistory,
+    usedTodayMinutes
+  );
+  const serverDays = snapshot.days ?? [];
+  const days =
+    serverDays.length > 0 &&
+    serverDays.some((day) => day.dateKey && (day.hasData || day.usedMinutes > 0))
+      ? serverDays
+      : daysFromHistory;
+
+  return {
+    usedTodayMinutes,
+    dailyLimitMinutes,
+    days:
+      days.length > 0
+        ? days.map((day, index) => ({
+            ...day,
+            usedMinutes: Math.max(
+              Number(day.usedMinutes ?? 0),
+              daysFromHistory[index]?.usedMinutes ?? 0
+            ),
+          }))
+        : daysFromHistory,
+  };
+}
 
 export default function ChildReportsScreen() {
   const navigation = useNavigation();
-  const dispatch = useDispatch<AppDispatch>();
 
-  const [childSnapshot, setChildSnapshot] = useState<ScreenTimeSnapshot | null>(
-    null
-  );
-  const [isChildSnapshotLoading, setIsChildSnapshotLoading] = useState(false);
+  const [screenTimeSnapshot, setScreenTimeSnapshot] =
+    useState<DeviceScreenTimeSnapshot | null>(null);
+  const [isSnapshotLoading, setIsSnapshotLoading] = useState(false);
 
   const activeChildId = useSelector(
     (state: RootState) => state.auth.activeChildId
   );
-  const selectedChildId = useSelector(
-    (state: RootState) => state.reports.selectedChildId
-  );
+  const deviceId = useSelector((state: RootState) => state.auth.deviceId);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: true,
@@ -62,67 +100,57 @@ export default function ChildReportsScreen() {
     });
   }, [navigation]);
 
-  useEffect(() => {
-    if (activeChildId) {
-      dispatch(setReportsSelectedChildId(activeChildId));
-    }
-  }, [activeChildId, dispatch]);
+  const loadScreenTimeSnapshot = useCallback(async () => {
+    const resolvedDeviceId = deviceId ? String(deviceId).trim() : "";
 
-  const effectiveChildId = activeChildId ?? selectedChildId;
-
-  const loadChildSnapshot = useCallback(async () => {
-    if (!DeviceControl?.getRemainingTime) {
+    if (!resolvedDeviceId) {
+      setScreenTimeSnapshot(null);
       return;
     }
 
-    setIsChildSnapshotLoading(true);
+    setIsSnapshotLoading(true);
 
     try {
-      const result = await DeviceControl.getRemainingTime();
-
-      const limitMode = String(result.limitMode || "NONE");
-      const isLimitEnabled = Boolean(result.limitEnabled);
-
-      const dailyLimitMinutes =
-        isLimitEnabled && limitMode === "DAILY"
-          ? Number(result.dailyLimitMinutes ?? 0) + Number(result.extraMinutes ?? 0)
-          : null;
-
-      setChildSnapshot({
-        usedTodayMinutes: Number(result.usedTodayMinutes) || 0,
-        usedWeekMinutes: Number(result.usedWeekMinutes) || 0,
-        dailyLimitMinutes,
-      });
+      const snapshot = await apiGetDeviceScreenTimeSnapshot(resolvedDeviceId);
+      setScreenTimeSnapshot(snapshot);
     } catch {
-      setChildSnapshot(null);
+      setScreenTimeSnapshot(null);
     } finally {
-      setIsChildSnapshotLoading(false);
+      setIsSnapshotLoading(false);
     }
-  }, []);
+  }, [deviceId]);
 
   useFocusEffect(
     useCallback(() => {
-      void loadChildSnapshot();
-      const interval = setInterval(() => {
-        void loadChildSnapshot();
-      }, 5000);
-
-      return () => clearInterval(interval);
-    }, [loadChildSnapshot])
+      void loadScreenTimeSnapshot();
+    }, [loadScreenTimeSnapshot])
   );
 
   const charts = useMemo(() => {
-    if (!childSnapshot) {
+    if (!screenTimeSnapshot) {
       return null;
     }
 
-    return buildChildChartsFromSnapshot(childSnapshot);
-  }, [childSnapshot]);
+    return buildChildChartsFromScreenTime(
+      screenTimeInputFromSnapshot(screenTimeSnapshot)
+    );
+  }, [screenTimeSnapshot]);
 
-  const isLoading = isChildSnapshotLoading && !childSnapshot;
+  const isLoading = isSnapshotLoading && !screenTimeSnapshot;
 
-  if (!effectiveChildId) {
-    return <View style={styles.screen} />;
+  if (!activeChildId || !deviceId) {
+    return (
+      <View style={styles.screen}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.loadingWrap}>
+            <ReportsMetricRow
+              label="Reports"
+              value="Connect this device to see your screen time"
+            />
+          </View>
+        </ScrollView>
+      </View>
+    );
   }
 
   if (isLoading) {

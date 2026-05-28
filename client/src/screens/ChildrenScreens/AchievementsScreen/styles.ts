@@ -13,7 +13,6 @@ export const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 10,
     paddingBottom: 24,
-    backgroundColor: "#FFFFFF",
   },
 
   heroCard: {

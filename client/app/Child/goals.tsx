@@ -8,7 +8,7 @@ export default function ChildGoalsRoute() {
     <>
       <Stack.Screen
         options={{
-          title: "Goals",
+          title: "Badges",
           headerTitleAlign: "center",
           headerShadowVisible: false,
         }}

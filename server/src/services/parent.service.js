@@ -260,7 +260,7 @@ export async function getParentHomeSummary(parentId) {
 }
 
 
-export async function getChildScreenTimeReports(parentId, childId) {
+export async function getChildScreenTimeReports(parentId, childId, deviceId = null) {
   const child = await getChildByParentId(parentId, childId);
 
   if (!child) {
@@ -268,7 +268,18 @@ export async function getChildScreenTimeReports(parentId, childId) {
   }
 
   const devices = await findDevicesByChildId(childId);
-  let device = pickRepresentativeDevice(devices);
+  let device = null;
+
+  if (deviceId) {
+    device =
+      devices.find((entry) => String(entry._id) === String(deviceId)) ?? null;
+
+    if (!device) {
+      throw new AppError(CommonErrors.DEVICE_NOT_FOUND);
+    }
+  } else {
+    device = pickRepresentativeDevice(devices);
+  }
 
   if (!device) {
     return {

@@ -5,6 +5,7 @@ import {
   addCompletedBadgeIdDal,
   getCompletedBadgeIdsDal,
 } from "../dal/badge.dal.js";
+import { unlockAchievementsForChildService } from "./gamification.service.js";
 import { badgesSeed } from "../seeds/badges.seed.js";
 import { getDeviceCurrentStatusForChild } from "./device.service.js";
 import { notifyChild } from "./notification.service.js";
@@ -169,6 +170,48 @@ async function findActiveDeviceForChild(childId) {
   return devices.find((device) => device.isActive !== false) ?? devices[0];
 }
 
+async function unlockGoalAchievementsIfNeeded({
+  parentId,
+  childId,
+  previousCompletedBadgeIds,
+  completedBadgeIds,
+}) {
+  const previousCount = Array.isArray(previousCompletedBadgeIds)
+    ? previousCompletedBadgeIds.length
+    : 0;
+
+  const completedCount = Array.isArray(completedBadgeIds)
+    ? completedBadgeIds.length
+    : 0;
+
+  const achievementKeys = [];
+
+  if (previousCount === 0 && completedCount > 0) {
+    achievementKeys.push("first_goal_completed");
+  }
+
+  if (completedCount >= badges.length) {
+    achievementKeys.push("all_goals_completed");
+  }
+
+  if (achievementKeys.length === 0) {
+    return;
+  }
+
+  try {
+    await unlockAchievementsForChildService(
+      parentId,
+      childId,
+      achievementKeys
+    );
+  } catch (err) {
+    console.error(
+      "unlockAchievementsForChildService failed in unlockGoalAchievementsIfNeeded:",
+      err.message
+    );
+  }
+}
+
 async function unlockBadgeIfEligible({
   parentId,
   childId,
@@ -186,6 +229,9 @@ async function unlockBadgeIfEligible({
     return null;
   }
 
+  const previousCompletedBadgeIds =
+    (await getCompletedBadgeIdsDal(parentId, childId)) ?? [];
+
   const completedBadgeIds = await addCompletedBadgeIdDal(
     parentId,
     childId,
@@ -195,6 +241,13 @@ async function unlockBadgeIfEligible({
   if (!completedBadgeIds) {
     throw new AppError(CommonErrors.CHILD_NOT_FOUND);
   }
+
+  await unlockGoalAchievementsIfNeeded({
+    parentId,
+    childId,
+    previousCompletedBadgeIds,
+    completedBadgeIds,
+  });
 
   await notifyChild({
     parentId,

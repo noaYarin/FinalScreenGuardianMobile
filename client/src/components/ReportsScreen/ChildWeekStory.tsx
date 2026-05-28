@@ -47,9 +47,7 @@ export default function ChildWeekStory({ weekDays }: Props) {
             >
               {day.isFuture
                 ? "—"
-                : day.usedMinutes > 0
-                  ? formatChildReportDuration(day.usedMinutes)
-                  : "—"}
+                : formatChildReportDuration(day.usedMinutes)}
             </AppText>
           </View>
         ))}

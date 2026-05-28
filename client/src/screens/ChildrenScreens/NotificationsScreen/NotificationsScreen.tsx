@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { Pressable, ScrollView, View, useWindowDimensions } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useFocusEffect } from "expo-router";
+import { Href, useFocusEffect, useRouter } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
@@ -30,6 +30,7 @@ type NotificationItem = {
   timeLabel: string;
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
   isNew: boolean;
+  link: Href | null;
 };
 
 const FILTERS: { id: NotificationType; label: string }[] = [
@@ -48,6 +49,18 @@ function isBadgeNotification(notification: Notification) {
   return notification.data?.badgeId != null;
 }
 
+function getNotificationLink(notification: Notification): Href | null {
+  const rawLink = notification.data?.link;
+
+  if (typeof rawLink !== "string" || !rawLink.trim()) {
+    return null;
+  }
+
+  const link = rawLink.trim();
+
+  return (link.startsWith("/") ? link : `/${link}`) as Href;
+}
+
 function mapNotificationType(
   notification: Notification
 ): Exclude<NotificationType, "all"> {
@@ -57,7 +70,9 @@ function mapNotificationType(
     normalized.includes("SCREEN_TIME") ||
     normalized.includes("DEVICE_LOCKED") ||
     normalized.includes("DEVICE_UNLOCKED") ||
-    normalized.includes("EXTENSION_REQUEST")
+    normalized.includes("EXTENSION_REQUEST") ||
+    normalized.includes("APPLICATION_BLOCKED") ||
+    normalized.includes("APPLICATION_UNBLOCKED")
   ) {
     return "time";
   }
@@ -97,6 +112,10 @@ function getNotificationIcon(
       if (normalized.includes("ACHIEVEMENT")) return "trophy";
       return "star-circle";
     case "time":
+      if (normalized.includes("APPLICATION_BLOCKED")) return "cellphone-lock"
+      if (normalized.includes("APPLICATION_UNBLOCKED")) return "cellphone-check";
+
+      if (normalized.includes("UNLOCK")) return "lock-open-outline";
       if (normalized.includes("LOCK")) return "lock-outline";
       if (normalized.includes("EXTENSION")) return "clock-plus-outline";
       if (normalized.includes("SCREEN_TIME")) return "timer-sand";
@@ -155,11 +174,14 @@ function mapNotificationToItem(notification: Notification): NotificationItem {
     timeLabel: getTimeLabel(notification.createdAt),
     icon: getNotificationIcon(notification, type),
     isNew: !notification.isRead,
+    link: getNotificationLink(notification),
   };
 }
 
 export default function NotificationsScreen() {
   const dispatch = useDispatch<AppDispatch>();
+
+  const router = useRouter();
 
   const { width } = useWindowDimensions();
   const [selectedFilter, setSelectedFilter] = useState<NotificationType>("all");
@@ -205,7 +227,7 @@ export default function NotificationsScreen() {
       };
     }, [dispatch, activeChildId])
   );
-  
+
   const childNotifications = useMemo(() => {
     return notifications
       .filter((notification) => {
@@ -311,6 +333,11 @@ export default function NotificationsScreen() {
               filteredNotifications.map((item) => (
                 <Pressable
                   key={item.id}
+                  onPress={() => {
+                    if (!item.link) return;
+
+                    router.replace(item.link);
+                  }}
                   accessibilityRole="button"
                   accessibilityLabel={`${item.title}. ${item.message}`}
                   style={styles.notificationCard}

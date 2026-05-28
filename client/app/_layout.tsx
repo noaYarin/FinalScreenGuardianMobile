@@ -1,5 +1,6 @@
 import "react-native-gesture-handler";
 import React, { useEffect, useState } from "react";
+import { AppState, NativeModules } from "react-native";
 import { Href, Stack, useRouter, useSegments } from "expo-router";
 import { Provider as ReduxProvider, useDispatch, useSelector } from "react-redux";
 import { showInfoToast } from "@/src/utils/appToast";
@@ -53,6 +54,7 @@ import {
 import store from "../src/redux/store";
 import { fetchChildAchievementsThunk } from "@/src/redux/thunks/achievementsThunks";
 import { fetchCurrentChildProfileThunk } from "@/src/redux/thunks/childrenThunks";
+const { DeviceControl } = NativeModules;
 
 function AppStack() {
   const dispatch = useDispatch<AppDispatch>();
@@ -68,6 +70,30 @@ function AppStack() {
   const { token, childToken, parentId, activeChildId } = useSelector(
     (state: RootState) => state.auth
   );
+
+  useEffect(() => {
+    if (!childToken) return;
+
+    const syncProtectionStatus = async () => {
+      try {
+        await DeviceControl?.syncProtectionStatus?.();
+      } catch (e) {
+        console.warn("syncProtectionStatus failed", e);
+      }
+    };
+
+    syncProtectionStatus();
+
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        syncProtectionStatus();
+      }
+    });
+
+    return () => {
+      sub.remove();
+    };
+  }, [childToken]);
 
   useEffect(() => {
     if (!childToken) return;

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
-  Pressable,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -10,10 +9,12 @@ import { router } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { NativeModules } from "react-native";
-import { Button, Surface, TextInput as PaperTextInput } from "react-native-paper";
+import { Button, TextInput as PaperTextInput } from "react-native-paper";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
+import CustomCard from "@/src/components/CustomCard/CustomCard";
+import MinuteCard, { type MinuteCardTile } from "@/src/components/MinuteCard/MinuteCard";
 import { styles } from "./styles";
 
 import type { AppDispatch, RootState } from "@/src/redux/store/types";
@@ -22,18 +23,19 @@ import {
   fetchMyRequestsThunk,
 } from "@/src/redux/thunks/requestThunks";
 import { showErrorToast, showSuccessToast } from "@/src/utils/appToast";
+import { selectChildPalette } from "@/src/redux/slices/child-theme-slice";
 
 // Native module for device control actions and current screen-time status
 const { DeviceControl } = NativeModules;
 
 type MinuteOption = {
   minutes: number;
-  icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
-  tile: "blue" | "green";
+  tile: MinuteCardTile;
 };
 
 export default function ExtendTimeRequestScreen() {
   const dispatch = useDispatch<AppDispatch>();
+  const palette = useSelector(selectChildPalette);
 
   const { activeChildId, deviceId } = useSelector(
     (state: RootState) => state.auth
@@ -54,8 +56,8 @@ export default function ExtendTimeRequestScreen() {
 
   const minuteOptions: MinuteOption[] = useMemo(
     () => [
-      { minutes: 10, icon: "clock-outline", tile: "blue" },
-      { minutes: 30, icon: "clock-outline", tile: "green" },
+      { minutes: 10, tile: "blue" },
+      { minutes: 30, tile: "purple" },
     ],
     []
   );
@@ -190,23 +192,16 @@ export default function ExtendTimeRequestScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.outer}>
-            <Surface style={styles.heroSurface} elevation={0}>
-              <View style={styles.heroAccentTop} />
-              <View style={styles.heroAccentBottom} />
-
+            <View style={styles.content}>
               <View style={styles.headerBlock}>
                 <View style={styles.subTitleRow}>
                   <View style={styles.subTitleIconBadge}>
                     <MaterialCommunityIcons
                       name="clock-plus-outline"
-                      size={16}
+                      size={28}
                       color="#2F6DEB"
                     />
                   </View>
-
-                  <AppText weight="bold" style={styles.subTitle}>
-                    Extension Request
-                  </AppText>
                 </View>
 
                 <AppText weight="extraBold" style={styles.question}>
@@ -214,7 +209,7 @@ export default function ExtendTimeRequestScreen() {
                 </AppText>
 
                 <AppText weight="medium" style={styles.helperText}>
-                  Choose a quick option or set your own amount.
+                  Choose a quick option or set your own amount
                 </AppText>
               </View>
 
@@ -222,7 +217,6 @@ export default function ExtendTimeRequestScreen() {
                 <View style={styles.rowTwo}>
                   <MinuteCard
                     minutes={minuteOptions[0].minutes}
-                    iconName={minuteOptions[0].icon}
                     active={selectedMinutes === minuteOptions[0].minutes}
                     tile={minuteOptions[0].tile}
                     onPress={() => selectPreset(minuteOptions[0].minutes)}
@@ -232,7 +226,6 @@ export default function ExtendTimeRequestScreen() {
 
                   <MinuteCard
                     minutes={minuteOptions[1].minutes}
-                    iconName={minuteOptions[1].icon}
                     active={selectedMinutes === minuteOptions[1].minutes}
                     tile={minuteOptions[1].tile}
                     onPress={() => selectPreset(minuteOptions[1].minutes)}
@@ -242,93 +235,26 @@ export default function ExtendTimeRequestScreen() {
                 </View>
 
                 <View style={styles.customRow}>
-                  <View
-                    style={[
-                      styles.customCard,
-                      selectedMinutes === customMinutes ? styles.cardActive : null,
-                    ]}
-                    accessible={false}
-                  >
-                    <Pressable
-                      onPress={() => selectCustom(customMinutes)}
-                      accessibilityRole="button"
-                      accessibilityLabel="Select a custom amount"
-                      style={({ pressed }) => [
-                        styles.cardOverlayPressable,
-                        pressed ? styles.cardPressed : null,
-                      ]}
-                    />
-
-                    <View style={styles.customTopRow}>
-                      <View style={styles.orangeBadge}>
-                        <MaterialCommunityIcons
-                          name="pencil-outline"
-                          size={18}
-                          color="#B46B00"
-                        />
-                      </View>
-                    </View>
-
-                    <AppText weight="extraBold" style={styles.customLabel}>
-                      Custom
-                    </AppText>
-
-                    <View style={styles.customValueRow}>
-                      <Pressable
-                        onPress={decCustom}
-                        accessibilityRole="button"
-                        accessibilityLabel="Decrease minutes"
-                        hitSlop={10}
-                        style={({ pressed }) => [
-                          styles.customControlBtn,
-                          pressed ? styles.pressedOpacity : null,
-                        ]}
-                      >
-                        <MaterialCommunityIcons
-                          name="minus"
-                          size={18}
-                          color="#B46B00"
-                        />
-                      </Pressable>
-
-                      <AppText weight="extraBold" style={styles.customValue}>
-                        {customMinutes}
-                      </AppText>
-
-                      <Pressable
-                        onPress={incCustom}
-                        accessibilityRole="button"
-                        accessibilityLabel="Increase minutes"
-                        hitSlop={10}
-                        style={({ pressed }) => [
-                          styles.customControlBtn,
-                          pressed ? styles.pressedOpacity : null,
-                        ]}
-                      >
-                        <MaterialCommunityIcons
-                          name="plus"
-                          size={18}
-                          color="#B46B00"
-                        />
-                      </Pressable>
-                    </View>
-
-                    <AppText style={styles.customUnit}>minutes</AppText>
-                  </View>
+                  <CustomCard
+                    customMinutes={customMinutes}
+                    active={selectedMinutes === customMinutes}
+                    onSelect={() => selectCustom(customMinutes)}
+                    onDec={decCustom}
+                    onInc={incCustom}
+                  />
                 </View>
               </View>
 
-              <View style={styles.summaryBar}>
-                <View style={styles.summaryBadge}>
-                  <MaterialCommunityIcons
-                    name="check-circle-outline"
-                    size={18}
-                    color="#0F8A5F"
-                  />
-                </View>
-
-                <AppText weight="extraBold" style={styles.summaryText}>
-                  Requested: +{selectedMinutes} minutes
+              <View
+                style={styles.summaryBar}
+                accessibilityRole="summary"
+                accessibilityLabel={`Requested ${selectedMinutes} minutes`}
+              >
+                <AppText weight="bold" style={styles.summaryLabel}>
+                  Requested
+                </AppText>
+                <AppText weight="extraBold" style={styles.summaryAmount}>
+                  +{selectedMinutes} minutes
                 </AppText>
               </View>
 
@@ -351,10 +277,10 @@ export default function ExtendTimeRequestScreen() {
                   theme={{
                     roundness: 18,
                     colors: {
-                      primary: "#2F6DEB",
-                      outline: "#D6E6FF",
-                      background: "#FFFFFF",
-                      onSurfaceVariant: "#8A8A8A",
+                      primary: palette.accent,
+                      outline: palette.cardBorder,
+                      background: palette.accentSoft,
+                      onSurfaceVariant: palette.textMuted,
                     },
                   }}
                 />
@@ -388,55 +314,10 @@ export default function ExtendTimeRequestScreen() {
                     ? "Sending..."
                     : "Send request to parent"}
               </Button>
-            </Surface>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </ScreenLayout>
-  );
-}
-
-function MinuteCard({
-  minutes,
-  iconName,
-  active,
-  tile,
-  onPress,
-  a11y,
-  minutesLabel,
-}: {
-  minutes: number;
-  iconName: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
-  active: boolean;
-  tile: "blue" | "green";
-  onPress: () => void;
-  a11y: string;
-  minutesLabel: string;
-}) {
-  const tileStyle = tile === "blue" ? styles.tileBlue : styles.tileGreen;
-  const iconColor = tile === "blue" ? "#2F6DEB" : "#0F8A5F";
-
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={a11y}
-      style={({ pressed }) => [
-        styles.minuteCard,
-        tileStyle,
-        active ? styles.cardActive : null,
-        pressed ? styles.cardPressed : null,
-      ]}
-    >
-      <View style={styles.tileIconBadge}>
-        <MaterialCommunityIcons name={iconName} size={18} color={iconColor} />
-      </View>
-
-      <AppText weight="extraBold" style={styles.minutesValue}>
-        +{minutes}
-      </AppText>
-
-      <AppText style={styles.minutesLabel}>{minutesLabel}</AppText>
-    </Pressable>
   );
 }
