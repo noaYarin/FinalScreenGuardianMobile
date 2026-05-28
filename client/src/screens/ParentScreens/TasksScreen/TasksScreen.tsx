@@ -164,7 +164,7 @@ export default function TasksScreen() {
         recurrenceLabel: getRecurrenceLabel(task),
         note:
           status === "pending"
-            ? "Photo submitted and waiting for parent approval."
+            ? "Task submitted and waiting for parent approval."
             : status === "completed"
               ? "Completed and approved."
               : "This task is still open and has not been completed yet.",

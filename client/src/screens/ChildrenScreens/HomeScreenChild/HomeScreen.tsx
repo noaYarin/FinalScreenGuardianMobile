@@ -426,8 +426,7 @@ export default function HomeScreen() {
               usageStats,
             })
           ).unwrap();
-
-          console.log("App usage synced:", usageStats.length);
+          
         } else {
           console.log("DeviceControl.getAppUsageStats is not available");
         }
@@ -454,8 +453,6 @@ export default function HomeScreen() {
                   app.packageName === "com.google.android.youtube" ||
                   String(app.packageName).toLowerCase().includes("youtube")
               );
-
-              console.log("YOUTUBE USAGE ON APP ACTIVE:", youtubeUsage);
 
               return dispatch(
                 syncAppUsageThunk({
@@ -783,31 +780,30 @@ export default function HomeScreen() {
             />
           </View>
 
-          <Pressable
-            disabled
-            style={({ pressed }) => [
-              styles.panicBtn,
-              styles.panicDisabled,
-              pressed && styles.panicPressed,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="SOS disabled"
-            accessibilityState={{ disabled: true }}
-          >
-            <View style={styles.panicContent}>
-              <View style={styles.panicIconBadge}>
-                <MaterialCommunityIcons
-                  name={ICON.panic}
-                  size={24}
-                  color="#fff"
-                />
-              </View>
+<Pressable
+  onPress={() => router.push("/Child/sos" as Href)}
+  style={({ pressed }) => [
+    styles.panicBtn,
+    pressed && styles.panicPressed,
+  ]}
+  accessibilityRole="button"
+  accessibilityLabel="Send SOS alert"
+  accessibilityState={{ disabled: false }}
+>
+  <View style={styles.panicContent}>
+    <View style={styles.panicIconBadge}>
+      <MaterialCommunityIcons
+        name={ICON.panic}
+        size={24}
+        color="#fff"
+      />
+    </View>
 
-              <AppText weight="extraBold" style={styles.panicText}>
-                SOS
-              </AppText>
-            </View>
-          </Pressable>
+    <AppText weight="extraBold" style={styles.panicText}>
+      SOS
+    </AppText>
+  </View>
+</Pressable>
 
           <Modal
             visible={avatarInfoVisible}

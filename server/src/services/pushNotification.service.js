@@ -22,13 +22,32 @@ export async function sendNotification(userId, title, body, data) {
   }
 
   const admin = getFirebaseAdmin();
+
+  const isSos =
+    data?.type === "SOS_TRIGGERED" ||
+    data?.source === "DISTRESS_BUTTON";
+
   const message = {
     token,
-    notification: { title, body },
+    notification: {
+      title,
+      body,
+    },
+    android: {
+      priority: isSos ? "high" : "normal",
+      notification: {
+        channelId: isSos ? "sos_alerts" : "default",
+        priority: isSos ? "max" : "default",
+        defaultSound: true,
+        defaultVibrateTimings: true,
+        visibility: "public",
+      },
+    },
     data: stringifyData(data),
   };
 
   const messageId = await admin.messaging().send(message);
+
   return { sent: true, messageId };
 }
 
