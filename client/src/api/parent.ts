@@ -125,10 +125,16 @@ export type ScreenTimeUsageReport = {
 };
 
 export async function getChildScreenTimeReports(
-  childId: string
+  childId: string,
+  deviceId?: string
 ): Promise<ScreenTimeUsageReport> {
+  const query =
+    deviceId && deviceId.trim()
+      ? `?deviceId=${encodeURIComponent(deviceId.trim())}`
+      : "";
+
   return api.get<ScreenTimeUsageReport>(
-    `${URL}/children/${encodeURIComponent(childId)}/screen-time-reports`,
+    `${URL}/children/${encodeURIComponent(childId)}/screen-time-reports${query}`,
     { requireAuth: true, role: "PARENT" }
   );
 }

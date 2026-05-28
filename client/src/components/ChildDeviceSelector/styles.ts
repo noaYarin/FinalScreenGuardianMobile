@@ -11,8 +11,10 @@ export const styles = StyleSheet.create({
   },
 
   sectionTitle: {
+    width: "100%",
     fontSize: 16,
     color: "#1F2937",
+    textAlign: "center",
   },
 
   childrenViewport: {
