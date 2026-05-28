@@ -927,13 +927,32 @@ export async function blockApplication(parentId, deviceId, packageName) {
   }
 
   pushPolicyUpdate(updatedDevice);
-console.log("BLOCK APPLICATION AUDIT POINT:", {
-  parentId,
-  childId: device.childId,
-  packageName,
-  appName: app.name,
-  actionType: AuditActionType.BLOCK_APPLICATION,
-});
+  pushDeviceStatusUpdate(updatedDevice);
+  console.log("BLOCK APPLICATION AUDIT POINT:", {
+    parentId,
+    childId: device.childId,
+    packageName,
+    appName: app.name,
+    actionType: AuditActionType.BLOCK_APPLICATION,
+  });
+
+  await notifyChild({
+    parentId,
+    childId: device.childId,
+    type: NotificationType.APPLICATION_BLOCKED,
+    severity: NotificationSeverity.WARNING,
+    title: "App blocked",
+    description: `${app.name ?? packageName} was blocked by your parent`,
+    data: {
+      deviceId: String(device._id),
+      deviceName: device.name ?? "Child device",
+      packageName,
+      appName: app.name ?? packageName,
+      reason: "APPLICATION_BLOCKED",
+      link: "/Child/apps",
+    },
+  });
+
   await sendAuditLog({
     parentId,
     childId: device.childId,
@@ -974,6 +993,24 @@ export async function unblockApplication(parentId, deviceId, packageName) {
   }
 
   pushPolicyUpdate(updatedDevice);
+  pushDeviceStatusUpdate(updatedDevice);
+
+  await notifyChild({
+    parentId,
+    childId: device.childId,
+    type: NotificationType.APPLICATION_UNBLOCKED,
+    severity: NotificationSeverity.INFO,
+    title: "App unlocked",
+    description: `${app.name ?? packageName} is now available`,
+    data: {
+      deviceId: String(device._id),
+      deviceName: device.name ?? "Child device",
+      packageName,
+      appName: app.name ?? packageName,
+      reason: "APPLICATION_UNBLOCKED",
+      link: "/Child/apps",
+    },
+  });
 
   await sendAuditLog({
     parentId,
@@ -1596,4 +1633,47 @@ export async function syncApplicationUsageByChild({
   pushDeviceStatusUpdate(updatedDevice);
 
   return updatedDevice.applications ?? [];
+}
+
+export async function reportBlockedApplicationAttempt({
+  deviceId,
+  packageName,
+  childId,
+  parentId,
+}) {
+  const device = await validateDeviceAccess({
+    deviceId,
+    parentId,
+    childId,
+  });
+
+  const app = device.applications?.find(
+    (application) => application.packageName === packageName
+  );
+
+  if (!app) {
+    throw new AppError(CommonErrors.APP_NOT_FOUND);
+  }
+
+  await notifyParent({
+    parentId,
+    childId,
+    type: NotificationType.BYPASS_ATTEMPT,
+    severity: NotificationSeverity.WARNING,
+    title: "Blocked app attempt",
+    description: `${app.name ?? packageName} was opened but blocked`,
+    data: {
+      deviceId: String(deviceId),
+      packageName,
+      appName: app.name ?? packageName,
+      link: "/Parent/systemAlerts",
+    },
+  });
+
+  return {
+    deviceId: String(deviceId),
+    packageName,
+    appName: app.name ?? packageName,
+    reported: true,
+  };
 }

@@ -18,7 +18,8 @@ import {
   updateDeviceLocation,
   updateDeviceName,
   syncInstalledApplicationsByChild,
-  syncApplicationUsageByChild
+  syncApplicationUsageByChild,
+  reportBlockedApplicationAttempt,
 } from "../services/device.service.js";
 export async function getDevicesByChildController(req, res, next) {
   try {
@@ -174,6 +175,27 @@ export async function unblockApplicationController(req, res, next) {
     const data = await unblockApplication(parentId, deviceId, packageName);
 
     res.status(200).json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+
+export async function reportBlockedApplicationAttemptController(req, res, next) {
+  try {
+    const { deviceId, packageName } = req.params;
+
+    const childId = req.user.childId;
+    const parentId = req.user.parentId;
+
+    const data = await reportBlockedApplicationAttempt({
+      deviceId,
+      packageName,
+      childId,
+      parentId,
+    });
+
+    res.status(201).json({ ok: true, data });
   } catch (err) {
     next(err);
   }

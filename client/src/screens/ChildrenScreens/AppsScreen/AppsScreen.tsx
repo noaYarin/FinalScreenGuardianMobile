@@ -1,9 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Image,
   NativeModules,
-  Pressable,
   ScrollView,
   View,
   useWindowDimensions,
@@ -14,6 +13,8 @@ import { useLocalSearchParams } from "expo-router";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import { apiGetDevicePolicyForChild } from "../../../api/device";
+import { onEvent } from "../../../services/socket";
+import { POLICY_UPDATED } from "../../../constants/socketEvents";
 import { styles } from "./styles";
 
 type InstalledApp = {
@@ -52,57 +53,75 @@ export default function AppsScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorText, setErrorText] = useState("");
 
-  async function loadApps() {
-    try {
-      setIsLoading(true);
-      setErrorText("");
+  const loadApps = useCallback(
+    async (showLoader = true) => {
+      try {
+        if (showLoader) {
+          setIsLoading(true);
+        }
 
-      if (!DeviceControl?.getInstalledApps) {
-        setErrorText("App list is not available on this device.");
-        return;
+        setErrorText("");
+
+        if (!DeviceControl?.getInstalledApps) {
+          setErrorText("App list is not available on this device.");
+          return;
+        }
+
+        const installedApps = await DeviceControl.getInstalledApps();
+
+        const policy = deviceId
+          ? await apiGetDevicePolicyForChild(String(deviceId))
+          : { applications: [] };
+
+        const blockedPackages = new Set(
+          (policy.applications ?? [])
+            .filter((app) => app.isBlocked === true)
+            .map((app) => String(app.packageName))
+        );
+
+        const normalizedApps: InstalledApp[] = Array.isArray(installedApps)
+          ? installedApps
+              .filter((app) => app?.packageName && app?.name)
+              .map((app) => {
+                const packageName = String(app.packageName);
+
+                return {
+                  name: String(app.name),
+                  packageName,
+                  icon: app.icon ? String(app.icon) : "default.png",
+                  isSystemApp: app.isSystemApp === true,
+                  isBlocked: blockedPackages.has(packageName),
+                };
+              })
+              .sort((a, b) => a.name.localeCompare(b.name))
+          : [];
+
+        setApps(normalizedApps);
+      } catch (error) {
+        console.log("Failed to load installed apps:", error);
+        setErrorText("Could not load apps right now.");
+      } finally {
+        if (showLoader) {
+          setIsLoading(false);
+        }
       }
-
-      const installedApps = await DeviceControl.getInstalledApps();
-
-      const policy = deviceId
-        ? await apiGetDevicePolicyForChild(String(deviceId))
-        : { applications: [] };
-
-      const blockedPackages = new Set(
-        (policy.applications ?? [])
-          .filter((app) => app.isBlocked === true)
-          .map((app) => String(app.packageName))
-      );
-
-      const normalizedApps: InstalledApp[] = Array.isArray(installedApps)
-        ? installedApps
-            .filter((app) => app?.packageName && app?.name)
-            .map((app) => {
-              const packageName = String(app.packageName);
-
-              return {
-                name: String(app.name),
-                packageName,
-                icon: app.icon ? String(app.icon) : "default.png",
-                isSystemApp: app.isSystemApp === true,
-                isBlocked: blockedPackages.has(packageName),
-              };
-            })
-            .sort((a, b) => a.name.localeCompare(b.name))
-        : [];
-
-      setApps(normalizedApps);
-    } catch (error) {
-      console.log("Failed to load installed apps:", error);
-      setErrorText("Could not load apps right now.");
-    } finally {
-      setIsLoading(false);
-    }
-  }
+    },
+    [deviceId]
+  );
 
   useEffect(() => {
-    loadApps();
-  }, [deviceId]);
+    loadApps(true);
+  }, [loadApps]);
+
+  useEffect(() => {
+    const unsubscribePolicyUpdated = onEvent(POLICY_UPDATED, () => {
+      loadApps(false);
+    });
+
+    return () => {
+      if (unsubscribePolicyUpdated) unsubscribePolicyUpdated();
+    };
+  }, [loadApps]);
 
   const blockedApps = useMemo(
     () => apps.filter((app) => app.isBlocked),
@@ -153,19 +172,6 @@ export default function AppsScreen() {
               </AppText>
             </View>
           </View>
-
-          <Pressable
-            onPress={loadApps}
-            accessibilityRole="button"
-            accessibilityLabel="Refresh locked apps list"
-            style={styles.refreshButton}
-          >
-            <MaterialCommunityIcons name="refresh" size={20} color="#FFFFFF" />
-
-            <AppText weight="bold" style={styles.refreshText}>
-              Refresh apps
-            </AppText>
-          </Pressable>
 
           <View style={styles.lockedSection}>
             <View style={styles.sectionHeader}>
@@ -295,7 +301,10 @@ export default function AppsScreen() {
 
                         <AppText
                           weight="bold"
-                          style={[styles.statusBadgeText, styles.lockedBadgeText]}
+                          style={[
+                            styles.statusBadgeText,
+                            styles.lockedBadgeText,
+                          ]}
                         >
                           Locked
                         </AppText>

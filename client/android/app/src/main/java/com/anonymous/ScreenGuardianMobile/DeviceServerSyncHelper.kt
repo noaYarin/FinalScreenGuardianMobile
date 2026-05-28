@@ -6,6 +6,7 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
 
 /**
  * DeviceServerSyncHelper
@@ -199,6 +200,59 @@ fun sendUsageIfChanged(context: Context, minDeltaMinutes: Int = 1) {
         Log.e(TAG, "sendUsageIfChanged error", e)
     }
  }
+
+
+ fun reportBlockedAppAttempt(context: Context, packageName: String) {
+    try {
+        val baseUrl = PolicyStore.getHeartbeatBaseUrl(context) ?: return
+        val deviceId = PolicyStore.getHeartbeatDeviceId(context) ?: return
+        val token = PolicyStore.getHeartbeatToken(context) ?: return
+
+        val encodedPackageName = URLEncoder.encode(packageName, "UTF-8")
+
+        Thread {
+            var connection: HttpURLConnection? = null
+
+            try {
+                val url = URL(
+                    "${baseUrl.trimEnd('/')}/api/v1/devices/$deviceId/apps/$encodedPackageName/block-attempt"
+                )
+
+                connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "POST"
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.setRequestProperty("Authorization", "Bearer $token")
+                connection.doOutput = true
+                connection.connectTimeout = 10000
+                connection.readTimeout = 10000
+
+                val body = """
+                {
+                  "packageName": "$packageName"
+                }
+                """.trimIndent()
+
+                connection.outputStream.use {
+                    it.write(body.toByteArray(Charsets.UTF_8))
+                }
+
+                val responseCode = connection.responseCode
+                val responseBody = readResponse(connection)
+
+                Log.d(
+                    TAG,
+                    "Blocked app attempt responseCode=$responseCode package=$packageName body=$responseBody"
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to report blocked app attempt", e)
+            } finally {
+                connection?.disconnect()
+            }
+        }.start()
+    } catch (e: Exception) {
+        Log.e(TAG, "reportBlockedAppAttempt error", e)
+    }
+}
 
     /**
      * Clears local usage sync cache.

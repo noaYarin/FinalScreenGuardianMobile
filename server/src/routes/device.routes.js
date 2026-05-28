@@ -22,7 +22,8 @@ import {
   deviceHeartbeatController,
   updateDeviceLocationController,
   syncInstalledApplicationsController,
-  syncApplicationUsageController
+  syncApplicationUsageController,
+  reportBlockedApplicationAttemptController,
 } from "../controllers/device.controller.js";
 
 const router = Router();
@@ -99,6 +100,15 @@ router.patch("/:deviceId/apps/:packageName/block", authJwt, requireParent, block
 // PATCH /api/v1/devices/:deviceId/apps/:packageName/unblock
 // Parent unblocks an application on a specific device
 router.patch("/:deviceId/apps/:packageName/unblock", authJwt, requireParent, unblockApplicationController);
+
+// POST /api/v1/devices/:deviceId/apps/:packageName/block-attempt
+// Child reports that a blocked app was opened
+router.post(
+  "/:deviceId/apps/:packageName/block-attempt",
+  authJwt,
+  requireChild,
+  reportBlockedApplicationAttemptController
+);
 
 // GET /api/v1/devices/:deviceId/current-status
 // Child gets current daily screen-time status for home screen
