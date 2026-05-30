@@ -180,10 +180,6 @@ export default function AchievementsScreen() {
           </View>
 
           <View style={styles.heroTextBlock}>
-            <AppText weight="extraBold" style={styles.heroTitle}>
-              My Achievements
-            </AppText>
-
             <AppText weight="medium" style={styles.heroSubtitle}>
               Complete activities and unlock new achievements!
             </AppText>
