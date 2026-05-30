@@ -351,4 +351,24 @@ export const styles = StyleSheet.create({
   pressed: {
     opacity: 0.85,
   },
+    deleteRewardButton: {
+    borderRadius: 999,
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+
+  deleteRewardButtonText: {
+    fontSize: 12,
+    color: "#DC2626",
+  },
+
+  disabledButton: {
+    opacity: 0.55,
+  },
 });
