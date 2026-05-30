@@ -7,26 +7,28 @@ export const styles = StyleSheet.create({
 
   content: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     paddingTop: 14,
-    paddingBottom: 44,
-    gap: 14,
+    paddingBottom: 0,
   },
 
   scroll: {
     flex: 1,
+    minHeight: 0,
   },
 
   scrollContent: {
-    paddingBottom: 10,
+    flexGrow: 1,
+    paddingBottom: 8,
     gap: 14,
   },
 
   topCard: {
+    marginHorizontal: 10,
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     shadowColor: "#0F172A",
     shadowOpacity: 0.08,
     shadowRadius: 14,
@@ -65,26 +67,87 @@ export const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  selectedHintRow: {
-    marginTop: 10,
-    backgroundColor: "#EAF2FF",
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+  interestsSection: {
+    marginTop: 12,
     gap: 8,
   },
 
-  selectedHintText: {
+  interestsSectionLabel: {
+    fontSize: 13,
+    color: "#4767B5",
+    textAlign: "center",
+  },
+
+  interestsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    rowGap: 10,
+  },
+
+  interestChip: {
+    width: "31.5%",
+    maxWidth: "31.5%",
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    minHeight: 72,
+  },
+
+  interestChipText: {
+    fontSize: 11,
+    lineHeight: 14,
+    color: "#1E3A8A",
+    textAlign: "center",
+  },
+
+  interestsEmptyBox: {
+    backgroundColor: "#EAF2FF",
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+
+  interestsEmptyText: {
     fontSize: 12,
     color: "#1E3A8A",
+    textAlign: "center",
   },
 
   list: {
-    flex: 1,
-    gap: 10,
+    gap: 12,
+  },
+
+  activitiesPanel: {
+    flexGrow: 1,
+    minHeight: 500,
+    width: "100%",
+    alignSelf: "stretch",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 2,
+  },
+
+  footerActions: {
+    marginTop: "auto",
+    width: "100%",
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 4,
+    gap: 8,
   },
 
   gridRow: {
@@ -132,9 +195,10 @@ export const styles = StyleSheet.create({
 
   ideaCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
+    borderRadius: 22,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    minHeight: 96,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -147,24 +211,26 @@ export const styles = StyleSheet.create({
 
   ideaTextSide: {
     flex: 1,
-    paddingRight: 10,
-    gap: 4,
+    paddingRight: 14,
+    gap: 6,
   },
 
   ideaTitle: {
-    fontSize: 15,
+    fontSize: 17,
+    lineHeight: 22,
     color: "#0F172A",
   },
 
   ideaDesc: {
-    fontSize: 12,
+    fontSize: 14,
+    lineHeight: 20,
     color: "#64748B",
   },
 
   ideaIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 14,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     backgroundColor: "#EAF2FF",
     alignItems: "center",
     justifyContent: "center",
@@ -172,17 +238,17 @@ export const styles = StyleSheet.create({
     borderColor: "#C7DAFF",
   },
 
-  primaryButton: {
+  interestButton: {
+    width: "100%",
     backgroundColor: "#A7F3D0",
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginBottom: 24,
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     shadowColor: "#0F172A",
-    shadowOpacity: 0.14,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
 
   primaryPressed: {
@@ -196,12 +262,13 @@ export const styles = StyleSheet.create({
     gap: 10,
   },
 
-  primaryButtonText: {
+  interestButtonText: {
     color: "#064E3B",
-    fontSize: 15,
+    fontSize: 13,
   },
 
   shuffleButton: {
+    width: "100%",
     backgroundColor: "#A7F3D0",
     borderRadius: 16,
     paddingVertical: 12,
@@ -211,8 +278,6 @@ export const styles = StyleSheet.create({
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
     elevation: 2,
-    marginTop: 10,
-    marginBottom: 10,
   },
 
   shuffleButtonText: {

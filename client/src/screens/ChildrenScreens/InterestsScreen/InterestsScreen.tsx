@@ -4,10 +4,7 @@ import {
   Pressable,
   ActivityIndicator,
   ScrollView,
-  useWindowDimensions,
-  I18nManager,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { useDispatch, useSelector } from "react-redux";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -31,6 +28,7 @@ type InterestOption = {
 const EMPTY_INTERESTS: string[] = [];
 //Child can select up to 5 interests
 const MAX_SELECTED = 5;
+const GRID_COLUMNS = 3;
 
 function uniqStringArray(list: string[]) {
   const uniqueValues = new Set<string>();
@@ -44,8 +42,6 @@ function uniqStringArray(list: string[]) {
 export default function InterestsScreen() {
   const s = styles as any;
   const dispatch = useDispatch<AppDispatch>();
-  const { width } = useWindowDimensions();
-  const isSmall = width < 380;
   const childToken = useSelector((s: RootState) => s.auth.childToken);
 
   const existingInterests = useSelector((interestsSlice: RootState) => {
@@ -96,6 +92,14 @@ export default function InterestsScreen() {
     return selected.map((selectedKey) => labelByKey.get(selectedKey) || selectedKey);
   }, [selected, options]);
 
+  const optionRows = useMemo(() => {
+    const rows: InterestOption[][] = [];
+    for (let i = 0; i < options.length; i += GRID_COLUMNS) {
+      rows.push(options.slice(i, i + GRID_COLUMNS));
+    }
+    return rows;
+  }, [options]);
+
   //Toggle interest selection
   const toggle = (key: string) => {
     setSelected((prev) => {
@@ -131,7 +135,7 @@ export default function InterestsScreen() {
 
   return (
     <ScreenLayout scrollable={false}>
-      <LinearGradient colors={["#E6F0FF", "#F3F7FF"]} style={s.bg}>
+      <View style={s.bg}>
         <ScrollView
           style={s.scroll}
           contentContainerStyle={s.scrollContent}
@@ -169,56 +173,81 @@ export default function InterestsScreen() {
                 </View>
               ) : (
                 <View style={s.chipsWrap}>
-                  {options.map((opt) => {
-                    const isOn = selected.includes(opt.key);
-                    const meta = CHILD_INTERESTS_BY_KEY[opt.key];
-                    const chipSoft = meta?.softColor || "#F3F7FF";
-                    const chipAccent = meta?.color || "#2563EB";
-                    const iconName = meta?.icon || "tag-outline";
-                    const isAtLimit = selected.length >= MAX_SELECTED && !isOn;
-                    return (
-                      <Pressable
-                        key={opt.key}
-                        onPress={() => toggle(opt.key)}
-                        accessibilityRole="button"
-                        accessibilityLabel={opt.label}
-                        style={({ pressed }) => [
-                          s.chip,
-                          isOn ? s.chipOn : s.chipOff,
-                          !isOn ? { backgroundColor: chipSoft, borderColor: chipAccent } : null,
-                          pressed && s.chipPressed,
-                          isSmall && s.chipSmall,
-                          isAtLimit ? s.chipDisabled : null,
-                        ]}
-                      >
-                        <View style={[s.chipInner, I18nManager.isRTL ? s.chipInnerRtl : s.chipInnerLtr]}>
-                          <View
-                            style={[
-                              s.chipIconBadge,
-                              { backgroundColor: isOn ? "rgba(255,255,255,0.22)" : "#FFFFFF" },
-                            ]}
-                          >
-                            <MaterialCommunityIcons
-                              name={iconName as any}
-                              size={16}
-                              color={isOn ? "#FFFFFF" : chipAccent}
-                            />
-                          </View>
+                  {optionRows.map((row, rowIndex) => (
+                    <View key={`interest-row-${rowIndex}`} style={s.chipsRow}>
+                      {row.map((opt) => {
+                        const isOn = selected.includes(opt.key);
+                        const meta = CHILD_INTERESTS_BY_KEY[opt.key];
+                        const chipSoft = meta?.softColor || "#F3F7FF";
+                        const chipAccent = meta?.color || "#2563EB";
+                        const iconName = meta?.icon || "tag-outline";
+                        const isAtLimit =
+                          selected.length >= MAX_SELECTED && !isOn;
 
-                          <AppText
-                            weight={isOn ? "extraBold" : "bold"}
-                            style={[
-                              s.chipText,
-                              isOn ? s.chipTextOn : s.chipTextOff,
+                        return (
+                          <Pressable
+                            key={opt.key}
+                            onPress={() => toggle(opt.key)}
+                            accessibilityRole="button"
+                            accessibilityLabel={opt.label}
+                            style={({ pressed }) => [
+                              s.chip,
+                              isOn ? s.chipOn : s.chipOff,
+                              !isOn
+                                ? {
+                                    backgroundColor: chipSoft,
+                                    borderColor: chipAccent,
+                                  }
+                                : null,
+                              pressed && s.chipPressed,
+                              isAtLimit ? s.chipDisabled : null,
                             ]}
-                            numberOfLines={2}
                           >
-                            {opt.label}
-                          </AppText>
-                        </View>
-                      </Pressable>
-                    );
-                  })}
+                            <View style={s.chipInnerColumn}>
+                              <View
+                                style={[
+                                  s.chipIconBadge,
+                                  {
+                                    backgroundColor: isOn
+                                      ? "rgba(255,255,255,0.22)"
+                                      : "#FFFFFF",
+                                  },
+                                ]}
+                              >
+                                <MaterialCommunityIcons
+                                  name={iconName as any}
+                                  size={18}
+                                  color={isOn ? "#FFFFFF" : chipAccent}
+                                />
+                              </View>
+
+                              <AppText
+                                weight={isOn ? "extraBold" : "bold"}
+                                style={[
+                                  s.chipText,
+                                  isOn ? s.chipTextOn : s.chipTextOff,
+                                ]}
+                                numberOfLines={2}
+                              >
+                                {opt.label}
+                              </AppText>
+                            </View>
+                          </Pressable>
+                        );
+                      })}
+
+                      {row.length < GRID_COLUMNS
+                        ? Array.from({
+                            length: GRID_COLUMNS - row.length,
+                          }).map((_, spacerIndex) => (
+                            <View
+                              key={`spacer-${rowIndex}-${spacerIndex}`}
+                              style={s.chipSpacer}
+                            />
+                          ))
+                        : null}
+                    </View>
+                  ))}
                 </View>
               )}
             </View>
@@ -265,7 +294,7 @@ export default function InterestsScreen() {
             </Pressable>
           </View>
         </ScrollView>
-      </LinearGradient>
+      </View>
     </ScreenLayout>
   );
 }

@@ -1,7 +1,10 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
-  bg: { flex: 1 },
+  bg: {
+    flex: 1,
+    backgroundColor: "transparent",
+  },
 
   scroll: { flex: 1 },
 
@@ -47,31 +50,31 @@ export const styles = StyleSheet.create({
   },
 
   chipsWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "flex-start",
-    rowGap: 10,
-    columnGap: 10,
+    gap: 10,
     paddingBottom: 6,
   },
 
+  chipsRow: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    gap: 8,
+  },
+
   chip: {
-    borderRadius: 999,
-    flexGrow: 0,
-    flexBasis: "31%",
-    minWidth: "31%",
-    paddingVertical: 9,
-    paddingHorizontal: 10,
+    flex: 1,
+    minWidth: 0,
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
+    minHeight: 80,
   },
 
-  chipSmall: {
-    flexBasis: "31%",
-    minWidth: "31%",
-    paddingVertical: 8,
-    paddingHorizontal: 8,
+  chipSpacer: {
+    flex: 1,
+    minWidth: 0,
   },
 
   chipOn: {
@@ -87,20 +90,12 @@ export const styles = StyleSheet.create({
   chipPressed: { opacity: 0.92 },
   chipDisabled: { opacity: 0.55 },
 
-  chipInner: {
-    flexDirection: "row",
+  chipInnerColumn: {
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-  },
-
-  chipInnerRtl: {
-    flexDirection: "row-reverse",
-    gap: 8,
-  },
-
-  chipInnerLtr: {
-    flexDirection: "row",
-    gap: 8,
+    gap: 6,
+    width: "100%",
   },
 
   checkBadge: {
@@ -124,7 +119,12 @@ export const styles = StyleSheet.create({
     borderColor: "rgba(15,23,42,0.08)",
   },
 
-  chipText: { fontSize: 12, textAlign: "center", flexShrink: 1 },
+  chipText: {
+    fontSize: 11,
+    lineHeight: 14,
+    textAlign: "center",
+    width: "100%",
+  },
   chipTextOn: { color: "#FFFFFF" },
   chipTextOff: { color: "#1E3A8A" },
 
