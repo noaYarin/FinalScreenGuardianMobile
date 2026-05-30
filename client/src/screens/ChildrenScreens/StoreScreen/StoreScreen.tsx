@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { View, Pressable, ScrollView } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import { LinearGradient } from "expo-linear-gradient";
 import { useDispatch, useSelector } from "react-redux";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
+import CoinIcon from "@/src/components/CoinIcon/CoinIcon";
 import { styles } from "./styles";
 import {
   getChildRewardsThunk,
@@ -20,7 +21,6 @@ import {
 } from "@/src/utils/appToast";
 
 const ICON = {
-  coin: "circle-multiple",
   fallback: "gift-outline",
 } as const;
 
@@ -40,28 +40,34 @@ type RewardItem = {
 
 const CARD_THEMES = [
   {
-    bg: "#EAF2FF",
-    badge: "#CFE3FF",
-    iconColor: "#2F6DEB",
-    border: "#D6E6FF",
+    bg: "#FFF0F6",
+    badge: "#FFD6E8",
+    iconColor: "#DB2777",
+    border: "#FFC2DC",
   },
   {
-    bg: "#F3EDFF",
-    badge: "#E0D2FF",
-    iconColor: "#6D28D9",
-    border: "#E7DBFF",
+    bg: "#F0F7FF",
+    badge: "#D6E8FF",
+    iconColor: "#2563EB",
+    border: "#BFDBFE",
   },
   {
-    bg: "#FFEAF0",
-    badge: "#FFC9D8",
-    iconColor: "#D81B60",
-    border: "#FFD6E2",
+    bg: "#F5F0FF",
+    badge: "#E4D4FF",
+    iconColor: "#7C3AED",
+    border: "#DDD6FE",
   },
   {
-    bg: "#FFF3DD",
-    badge: "#FFE1A8",
-    iconColor: "#B46B00",
-    border: "#FFE6BA",
+    bg: "#FFFBEB",
+    badge: "#FFE08A",
+    iconColor: "#D97706",
+    border: "#FDE68A",
+  },
+  {
+    bg: "#ECFDF5",
+    badge: "#A7F3D0",
+    iconColor: "#059669",
+    border: "#BBF7D0",
   },
 ];
 
@@ -71,18 +77,23 @@ function resolveRewardIcon(iconValue?: string) {
   const allowedIcons: Array<
     React.ComponentProps<typeof MaterialCommunityIcons>["name"]
   > = [
-      "gift-outline",
-      "clock-outline",
-      "movie-open-outline",
-      "ice-cream",
-      "star-circle",
-      "trophy-outline",
-      "gamepad-variant-outline",
-      "ticket-percent-outline",
-    ];
+    "gift-outline",
+    "clock-outline",
+    "movie-open-outline",
+    "ice-cream",
+    "star-circle",
+    "trophy-outline",
+    "gamepad-variant-outline",
+    "ticket-percent-outline",
+    "pizza",
+    "cupcake",
+    "party-popper",
+  ];
 
   if (allowedIcons.includes(normalized as any)) {
-    return normalized as React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+    return normalized as React.ComponentProps<
+      typeof MaterialCommunityIcons
+    >["name"];
   }
 
   return ICON.fallback;
@@ -90,7 +101,9 @@ function resolveRewardIcon(iconValue?: string) {
 
 export default function StoreScreen() {
   const dispatch = useDispatch<any>();
-  const [redeemingRewardId, setRedeemingRewardId] = useState<string | null>(null);
+  const [redeemingRewardId, setRedeemingRewardId] = useState<string | null>(
+    null
+  );
 
   const childRewards = useSelector(
     (state: any) => state?.rewards?.childRewards ?? []
@@ -194,51 +207,56 @@ export default function StoreScreen() {
   };
 
   return (
-    <ScreenLayout>
+    <ScreenLayout scrollable={false}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.container}>
-          <View style={styles.headerBlock}>
-            <AppText weight="extraBold" style={styles.title}>
-              Reward Store
-            </AppText>
-            <AppText weight="medium" style={styles.subtitle}>
-              Spend your coins on rewards you like.
-            </AppText>
-          </View>
 
-          <View style={styles.balanceSection}>
-            <AppText weight="bold" style={styles.balanceLabel}>
-              Your Balance
-            </AppText>
-
-            <View style={styles.balanceCard}>
-              <View style={styles.balanceBadge}>
-                <MaterialCommunityIcons name={ICON.coin} size={28} color="#F59E0B" />
+          <LinearGradient
+            colors={["#FFF9E6", "#FFE9A8", "#FFD95A"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.balanceHero}
+          >
+            <View style={styles.balanceHeroInner}>
+              <View style={styles.coinCircle}>
+                <CoinIcon size={32} />
               </View>
 
               <View style={styles.balanceTextWrap}>
+                <AppText weight="bold" style={styles.balanceLabel}>
+                  Your Balance
+                </AppText>
                 <AppText weight="extraBold" style={styles.balanceAmount}>
                   {coinsBalance}
                 </AppText>
-                <AppText style={styles.balanceSub}>coins available</AppText>
+                <AppText weight="medium" style={styles.balanceSub}>
+                  coins ready to spend
+                </AppText>
               </View>
             </View>
-          </View>
+          </LinearGradient>
 
           <View style={styles.rewardsContainer}>
-            <AppText weight="bold" style={styles.sectionTitle}>
-              Available Rewards
-            </AppText>
+            <View style={styles.sectionHeader}>
+              <MaterialCommunityIcons
+                name="gift-open-outline"
+                size={22}
+                color="#7C3AED"
+              />
+              <AppText weight="bold" style={styles.sectionTitle}>
+                Available Rewards
+              </AppText>
+            </View>
 
             {rewardsError ? (
               <View style={styles.emptyState}>
                 <MaterialCommunityIcons
                   name="alert-circle-outline"
-                  size={30}
-                  color="#94A3B8"
+                  size={36}
+                  color="#A855F7"
                 />
                 <AppText weight="extraBold" style={styles.emptyStateTitle}>
                   Could not load rewards
@@ -269,7 +287,7 @@ export default function StoreScreen() {
                       },
                     ]}
                   >
-                    <View style={styles.rewardRow}>
+                    <View style={styles.rewardTopRow}>
                       <View
                         style={[
                           styles.iconBox,
@@ -281,7 +299,7 @@ export default function StoreScreen() {
                       >
                         <MaterialCommunityIcons
                           name={item.icon}
-                          size={24}
+                          size={28}
                           color={item.iconColor}
                         />
                       </View>
@@ -293,49 +311,47 @@ export default function StoreScreen() {
                         <AppText style={styles.rewardSub}>
                           {item.description}
                         </AppText>
+                      </View>
+                    </View>
 
-                        <View style={styles.statusRow}>
-                          {canRedeem ? (
-                            <View style={styles.availablePill}>
-                              <MaterialCommunityIcons
-                                name="check-circle-outline"
-                                size={14}
-                                color="#15803D"
-                              />
-                              <AppText weight="bold" style={styles.availablePillText}>
-                                Can redeem
-                              </AppText>
-                            </View>
-                          ) : (
-                            <View style={styles.disabledPill}>
-                              <MaterialCommunityIcons
-                                name="lock-outline"
-                                size={14}
-                                color="#64748B"
-                              />
-                              <AppText weight="bold" style={styles.disabledPillText}>
-                                Not enough coins
-                              </AppText>
-                            </View>
-                          )}
-                        </View>
+                    <View style={styles.metaRow}>
+                      <View
+                        style={[
+                          styles.pricePill,
+                          { borderColor: item.border },
+                        ]}
+                      >
+                        <CoinIcon size={18} />
+                        <AppText weight="extraBold" style={styles.rewardPrice}>
+                          {item.coins}
+                        </AppText>
                       </View>
 
-                      <View style={styles.priceBox}>
-                        <View
-                          style={[
-                            styles.pricePill,
-                            {
-                              borderColor: item.border,
-                              backgroundColor: "#FFFFFF",
-                            },
-                          ]}
+                      <View
+                        style={[
+                          styles.statusPill,
+                          canRedeem
+                            ? styles.statusPillReady
+                            : styles.statusPillLocked,
+                        ]}
+                      >
+                        <MaterialCommunityIcons
+                          name={
+                            canRedeem ? "check-circle-outline" : "lock-outline"
+                          }
+                          size={14}
+                          color={canRedeem ? "#15803D" : "#64748B"}
+                        />
+                        <AppText
+                          weight="bold"
+                          style={
+                            canRedeem
+                              ? styles.statusPillTextReady
+                              : styles.statusPillTextLocked
+                          }
                         >
-                          <AppText weight="extraBold" style={styles.rewardPrice}>
-                            {item.coins}
-                          </AppText>
-                          <AppText style={styles.rewardCoins}>coins</AppText>
-                        </View>
+                          {canRedeem ? "You can get it" : "Need more coins"}
+                        </AppText>
                       </View>
                     </View>
 
@@ -345,19 +361,49 @@ export default function StoreScreen() {
                       disabled={!canRedeem || isRedeeming}
                       onPress={() => handleRedeemReward(item.id, item.coins)}
                       style={({ pressed }) => [
-                        styles.redeemButton,
-                        (!canRedeem || isRedeeming) && styles.redeemButtonDisabled,
-                        pressed && canRedeem && !isRedeeming && styles.pressed,
+                        canRedeem && !isRedeeming
+                          ? styles.redeemButton
+                          : styles.redeemButtonDisabled,
+                        pressed &&
+                          canRedeem &&
+                          !isRedeeming &&
+                          styles.pressed,
                       ]}
                     >
-                      <MaterialCommunityIcons
-                        name="gift-open-outline"
-                        size={18}
-                        color="#FFFFFF"
-                      />
-                      <AppText weight="extraBold" style={styles.redeemButtonText}>
-                        {isRedeeming ? "Redeeming..." : "Redeem"}
-                      </AppText>
+                      {canRedeem && !isRedeeming ? (
+                        <LinearGradient
+                          colors={["#34D399", "#10B981", "#059669"]}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={styles.redeemButtonInner}
+                        >
+                          <MaterialCommunityIcons
+                            name="gift-open-outline"
+                            size={20}
+                            color="#FFFFFF"
+                          />
+                          <AppText
+                            weight="extraBold"
+                            style={styles.redeemButtonText}
+                          >
+                            Get reward
+                          </AppText>
+                        </LinearGradient>
+                      ) : (
+                        <>
+                          <MaterialCommunityIcons
+                            name="lock-outline"
+                            size={18}
+                            color="#F8FAFC"
+                          />
+                          <AppText
+                            weight="extraBold"
+                            style={styles.redeemButtonTextDisabled}
+                          >
+                            {isRedeeming ? "Getting it..." : "Not yet"}
+                          </AppText>
+                        </>
+                      )}
                     </Pressable>
                   </View>
                 );
