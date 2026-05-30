@@ -15,8 +15,9 @@ export const HomeScreen: React.FC = () => {
   };
 
      return (
-    <ScreenLayout scrollable={false}>
-      <View style={styles.container}>
+    <View style={styles.screenRoot}>
+      <ScreenLayout scrollable={false}>
+        <View style={styles.container}>
         <View style={styles.heroBlock}>
           <Image
             source={require("../../../../assets/images/homeImg.webp")}
@@ -46,7 +47,8 @@ export const HomeScreen: React.FC = () => {
             </AppText>
           </TouchableOpacity>
         </View>
-      </View>
-    </ScreenLayout>
+        </View>
+      </ScreenLayout>
+    </View>
   );
 };
