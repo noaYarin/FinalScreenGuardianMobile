@@ -372,9 +372,8 @@ export const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#EFF6FF",
-    borderWidth: 1,
-    borderColor: "#D6E6FF",
+    backgroundColor: COLORS.light.tint,
+    borderWidth: 0,
   },
 
   btnSecondaryText: {

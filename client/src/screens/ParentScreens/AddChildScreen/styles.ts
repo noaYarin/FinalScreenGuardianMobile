@@ -6,7 +6,7 @@ export const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: 16,
     paddingTop: 12,
-    backgroundColor: COLORS.light.background,
+    backgroundColor: APP_COLORS.screenBg,
     alignItems: "stretch",
   },
 
@@ -122,7 +122,7 @@ export const styles = StyleSheet.create({
     width: "100%",
     marginTop: 18,
     borderRadius: 16,
-    backgroundColor: APP_COLORS.primaryBlue,
+    backgroundColor: COLORS.light.tint,
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 15,
@@ -130,7 +130,7 @@ export const styles = StyleSheet.create({
 
   saveButtonText: {
     fontSize: 16,
-    color: "#FFFFFF",
+    color: "#1D4ED8",
   },
 
   bottomSpacer: {

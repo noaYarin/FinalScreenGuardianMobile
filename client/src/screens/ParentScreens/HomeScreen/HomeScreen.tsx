@@ -254,6 +254,8 @@ export default function HomeParentScreen() {
                 subtitle="Add your first child to start tracking screen time, limits, and device status."
                 buttonLabel="Add Child"
                 onPressButton={onPressAddChild}
+                buttonStyle={styles.btnSecondary}
+                buttonTextStyle={styles.btnSecondaryText}
               />
             ) : (
               <View style={styles.cardsWrap}>
