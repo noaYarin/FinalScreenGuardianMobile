@@ -4,6 +4,8 @@ import {
   getParentRewardsController,
   getChildRewardsController,
   redeemRewardController,
+  toggleRewardActiveController,
+  deleteRewardController,
 } from "../controllers/reward.controller.js";
 
 import { authJwt } from "../middlewares/authJwt.js";
@@ -13,8 +15,29 @@ import { requireChild } from "../middlewares/requireChild.js";
 const router = express.Router();
 
 router.post("/", authJwt, requireParent, createRewardsController);
+
 router.get("/parent", authJwt, requireParent, getParentRewardsController);
 router.get("/child", authJwt, requireChild, getChildRewardsController);
-router.patch("/:rewardId/redeem", authJwt, requireChild, redeemRewardController);
+
+router.patch(
+  "/:rewardId/redeem",
+  authJwt,
+  requireChild,
+  redeemRewardController
+);
+
+router.patch(
+  "/:rewardId/toggle-active",
+  authJwt,
+  requireParent,
+  toggleRewardActiveController
+);
+
+router.delete(
+  "/:rewardId",
+  authJwt,
+  requireParent,
+  deleteRewardController
+);
 
 export default router;

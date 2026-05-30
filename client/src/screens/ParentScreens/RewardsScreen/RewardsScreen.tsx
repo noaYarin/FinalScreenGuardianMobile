@@ -4,6 +4,7 @@ import {
   ScrollView,
   Pressable,
   useWindowDimensions,
+  Alert,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, type Href } from "expo-router";
@@ -14,7 +15,10 @@ import AppText from "../../../components/AppText/AppText";
 import ChildDeviceSelector from "../../../components/ChildDeviceSelector/ChildDeviceSelector";
 import { styles } from "./styles";
 import { getMyChildrenThunk } from "../../../redux/thunks/childrenThunks";
-import { getParentRewardsThunk } from "../../../redux/thunks/rewardsThunks";
+import {
+  getParentRewardsThunk,
+  deleteRewardThunk,
+} from "../../../redux/thunks/rewardsThunks";
 
 type UiChild = {
   id: string;
@@ -69,6 +73,13 @@ export default function RewardsScreen() {
     (state: any) => state?.rewards?.parentRewards ?? []
   );
 
+  const [viewMode, setViewMode] = useState<"all" | "single">("all");
+  const [selectedChildId, setSelectedChildId] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<"available" | "redeemed">(
+    "available"
+  );
+  const [deletingRewardId, setDeletingRewardId] = useState<string | null>(null);
+
   const children: UiChild[] = useMemo(() => {
     if (Array.isArray(reduxChildren) && reduxChildren.length > 0) {
       return reduxChildren.map((child: any) => ({
@@ -79,12 +90,6 @@ export default function RewardsScreen() {
 
     return FALLBACK_CHILDREN;
   }, [reduxChildren]);
-
-  const [viewMode, setViewMode] = useState<"all" | "single">("all");
-  const [selectedChildId, setSelectedChildId] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"available" | "redeemed">(
-    "available"
-  );
 
   useEffect(() => {
     dispatch(getMyChildrenThunk());
@@ -107,7 +112,9 @@ export default function RewardsScreen() {
       const childName =
         children.find((child) => child.id === childId)?.name ?? "Child";
 
-      const status: RewardStatus = reward?.redeemedAt ? "redeemed" : "available";
+      const status: RewardStatus = reward?.redeemedAt
+        ? "redeemed"
+        : "available";
 
       return {
         id: String(reward?._id ?? reward?.id ?? Math.random()),
@@ -154,6 +161,38 @@ export default function RewardsScreen() {
   const selectedChildName =
     children.find((child) => child.id === selectedChildId)?.name ?? "Child";
 
+  async function handleDeleteReward(reward: RewardCardItem) {
+    Alert.alert(
+      "Delete reward?",
+      `Are you sure you want to delete "${reward.title}"?`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setDeletingRewardId(reward.id);
+              await dispatch(deleteRewardThunk(reward.id)).unwrap();
+            } catch (error) {
+              Alert.alert(
+                "Delete failed",
+                error instanceof Error
+                  ? error.message
+                  : "Could not delete this reward."
+              );
+            } finally {
+              setDeletingRewardId(null);
+            }
+          },
+        },
+      ]
+    );
+  }
+
   return (
     <ScreenLayout>
       <ScrollView
@@ -186,7 +225,10 @@ export default function RewardsScreen() {
                   size={18}
                   color="#16A34A"
                 />
-                <AppText weight="extraBold" style={styles.addRewardButtonGreenText}>
+                <AppText
+                  weight="extraBold"
+                  style={styles.addRewardButtonGreenText}
+                >
                   Add Reward
                 </AppText>
               </Pressable>
@@ -200,7 +242,11 @@ export default function RewardsScreen() {
                   pressed && styles.pressed,
                 ]}
               >
-                <MaterialCommunityIcons name="history" size={18} color="#4C6FFF" />
+                <MaterialCommunityIcons
+                  name="history"
+                  size={18}
+                  color="#4C6FFF"
+                />
                 <AppText weight="extraBold" style={styles.historyButtonText}>
                   History
                 </AppText>
@@ -245,7 +291,8 @@ export default function RewardsScreen() {
                   weight={viewMode === "single" ? "extraBold" : "medium"}
                   style={[
                     styles.filterModeButtonText,
-                    viewMode === "single" && styles.filterModeButtonTextActive,
+                    viewMode === "single" &&
+                      styles.filterModeButtonTextActive,
                   ]}
                 >
                   One Child
@@ -289,6 +336,7 @@ export default function RewardsScreen() {
               >
                 Available
               </AppText>
+
               <View
                 style={[
                   styles.tabCountBadge,
@@ -331,6 +379,7 @@ export default function RewardsScreen() {
               >
                 Redeemed
               </AppText>
+
               <View
                 style={[
                   styles.tabCountBadge,
@@ -374,61 +423,99 @@ export default function RewardsScreen() {
 
             <View style={styles.listContent}>
               {visibleRewards.length > 0 ? (
-                visibleRewards.map((reward: RewardCardItem) => (
-                  <View key={reward.id} style={styles.rewardCard}>
-                    <View style={styles.rewardTopRow}>
-                      <View style={styles.rewardMainInfo}>
-                        <AppText weight="extraBold" style={styles.rewardTitle}>
-                          {reward.title}
-                        </AppText>
-                        <AppText weight="medium" style={styles.rewardMeta}>
-                          {reward.childName} · {reward.createdOrRedeemedLabel}
-                        </AppText>
-                      </View>
+                visibleRewards.map((reward: RewardCardItem) => {
+                  const isDeleting = deletingRewardId === reward.id;
 
-                      <View style={styles.coinsBadge}>
-                        <MaterialCommunityIcons
-                          name="star-circle"
-                          size={16}
-                          color="#F59E0B"
-                        />
-                        <AppText weight="bold" style={styles.coinsBadgeText}>
-                          {reward.coins}
-                        </AppText>
-                      </View>
-                    </View>
-
-                    <AppText weight="medium" style={styles.rewardNote}>
-                      {reward.note}
-                    </AppText>
-
-                    <View style={styles.rewardBottomRow}>
-                      {reward.status === "available" ? (
-                        <View style={styles.availablePill}>
-                          <MaterialCommunityIcons
-                            name="gift-outline"
-                            size={15}
-                            color="#4C6FFF"
-                          />
-                          <AppText weight="bold" style={styles.availablePillText}>
-                            Available
+                  return (
+                    <View key={reward.id} style={styles.rewardCard}>
+                      <View style={styles.rewardTopRow}>
+                        <View style={styles.rewardMainInfo}>
+                          <AppText
+                            weight="extraBold"
+                            style={styles.rewardTitle}
+                          >
+                            {reward.title}
+                          </AppText>
+                          <AppText weight="medium" style={styles.rewardMeta}>
+                            {reward.childName} ·{" "}
+                            {reward.createdOrRedeemedLabel}
                           </AppText>
                         </View>
-                      ) : (
-                        <View style={styles.redeemedPill}>
+
+                        <View style={styles.coinsBadge}>
                           <MaterialCommunityIcons
-                            name="check-decagram-outline"
-                            size={15}
-                            color="#15803D"
+                            name="star-circle"
+                            size={16}
+                            color="#F59E0B"
                           />
-                          <AppText weight="bold" style={styles.redeemedPillText}>
-                            Redeemed
+                          <AppText weight="bold" style={styles.coinsBadgeText}>
+                            {reward.coins}
                           </AppText>
                         </View>
-                      )}
+                      </View>
+
+                      <AppText weight="medium" style={styles.rewardNote}>
+                        {reward.note}
+                      </AppText>
+
+                      <View style={styles.rewardBottomRow}>
+                        {reward.status === "available" ? (
+                          <View style={styles.availablePill}>
+                            <MaterialCommunityIcons
+                              name="gift-outline"
+                              size={15}
+                              color="#4C6FFF"
+                            />
+                            <AppText
+                              weight="bold"
+                              style={styles.availablePillText}
+                            >
+                              Available
+                            </AppText>
+                          </View>
+                        ) : (
+                          <View style={styles.redeemedPill}>
+                            <MaterialCommunityIcons
+                              name="check-decagram-outline"
+                              size={15}
+                              color="#15803D"
+                            />
+                            <AppText
+                              weight="bold"
+                              style={styles.redeemedPillText}
+                            >
+                              Redeemed
+                            </AppText>
+                          </View>
+                        )}
+
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`Delete ${reward.title}`}
+                          disabled={isDeleting}
+                          onPress={() => handleDeleteReward(reward)}
+                          style={({ pressed }) => [
+                            styles.deleteRewardButton,
+                            pressed && styles.pressed,
+                            isDeleting && styles.disabledButton,
+                          ]}
+                        >
+                          <MaterialCommunityIcons
+                            name="trash-can-outline"
+                            size={15}
+                            color="#DC2626"
+                          />
+                          <AppText
+                            weight="bold"
+                            style={styles.deleteRewardButtonText}
+                          >
+                            {isDeleting ? "Deleting..." : "Delete"}
+                          </AppText>
+                        </Pressable>
+                      </View>
                     </View>
-                  </View>
-                ))
+                  );
+                })
               ) : (
                 <View style={styles.emptyState}>
                   <MaterialCommunityIcons
