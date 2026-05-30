@@ -13,6 +13,7 @@ import AppText from "../../../components/AppText/AppText";
 import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
 import { styles } from "./styles";
 import { getAchievementIconByKey } from "@/src/utils/achievementIcons";
+import CoinIcon from "@/src/components/CoinIcon/CoinIcon";
 import { getLockedAchievementHint } from "@/src/utils/achievementText";
 
 type AchievementFilter = "all" | "unlocked" | "locked";
@@ -336,17 +337,30 @@ export default function AchievementsScreen() {
                           : styles.achievementIconBoxLocked,
                       ]}
                     >
-                      <MaterialCommunityIcons
-                        name={item.icon}
-                        size={28}
-                        color={
-                          isUnlocked
-                            ? isGold
-                              ? "#A17B00"
-                              : "#7C3AED"
-                            : "#A19AB8"
-                        }
-                      />
+                      {item.key === "saved_100_coins" ? (
+                        <CoinIcon
+                          size={28}
+                          color={
+                            isUnlocked
+                              ? isGold
+                                ? "#CA8A04"
+                                : "#7C3AED"
+                              : "#A19AB8"
+                          }
+                        />
+                      ) : (
+                        <MaterialCommunityIcons
+                          name={item.icon}
+                          size={28}
+                          color={
+                            isUnlocked
+                              ? isGold
+                                ? "#A17B00"
+                                : "#7C3AED"
+                              : "#A19AB8"
+                          }
+                        />
+                      )}
                     </View>
 
                     <View style={styles.achievementTextArea}>

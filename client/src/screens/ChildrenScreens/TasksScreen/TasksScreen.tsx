@@ -6,6 +6,7 @@ import * as ImagePicker from "expo-image-picker";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
+import CoinIcon from "@/src/components/CoinIcon/CoinIcon";
 import { styles } from "./styles";
 import {
   getChildTasksThunk,
@@ -19,7 +20,6 @@ import {
 } from "@/src/utils/appToast";
 
 const ICON = {
-  coin: "circle-multiple",
   check: "check",
   checkCircle: "check-circle-outline",
   camera: "camera-outline",
@@ -267,11 +267,7 @@ export default function TasksScreen() {
                     </AppText>
 
                     <View style={styles.coinsBadge}>
-                      <MaterialCommunityIcons
-                        name={ICON.coin}
-                        size={18}
-                        color="#F59E0B"
-                      />
+                      <CoinIcon size={18} />
                       <AppText weight="extraBold" style={styles.coinsText}>
                         {task.coins}
                       </AppText>
@@ -358,11 +354,7 @@ export default function TasksScreen() {
             <View style={styles.weekBox}>
               <View style={styles.weekInner}>
                 <View style={styles.weekIconCircle}>
-                  <MaterialCommunityIcons
-                    name={ICON.coin}
-                    size={18}
-                    color="#F59E0B"
-                  />
+                  <CoinIcon size={18} />
                 </View>
 
                 <AppText weight="extraBold" style={styles.weekText}>

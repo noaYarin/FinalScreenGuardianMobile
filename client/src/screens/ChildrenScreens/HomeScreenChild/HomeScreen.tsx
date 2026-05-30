@@ -18,6 +18,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
+import CoinIcon from "@/src/components/CoinIcon/CoinIcon";
 import { styles as rawStyles, TILE_COLORS } from "./styles";
 
 import { Child } from "@/src/redux/slices/children-slice";
@@ -40,7 +41,6 @@ const styles = rawStyles as any;
 const ICON = {
   points: "star-circle",
   level: "shield-star",
-  coins: "circle-multiple",
   time: "clock-outline",
   apps: "view-grid-outline",
   extend: "clock-plus-outline",
@@ -655,11 +655,7 @@ export default function HomeScreen() {
 
                   <View style={styles.coinsSummaryBadge}>
                     <View style={styles.coinsSummaryTopRow}>
-                      <MaterialCommunityIcons
-                        name={ICON.coins}
-                        size={18}
-                        color="#F59E0B"
-                      />
+                      <CoinIcon size={18} />
 
                       <AppText weight="extraBold" style={styles.coinsSummaryText}>
                         {coinsValue} coins

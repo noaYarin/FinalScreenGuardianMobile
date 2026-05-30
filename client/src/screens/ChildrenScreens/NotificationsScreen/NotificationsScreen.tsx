@@ -12,6 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
+import CoinIcon from "@/src/components/CoinIcon/CoinIcon";
 import { styles } from "./styles";
 import type { AppDispatch, RootState } from "@/src/redux/store/types";
 import type { Notification } from "@/src/api/notification";
@@ -29,6 +30,7 @@ type NotificationItem = {
   message: string;
   timeLabel: string;
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  useCoinIcon: boolean;
   isNew: boolean;
   link: Href | null;
 };
@@ -109,6 +111,7 @@ function getNotificationIcon(
       if (normalized.includes("TASK_APPROVED")) return "check-circle-outline";
       return "clipboard-check-outline";
     case "reward":
+      if (normalized.includes("COIN")) return "gift-outline";
       if (normalized.includes("ACHIEVEMENT")) return "trophy";
       return "star-circle";
     case "time":
@@ -165,6 +168,7 @@ function getTimeLabel(createdAt?: string) {
 
 function mapNotificationToItem(notification: Notification): NotificationItem {
   const type = mapNotificationType(notification);
+  const normalized = String(notification.type).toUpperCase();
 
   return {
     id: String(notification._id),
@@ -173,6 +177,7 @@ function mapNotificationToItem(notification: Notification): NotificationItem {
     message: notification.description || "",
     timeLabel: getTimeLabel(notification.createdAt),
     icon: getNotificationIcon(notification, type),
+    useCoinIcon: normalized.includes("COIN"),
     isNew: !notification.isRead,
     link: getNotificationLink(notification),
   };
@@ -343,11 +348,15 @@ export default function NotificationsScreen() {
                   style={styles.notificationCard}
                 >
                   <View style={styles.notificationIconWrap}>
-                    <MaterialCommunityIcons
-                      name={item.icon}
-                      size={26}
-                      color="#2563EB"
-                    />
+                    {item.useCoinIcon ? (
+                      <CoinIcon size={22} />
+                    ) : (
+                      <MaterialCommunityIcons
+                        name={item.icon}
+                        size={26}
+                        color="#2563EB"
+                      />
+                    )}
                   </View>
 
                   <View style={styles.notificationContent}>
