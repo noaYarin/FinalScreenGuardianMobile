@@ -37,6 +37,13 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
+  feedbackWrap: {
+    flexGrow: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    justifyContent: "center",
+  },
+
   emptyStateCard: {
     backgroundColor: REPORTS_COLORS.card,
     borderRadius: 16,

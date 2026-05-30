@@ -5,6 +5,8 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import type { ChildGoal } from "@/src/api/badge";
 import ScreenLayout from "@/src/layouts/ScreenLayout/ScreenLayout";
 import AppText from "@/src/components/AppText/AppText";
+import EmptyStateCard from "@/src/components/EmptyStateCard/EmptyStateCard";
+import ErrorStateCard from "@/src/components/ErrorStateCard/ErrorStateCard";
 import GoalBadge from "./GoalBadge";
 import { useChildBadges } from "@/src/hooks/useChildBadges";
 import { styles } from "./styles";
@@ -103,21 +105,21 @@ export default function GoalsScreen() {
         ) : null}
 
         {error ? (
-          <View
-            style={[styles.heroCard, styles.errorCard]}
-            accessibilityRole="alert"
-            accessibilityLabel="Could not load badges. Leave and open this screen again"
-          >
-            <AppText weight="extraBold" style={styles.errorTitle}>
-              Couldn't load your badges
-            </AppText>
-            <AppText weight="medium" style={styles.errorSubtitle}>
-              Leave this screen and come back to try again.
-            </AppText>
-          </View>
+          <ErrorStateCard
+            title="Could not load badges"
+            message="Check your internet connection and open this screen again."
+          />
         ) : null}
 
-        {!isLoading && !error ? (
+        {!isLoading && !error && badgeList.length === 0 ? (
+          <EmptyStateCard
+            icon="medal-outline"
+            title="No badges yet"
+            subtitle="Your badges will show up here once they are ready for you."
+          />
+        ) : null}
+
+        {!isLoading && !error && badgeList.length > 0 ? (
           <>
         <View style={styles.summaryPill}>
           <MaterialCommunityIcons name="medal-outline" size={16} color="#2563EB" />

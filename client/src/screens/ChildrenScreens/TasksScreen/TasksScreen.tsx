@@ -13,6 +13,7 @@ import {
   submitTaskThunk,
 } from "../../../redux/thunks/tasksThunks";
 import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
+import ErrorStateCard from "../../../components/ErrorStateCard/ErrorStateCard";
 import {
   showSuccessToast,
   showErrorToast,
@@ -54,6 +55,10 @@ export default function TasksScreen() {
   const dispatch = useDispatch<any>();
 
   const childTasks = useSelector((state: any) => state?.tasks?.childTasks ?? []);
+  const tasksError = useSelector((state: any) => state?.tasks?.error ?? null);
+  const isLoadingTasks = useSelector(
+    (state: any) => state?.tasks?.isLoadingChildTasks ?? false
+  );
 
   const [activeTab, setActiveTab] = useState<"done" | "todo">("todo");
   const [submittingTaskId, setSubmittingTaskId] = useState<string | null>(null);
@@ -229,7 +234,12 @@ export default function TasksScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
           >
-            {filteredTasks.length === 0 ? (
+            {tasksError ? (
+              <ErrorStateCard
+                title="Could not load tasks"
+                message={String(tasksError)}
+              />
+            ) : !isLoadingTasks && filteredTasks.length === 0 ? (
               <EmptyStateCard
                 icon={
                   activeTab === "todo"
@@ -249,7 +259,8 @@ export default function TasksScreen() {
               />
             ) : null}
 
-            {filteredTasks.map((task) => {
+            {!tasksError &&
+              filteredTasks.map((task) => {
               const isSubmitting = submittingTaskId === task.id;
               const ActionIcon = task.requireProof
                 ? ICON.camera
@@ -351,6 +362,7 @@ export default function TasksScreen() {
               );
             })}
 
+            {!tasksError ? (
             <View style={styles.weekBox}>
               <View style={styles.weekInner}>
                 <View style={styles.weekIconCircle}>
@@ -362,6 +374,7 @@ export default function TasksScreen() {
                 </AppText>
               </View>
             </View>
+            ) : null}
           </ScrollView>
         </View>
       </View>

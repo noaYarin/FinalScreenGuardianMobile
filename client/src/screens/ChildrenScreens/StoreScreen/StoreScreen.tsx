@@ -14,6 +14,7 @@ import {
 } from "../../../redux/thunks/rewardsThunks";
 import { fetchCurrentChildProfileThunk } from "../../../redux/thunks/childrenThunks";
 import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
+import ErrorStateCard from "../../../components/ErrorStateCard/ErrorStateCard";
 import {
   showSuccessToast,
   showWarningToast,
@@ -252,19 +253,10 @@ export default function StoreScreen() {
             </View>
 
             {rewardsError ? (
-              <View style={styles.emptyState}>
-                <MaterialCommunityIcons
-                  name="alert-circle-outline"
-                  size={36}
-                  color="#A855F7"
-                />
-                <AppText weight="extraBold" style={styles.emptyStateTitle}>
-                  Could not load rewards
-                </AppText>
-                <AppText weight="medium" style={styles.emptyStateText}>
-                  {String(rewardsError)}
-                </AppText>
-              </View>
+              <ErrorStateCard
+                title="Could not load rewards"
+                message={String(rewardsError)}
+              />
             ) : rewards.length === 0 ? (
               <EmptyStateCard
                 icon="gift-outline"

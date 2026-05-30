@@ -21,7 +21,8 @@ import {
   type ChildScreenTimeInput,
 } from "./buildChildReportsCharts";
 import ChildReportsContent from "@/src/components/ReportsScreen/ChildReportsContent";
-import ReportsMetricRow from "@/src/components/ReportsScreen/ReportsMetricRow";
+import EmptyStateCard from "@/src/components/EmptyStateCard/EmptyStateCard";
+import ErrorStateCard from "@/src/components/ErrorStateCard/ErrorStateCard";
 import { styles } from "../../ParentScreens/ReportsScreen/styles";
 
 // Maps the API snapshot into chart input with the effective daily limit.
@@ -70,11 +71,14 @@ export default function ChildReportsScreen() {
   const [screenTimeSnapshot, setScreenTimeSnapshot] =
     useState<DeviceScreenTimeSnapshot | null>(null);
   const [isSnapshotLoading, setIsSnapshotLoading] = useState(false);
+  const [snapshotError, setSnapshotError] = useState<string | null>(null);
 
   const activeChildId = useSelector(
-    (state: RootState) => state.auth.activeChildId
+    (state: RootState) => state.auth?.activeChildId ?? null
   );
-  const deviceId = useSelector((state: RootState) => state.auth.deviceId);
+  const deviceId = useSelector(
+    (state: RootState) => state.auth?.deviceId ?? null
+  );
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -105,16 +109,19 @@ export default function ChildReportsScreen() {
 
     if (!resolvedDeviceId) {
       setScreenTimeSnapshot(null);
+      setSnapshotError(null);
       return;
     }
 
     setIsSnapshotLoading(true);
+    setSnapshotError(null);
 
     try {
       const snapshot = await apiGetDeviceScreenTimeSnapshot(resolvedDeviceId);
       setScreenTimeSnapshot(snapshot);
     } catch {
       setScreenTimeSnapshot(null);
+      setSnapshotError("Check your internet connection and open this screen again.");
     } finally {
       setIsSnapshotLoading(false);
     }
@@ -136,18 +143,17 @@ export default function ChildReportsScreen() {
     );
   }, [screenTimeSnapshot]);
 
-  const isLoading = isSnapshotLoading && !screenTimeSnapshot;
+  const isLoading = isSnapshotLoading && !screenTimeSnapshot && !snapshotError;
 
   if (!activeChildId || !deviceId) {
     return (
       <View style={styles.screen}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.loadingWrap}>
-            <ReportsMetricRow
-              label="Reports"
-              value="Connect this device to see your screen time"
-            />
-          </View>
+        <ScrollView contentContainerStyle={styles.feedbackWrap}>
+          <EmptyStateCard
+            icon="cellphone-link"
+            title="Connect your device"
+            subtitle="Connect this device to see your screen time reports."
+          />
         </ScrollView>
       </View>
     );
@@ -163,15 +169,23 @@ export default function ChildReportsScreen() {
     );
   }
 
-  if (!charts) {
+  if (snapshotError || !charts) {
     return (
       <View style={styles.screen}>
-        <View style={styles.loadingWrap}>
-          <ReportsMetricRow
-            label="Daily average"
-            value="No data yet"
-          />
-        </View>
+        <ScrollView contentContainerStyle={styles.feedbackWrap}>
+          {snapshotError ? (
+            <ErrorStateCard
+              title="Could not load reports"
+              message={snapshotError}
+            />
+          ) : (
+            <EmptyStateCard
+              icon="chart-line"
+              title="No reports yet"
+              subtitle="Your screen time data will appear here once usage is tracked."
+            />
+          )}
+        </ScrollView>
       </View>
     );
   }

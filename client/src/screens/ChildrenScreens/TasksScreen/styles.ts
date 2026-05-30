@@ -26,6 +26,7 @@ export const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 560,
     alignSelf: "center",
+    paddingHorizontal: 16,
   },
 
   tabsWrapper: {
