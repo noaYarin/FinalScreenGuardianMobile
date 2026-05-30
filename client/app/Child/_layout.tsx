@@ -4,13 +4,12 @@ import { Stack } from "expo-router";
 import { useSelector } from "react-redux";
 
 import { selectChildPalette } from "@/src/redux/slices/child-theme-slice";
-import { APP_COLORS } from "@/constants/theme";
 
 function ThemedChildStack() {
   const palette = useSelector(selectChildPalette);
 
   return (
-    <View style={{ flex: 1, backgroundColor: APP_COLORS.screenBg }}>
+    <View style={{ flex: 1, backgroundColor: palette.screenBg }}>
       <Stack
         screenOptions={{
           headerTitleAlign: "center",
@@ -18,7 +17,7 @@ function ThemedChildStack() {
           headerStyle: { backgroundColor: palette.headerBg },
           headerTintColor: "#FFFFFF",
           headerTitleStyle: { color: "#FFFFFF", fontWeight: "800" },
-          contentStyle: { backgroundColor: APP_COLORS.screenBg },
+          contentStyle: { backgroundColor: palette.screenBg },
         }}
       />
     </View>

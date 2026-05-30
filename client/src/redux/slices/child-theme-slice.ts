@@ -1,10 +1,11 @@
 import { createSelector, createSlice } from "@reduxjs/toolkit";
+import { APP_COLORS } from "@/constants/theme";
 import {
   hydrateChildTheme,
   setChildThemeHueAndPersist,
 } from "../thunks/childThemeThunks";
 
-export const DEFAULT_CHILD_THEME_HUE = 195;
+export const DEFAULT_CHILD_THEME_HUE = 228;
 
 export type ChildPalette = {
   id: string;
@@ -35,7 +36,10 @@ export function paletteFromHue(h: number): ChildPalette {
     headerBg: hsl(H, 72, 41),
     accent: hsl(H, 78, 48),
     accentSoft: hsl(H, 62, 92),
-    screenBg: hsl(H, 38, 94),
+    screenBg:
+      Math.round(H) === DEFAULT_CHILD_THEME_HUE
+        ? APP_COLORS.screenBg
+        : hsl(H, 56, 97),
     cardBg: "#FFFFFF",
     cardBorder: hsl(H, 42, 86),
     text: "#0F172A",

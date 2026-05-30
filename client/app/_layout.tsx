@@ -296,7 +296,9 @@ const unsubscribeNotifications = onEvent(
       <Stack
         screenOptions={{
           contentStyle: {
-            backgroundColor: APP_COLORS.screenBg,
+            backgroundColor: onChildSegment
+              ? childPalette.screenBg
+              : APP_COLORS.screenBg,
           },
           headerStyle: {
             backgroundColor: onChildSegment

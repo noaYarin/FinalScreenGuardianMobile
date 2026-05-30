@@ -15,6 +15,7 @@ import {
   type DeviceScreenTimeSnapshot,
 } from "@/src/api/device";
 import type { RootState } from "@/src/redux/store/types";
+import { selectChildPalette } from "@/src/redux/slices/child-theme-slice";
 import { buildReportDaysFromHistory } from "@/src/utils/screenTimeHistory";
 import {
   buildChildChartsFromScreenTime,
@@ -67,6 +68,7 @@ function screenTimeInputFromSnapshot(
 
 export default function ChildReportsScreen() {
   const navigation = useNavigation();
+  const palette = useSelector(selectChildPalette);
 
   const [screenTimeSnapshot, setScreenTimeSnapshot] =
     useState<DeviceScreenTimeSnapshot | null>(null);
@@ -145,9 +147,11 @@ export default function ChildReportsScreen() {
 
   const isLoading = isSnapshotLoading && !screenTimeSnapshot && !snapshotError;
 
+  const screenStyle = [styles.screen, { backgroundColor: palette.screenBg }];
+
   if (!activeChildId || !deviceId) {
     return (
-      <View style={styles.screen}>
+      <View style={screenStyle}>
         <ScrollView contentContainerStyle={styles.feedbackWrap}>
           <EmptyStateCard
             icon="cellphone-link"
@@ -161,7 +165,7 @@ export default function ChildReportsScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.screen}>
+      <View style={screenStyle}>
         <View style={styles.loadingWrap}>
           <ActivityIndicator size="large" color="#4F46E5" />
         </View>
@@ -171,7 +175,7 @@ export default function ChildReportsScreen() {
 
   if (snapshotError || !charts) {
     return (
-      <View style={styles.screen}>
+      <View style={screenStyle}>
         <ScrollView contentContainerStyle={styles.feedbackWrap}>
           {snapshotError ? (
             <ErrorStateCard
@@ -191,7 +195,7 @@ export default function ChildReportsScreen() {
   }
 
   return (
-    <View style={styles.screen}>
+    <View style={screenStyle}>
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,

@@ -1,6 +1,10 @@
 import React from "react";
 import { ScrollView, View, type StyleProp, type ViewStyle } from "react-native";
+import { useSegments } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSelector } from "react-redux";
+
+import { selectChildPalette } from "@/src/redux/slices/child-theme-slice";
 import { styles } from "./styles";
 
 interface ScreenLayoutProps {
@@ -15,12 +19,18 @@ export default function ScreenLayout({
   backgroundColor,
 }: ScreenLayoutProps) {
   const insets = useSafeAreaInsets();
+  const segments = useSegments();
+  const childPalette = useSelector(selectChildPalette);
+  const isChildRoute = segments[0] === "Child";
 
   const bottomSafePadding = 24 + insets.bottom;
 
+  const resolvedBackgroundColor =
+    backgroundColor ?? (isChildRoute ? childPalette.screenBg : undefined);
+
   const pageStyle: StyleProp<ViewStyle> = [
     styles.page,
-    backgroundColor ? { backgroundColor } : null,
+    resolvedBackgroundColor ? { backgroundColor: resolvedBackgroundColor } : null,
   ];
 
   if (!scrollable) {
@@ -44,7 +54,7 @@ export default function ScreenLayout({
       style={pageStyle}
       contentContainerStyle={[
         styles.content,
-        backgroundColor ? { backgroundColor } : null,
+        resolvedBackgroundColor ? { backgroundColor: resolvedBackgroundColor } : null,
         {
           paddingBottom: bottomSafePadding,
         },
