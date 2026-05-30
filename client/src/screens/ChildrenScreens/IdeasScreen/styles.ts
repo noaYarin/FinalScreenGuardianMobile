@@ -238,16 +238,16 @@ export const styles = StyleSheet.create({
     borderColor: "#C7DAFF",
   },
 
-  interestButton: {
+  footerButton: {
     width: "100%",
     backgroundColor: "#A7F3D0",
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     shadowColor: "#0F172A",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
     elevation: 2,
   },
 
@@ -262,27 +262,17 @@ export const styles = StyleSheet.create({
     gap: 10,
   },
 
-  interestButtonText: {
+  footerButtonText: {
     color: "#064E3B",
-    fontSize: 13,
+    fontSize: 15,
   },
 
   shuffleButton: {
     width: "100%",
-    backgroundColor: "#A7F3D0",
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.12,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
   },
 
-  shuffleButtonText: {
-    color: "#064E3B",
-    fontSize: 15,
+  interestButton: {
+    width: "100%",
   },
 
   loadingRow: {

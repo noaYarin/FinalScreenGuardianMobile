@@ -331,10 +331,14 @@ export default function IdeasScreen() {
                 onPress={handleShuffle}
                 accessibilityRole="button"
                 accessibilityLabel="Shuffle ideas"
-                style={({ pressed }) => [s.shuffleButton, pressed && s.primaryPressed]}
+                style={({ pressed }) => [
+                  s.footerButton,
+                  s.shuffleButton,
+                  pressed && s.primaryPressed,
+                ]}
               >
                 <View style={s.primaryButtonInner}>
-                  <AppText weight="extraBold" style={s.shuffleButtonText}>
+                  <AppText weight="extraBold" style={s.footerButtonText}>
                     Shuffle
                   </AppText>
                   <MaterialCommunityIcons name="shuffle-variant" size={18} color="#064E3B" />
@@ -346,13 +350,17 @@ export default function IdeasScreen() {
               onPress={() => router.push("/Child/interests" as Href)}
               accessibilityRole="button"
               accessibilityLabel="Add interest tags"
-              style={({ pressed }) => [s.interestButton, pressed && s.primaryPressed]}
+              style={({ pressed }) => [
+                s.footerButton,
+                s.interestButton,
+                pressed && s.primaryPressed,
+              ]}
             >
               <View style={s.primaryButtonInner}>
-                <AppText weight="extraBold" style={s.interestButtonText}>
+                <AppText weight="extraBold" style={s.footerButtonText}>
                   Add Interest Tags
                 </AppText>
-                <MaterialCommunityIcons name="tag" size={15} color="#064E3B" />
+                <MaterialCommunityIcons name="tag" size={18} color="#064E3B" />
               </View>
             </Pressable>
           </View>
