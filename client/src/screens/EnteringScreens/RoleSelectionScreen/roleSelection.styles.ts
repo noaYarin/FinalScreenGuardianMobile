@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native";
-import { COLORS, Fonts, SIZES } from "../../../../constants/theme";
+import { APP_COLORS, COLORS, Fonts, SIZES } from "../../../../constants/theme";
 
 export const styles = StyleSheet.create({
   container: {
@@ -8,6 +8,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     padding: SIZES.padding,
     paddingTop: SIZES.padding * 2,
+    backgroundColor: APP_COLORS.screenBg,
   },
 
   title: {
