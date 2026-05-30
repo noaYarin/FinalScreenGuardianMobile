@@ -4,6 +4,7 @@ import { Stack } from "expo-router";
 import { useSelector } from "react-redux";
 
 import { selectChildPalette } from "@/src/redux/slices/child-theme-slice";
+import { CHILD_HEADING } from "@/src/theme/childTypography";
 
 function ThemedChildStack() {
   const palette = useSelector(selectChildPalette);
@@ -16,7 +17,7 @@ function ThemedChildStack() {
           headerShadowVisible: false,
           headerStyle: { backgroundColor: palette.headerBg },
           headerTintColor: "#FFFFFF",
-          headerTitleStyle: { color: "#FFFFFF", fontWeight: "800" },
+          headerTitleStyle: { color: "#FFFFFF", ...CHILD_HEADING.h2 },
           contentStyle: { backgroundColor: palette.screenBg },
         }}
       />

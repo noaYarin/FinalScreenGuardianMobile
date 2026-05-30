@@ -1,5 +1,10 @@
 import { StyleSheet } from "react-native";
 
+import {
+  CHILD_HEADING,
+  CHILD_TEXT,
+} from "@/src/theme/childTypography";
+
 export const COLORS = {
   white: "#FFFFFF",
   text: "#0F172A",
@@ -42,10 +47,9 @@ export const styles = StyleSheet.create({
   },
 
   stateMessage: {
-    fontSize: 15,
+    ...CHILD_TEXT.body,
     color: COLORS.textMuted,
     textAlign: "center",
-    lineHeight: 22,
   },
 
   errorCard: {
@@ -54,22 +58,20 @@ export const styles = StyleSheet.create({
   },
 
   errorTitle: {
-    fontSize: 18,
+    ...CHILD_HEADING.h2,
     color: COLORS.text,
     textAlign: "center",
-    lineHeight: 24,
   },
 
   errorSubtitle: {
-    fontSize: 14,
+    ...CHILD_TEXT.subtitle,
     color: COLORS.textMuted,
     textAlign: "center",
-    lineHeight: 20,
     paddingHorizontal: 8,
   },
 
   heroEyebrow: {
-    fontSize: 12,
+    ...CHILD_TEXT.bodySmall,
     color: COLORS.accent,
     textTransform: "uppercase",
     letterSpacing: 1.2,
@@ -77,17 +79,15 @@ export const styles = StyleSheet.create({
   },
 
   heroTitle: {
-    fontSize: 22,
+    ...CHILD_HEADING.h1,
     color: COLORS.text,
     textAlign: "center",
-    lineHeight: 28,
   },
 
   heroDescription: {
-    fontSize: 15,
+    ...CHILD_TEXT.body,
     color: COLORS.textMuted,
     textAlign: "center",
-    lineHeight: 22,
     paddingHorizontal: 8,
   },
 
@@ -97,16 +97,15 @@ export const styles = StyleSheet.create({
   },
 
   heroCompleteTitle: {
-    fontSize: 20,
+    ...CHILD_HEADING.h3,
     color: "#14532D",
     textAlign: "center",
   },
 
   heroCompleteSubtitle: {
-    fontSize: 14,
+    ...CHILD_TEXT.subtitle,
     color: "#166534",
     textAlign: "center",
-    lineHeight: 20,
   },
 
   sectionHeader: {
@@ -115,16 +114,15 @@ export const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 18,
+    ...CHILD_HEADING.h2,
     color: COLORS.text,
     textAlign: "left",
   },
 
   sectionSubtitle: {
-    fontSize: 13,
+    ...CHILD_TEXT.bodySmall,
     color: COLORS.textMuted,
     textAlign: "left",
-    lineHeight: 18,
   },
 
   badgeGrid: {
@@ -228,10 +226,9 @@ export const styles = StyleSheet.create({
   },
 
   badgeTitle: {
-    fontSize: 11,
+    ...CHILD_TEXT.caption,
     color: COLORS.text,
     textAlign: "center",
-    lineHeight: 14,
   },
 
   badgeTitleLocked: {
@@ -252,12 +249,12 @@ export const styles = StyleSheet.create({
   },
 
   summaryPillText: {
-    fontSize: 13,
+    ...CHILD_TEXT.bodySmall,
     color: COLORS.textMuted,
   },
 
   summaryPillValue: {
-    fontSize: 13,
+    ...CHILD_TEXT.bodySmall,
     color: COLORS.accent,
   },
 });

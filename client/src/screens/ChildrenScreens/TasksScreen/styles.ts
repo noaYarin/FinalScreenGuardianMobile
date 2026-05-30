@@ -1,5 +1,10 @@
 import { StyleSheet } from "react-native";
 
+import {
+  CHILD_HEADING,
+  CHILD_TEXT,
+} from "@/src/theme/childTypography";
+
 const COLORS = {
   white: "#FFFFFF",
   text: "#0F172A",
@@ -59,7 +64,7 @@ export const styles = StyleSheet.create({
   },
 
   tabText: {
-    fontSize: 15,
+    ...CHILD_HEADING.h4,
     color: COLORS.text,
   },
 
@@ -104,15 +109,14 @@ export const styles = StyleSheet.create({
   },
 
   coinsText: {
-    fontSize: 14,
+    ...CHILD_HEADING.h4,
     color: "#B46B00",
   },
 
   taskTitle: {
     flex: 1,
-    fontSize: 20,
+    ...CHILD_HEADING.h3,
     color: "#0F172A",
-    lineHeight: 26,
   },
 
   statusBoxDone: {
@@ -129,7 +133,7 @@ export const styles = StyleSheet.create({
 
   statusTextDone: {
     color: "#0F8A5F",
-    fontSize: 15,
+    ...CHILD_HEADING.h4,
   },
 
   todoArea: {
@@ -138,8 +142,7 @@ export const styles = StyleSheet.create({
 
   todoHint: {
     color: COLORS.muted,
-    fontSize: 14,
-    lineHeight: 20,
+    ...CHILD_TEXT.body,
   },
 
   uploadBtn: {
@@ -165,7 +168,7 @@ export const styles = StyleSheet.create({
 
   uploadText: {
     color: "#2F6DEB",
-    fontSize: 15,
+    ...CHILD_HEADING.h4,
   },
 
   statusIconCircle: {
@@ -215,12 +218,11 @@ export const styles = StyleSheet.create({
   },
 
   weekText: {
-    fontSize: 16,
+    ...CHILD_HEADING.h3,
     color: "#9B5B00",
-    lineHeight: 22,
   },
   completedDateText: {
-  fontSize: 12,
+  ...CHILD_TEXT.bodySmall,
   color: "#64748B",
   marginTop: 2,
 },

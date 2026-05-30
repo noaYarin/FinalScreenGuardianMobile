@@ -1,5 +1,10 @@
 import { StyleSheet } from "react-native";
 
+import {
+  CHILD_HEADING,
+  CHILD_TEXT,
+} from "@/src/theme/childTypography";
+
 export const styles = StyleSheet.create({
   bg: {
     flex: 1,
@@ -55,14 +60,14 @@ export const styles = StyleSheet.create({
   },
 
   headerTitle: {
-    fontSize: 19,
+    ...CHILD_HEADING.h1,
     color: "#0F172A",
     textAlign: "center",
   },
 
   headerSubtitle: {
     marginTop: 4,
-    fontSize: 13,
+    ...CHILD_TEXT.bodySmall,
     color: "#4767B5",
     textAlign: "center",
   },
@@ -73,7 +78,7 @@ export const styles = StyleSheet.create({
   },
 
   interestsSectionLabel: {
-    fontSize: 13,
+    ...CHILD_TEXT.bodySmall,
     color: "#4767B5",
     textAlign: "center",
   },
@@ -99,8 +104,7 @@ export const styles = StyleSheet.create({
   },
 
   interestChipText: {
-    fontSize: 11,
-    lineHeight: 14,
+    ...CHILD_TEXT.caption,
     color: "#1E3A8A",
     textAlign: "center",
   },
@@ -116,7 +120,7 @@ export const styles = StyleSheet.create({
   },
 
   interestsEmptyText: {
-    fontSize: 12,
+    ...CHILD_TEXT.bodySmall,
     color: "#1E3A8A",
     textAlign: "center",
   },
@@ -183,13 +187,13 @@ export const styles = StyleSheet.create({
   },
 
   gridTitle: {
-    fontSize: 14,
+    ...CHILD_HEADING.h4,
     color: "#0F172A",
   },
 
   gridDesc: {
     marginTop: 4,
-    fontSize: 12,
+    ...CHILD_TEXT.bodySmall,
     color: "#64748B",
   },
 
@@ -216,14 +220,12 @@ export const styles = StyleSheet.create({
   },
 
   ideaTitle: {
-    fontSize: 17,
-    lineHeight: 22,
+    ...CHILD_HEADING.h3,
     color: "#0F172A",
   },
 
   ideaDesc: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...CHILD_TEXT.body,
     color: "#64748B",
   },
 
@@ -264,7 +266,7 @@ export const styles = StyleSheet.create({
 
   footerButtonText: {
     color: "#064E3B",
-    fontSize: 15,
+    ...CHILD_HEADING.h4,
   },
 
   shuffleButton: {
@@ -285,7 +287,7 @@ export const styles = StyleSheet.create({
 
   loadingText: {
     color: "#1E3A8A",
-    fontSize: 13,
+    ...CHILD_TEXT.bodySmall,
   },
 
   errorBox: {
@@ -303,13 +305,13 @@ export const styles = StyleSheet.create({
 
   errorTitle: {
     color: "#0F172A",
-    fontSize: 16,
+    ...CHILD_HEADING.h3,
   },
 
   errorText: {
     marginTop: 6,
     color: "#64748B",
-    fontSize: 12,
+    ...CHILD_TEXT.bodySmall,
     textAlign: "center",
   },
 });

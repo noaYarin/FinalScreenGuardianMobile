@@ -1,5 +1,11 @@
 import { StyleSheet } from "react-native";
 
+import {
+  CHILD_DISPLAY,
+  CHILD_HEADING,
+  CHILD_TEXT,
+} from "@/src/theme/childTypography";
+
 export const styles = StyleSheet.create({
   flex: {
     flex: 1,
@@ -50,23 +56,21 @@ export const styles = StyleSheet.create({
   },
 
   subTitle: {
-    fontSize: 18,
+    ...CHILD_HEADING.h2,
     color: "#2F6DEB",
     includeFontPadding: false,
   },
 
   question: {
     textAlign: "center",
-    fontSize: 28,
+    ...CHILD_HEADING.h1,
     color: "#0F172A",
-    lineHeight: 34,
     includeFontPadding: false,
   },
 
   helperText: {
     marginTop: 8,
-    fontSize: 14,
-    lineHeight: 20,
+    ...CHILD_TEXT.subtitle,
     color: "#64748B",
     textAlign: "center",
     includeFontPadding: false,
@@ -101,16 +105,14 @@ export const styles = StyleSheet.create({
   },
 
   summaryLabel: {
-    fontSize: 13,
-    lineHeight: 17,
+    ...CHILD_TEXT.bodySmall,
     color: "#047857",
     textAlign: "center",
     includeFontPadding: false,
   },
 
   summaryAmount: {
-    fontSize: 26,
-    lineHeight: 30,
+    ...CHILD_HEADING.h1,
     color: "#065F46",
     textAlign: "center",
     letterSpacing: -0.3,
@@ -123,8 +125,7 @@ export const styles = StyleSheet.create({
 
   messageLabel: {
     marginBottom: 8,
-    fontSize: 14,
-    lineHeight: 18,
+    ...CHILD_HEADING.h4,
     color: "#1E2A39",
     opacity: 0.82,
     includeFontPadding: false,
@@ -140,7 +141,7 @@ export const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 10,
     color: "#1E2A39",
-    fontSize: 16,
+    ...CHILD_HEADING.h3,
   },
 
   messageInputOutline: {
@@ -158,8 +159,7 @@ export const styles = StyleSheet.create({
   },
 
   sendBtnText: {
-    fontSize: 16,
-    fontWeight: "700",
+    ...CHILD_HEADING.h3,
     letterSpacing: 0.2,
     color: "#FFFFFF",
   },
@@ -170,6 +170,6 @@ export const styles = StyleSheet.create({
 
   sendBtnTextDisabled: {
     color: "#475569",
-    fontSize: 14,
+    ...CHILD_HEADING.h4,
   },
 });

@@ -1,5 +1,10 @@
 import { StyleSheet } from "react-native";
 
+import {
+  CHILD_HEADING,
+  CHILD_TEXT,
+} from "@/src/theme/childTypography";
+
 export const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: {
@@ -14,9 +19,9 @@ export const styles = StyleSheet.create({
     padding: 16,
     gap: 4,
   },
-  permissionsTitle: { fontSize: 22, lineHeight: 28, marginBottom: 4 },
-  permissionsIntro: { fontSize: 16, lineHeight: 22, marginBottom: 8 },
-  permissionsHint: { fontSize: 14, lineHeight: 20, marginBottom: 12 },
+  permissionsTitle: { ...CHILD_HEADING.h1, marginBottom: 4 },
+  permissionsIntro: { ...CHILD_HEADING.h3, marginBottom: 8 },
+  permissionsHint: { ...CHILD_TEXT.body, marginBottom: 12 },
   permissionDivider: {
     height: StyleSheet.hairlineWidth * 2,
     backgroundColor: "rgba(15, 23, 42, 0.08)",
@@ -35,8 +40,8 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
   },
   cardTextWrap: { flex: 1, gap: 4 },
-  cardTitle: { fontSize: 18 },
-  cardSubtitle: { fontSize: 15, lineHeight: 21 },
+  cardTitle: { ...CHILD_HEADING.h2 },
+  cardSubtitle: { ...CHILD_TEXT.body },
   statusBubble: {
     width: 48,
     height: 48,
@@ -55,10 +60,10 @@ export const styles = StyleSheet.create({
   },
   fixBtnPressed: { opacity: 0.9 },
   fixBtnDisabled: { opacity: 0.65 },
-  fixBtnText: { color: "#FFFFFF", fontSize: 17 },
+  fixBtnText: { color: "#FFFFFF", ...CHILD_HEADING.h3 },
   paletteHeaderRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  sectionTitle: { fontSize: 18 },
-  sectionHint: { fontSize: 15, lineHeight: 21, marginTop: 4 },
+  sectionTitle: { ...CHILD_HEADING.h2 },
+  sectionHint: { ...CHILD_TEXT.body, marginTop: 4 },
   hueBarWrap: {
     marginTop: 10,
     width: "100%",

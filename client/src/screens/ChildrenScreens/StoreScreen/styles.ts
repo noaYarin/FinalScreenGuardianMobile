@@ -1,5 +1,11 @@
 import { StyleSheet } from "react-native";
 
+import {
+  CHILD_DISPLAY,
+  CHILD_HEADING,
+  CHILD_TEXT,
+} from "@/src/theme/childTypography";
+
 export const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
@@ -41,14 +47,12 @@ export const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 26,
-    lineHeight: 32,
+    ...CHILD_HEADING.h1,
     color: "#1E293B",
   },
 
   subtitle: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...CHILD_TEXT.subtitle,
     color: "#64748B",
   },
 
@@ -96,19 +100,18 @@ export const styles = StyleSheet.create({
   },
 
   balanceLabel: {
-    fontSize: 14,
+    ...CHILD_HEADING.h4,
     color: "#92400E",
     letterSpacing: 0.3,
   },
 
   balanceAmount: {
-    fontSize: 42,
+    ...CHILD_DISPLAY.amount,
     color: "#78350F",
-    lineHeight: 46,
   },
 
   balanceSub: {
-    fontSize: 15,
+    ...CHILD_TEXT.body,
     color: "#A16207",
     marginTop: 2,
   },
@@ -126,7 +129,7 @@ export const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 19,
+    ...CHILD_HEADING.h2,
     color: "#1E293B",
   },
 
@@ -166,16 +169,14 @@ export const styles = StyleSheet.create({
   },
 
   rewardTitle: {
-    fontSize: 17,
+    ...CHILD_HEADING.h3,
     color: "#0F172A",
-    lineHeight: 22,
   },
 
   rewardSub: {
-    fontSize: 13,
+    ...CHILD_TEXT.bodySmall,
     color: "#475569",
     marginTop: 4,
-    lineHeight: 18,
   },
 
   metaRow: {
@@ -198,9 +199,8 @@ export const styles = StyleSheet.create({
   },
 
   rewardPrice: {
-    fontSize: 18,
+    ...CHILD_HEADING.h2,
     color: "#78350F",
-    lineHeight: 20,
   },
 
   statusPill: {
@@ -225,12 +225,12 @@ export const styles = StyleSheet.create({
   },
 
   statusPillTextReady: {
-    fontSize: 12,
+    ...CHILD_TEXT.bodySmall,
     color: "#15803D",
   },
 
   statusPillTextLocked: {
-    fontSize: 12,
+    ...CHILD_TEXT.bodySmall,
     color: "#64748B",
   },
 
@@ -260,12 +260,12 @@ export const styles = StyleSheet.create({
   },
 
   redeemButtonText: {
-    fontSize: 16,
+    ...CHILD_HEADING.h3,
     color: "#FFFFFF",
   },
 
   redeemButtonTextDisabled: {
-    fontSize: 16,
+    ...CHILD_HEADING.h3,
     color: "#F8FAFC",
   },
 
@@ -282,14 +282,13 @@ export const styles = StyleSheet.create({
   },
 
   emptyStateTitle: {
-    fontSize: 17,
+    ...CHILD_HEADING.h3,
     color: "#6B21A8",
   },
 
   emptyStateText: {
     textAlign: "center",
-    fontSize: 14,
-    lineHeight: 21,
+    ...CHILD_TEXT.body,
     color: "#7C3AED",
   },
 

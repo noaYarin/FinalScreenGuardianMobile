@@ -273,10 +273,6 @@ export default function NotificationsScreen() {
             </View>
 
             <View style={styles.heroTextBlock}>
-              <AppText weight="extraBold" style={styles.title}>
-                Notifications
-              </AppText>
-
               <AppText weight="medium" style={styles.subtitle}>
                 Helpful updates about your screen time, tasks, and rewards.
               </AppText>

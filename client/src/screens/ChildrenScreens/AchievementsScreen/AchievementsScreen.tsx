@@ -8,6 +8,7 @@ import type { AppDispatch, RootState } from "@/src/redux/store/types";
 import type { Child } from "@/src/redux/slices/children-slice";
 import type { AchievementUiItem } from "@/src/api/achievements";
 import { fetchChildAchievementsThunk } from "@/src/redux/thunks/achievementsThunks";
+import { CHILD_TEXT } from "@/src/theme/childTypography";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
@@ -263,7 +264,7 @@ export default function AchievementsScreen() {
                 <AppText
                   weight="bold"
                   style={{
-                    fontSize: 12,
+                    ...CHILD_TEXT.bodySmall,
                     color: isSelected ? "#FFFFFF" : "#475569",
                   }}
                   numberOfLines={1}

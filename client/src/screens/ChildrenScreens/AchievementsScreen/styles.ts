@@ -1,5 +1,11 @@
 import { StyleSheet } from "react-native";
 
+import {
+  CHILD_DISPLAY,
+  CHILD_HEADING,
+  CHILD_TEXT,
+} from "@/src/theme/childTypography";
+
 export const styles = StyleSheet.create({
   headerIconButton: {
     padding: 8,
@@ -51,15 +57,13 @@ export const styles = StyleSheet.create({
   },
 
   heroTitle: {
-    fontSize: 24,
-    lineHeight: 30,
+    ...CHILD_HEADING.h1,
     color: "#111827",
     marginBottom: 6,
   },
 
   heroSubtitle: {
-    fontSize: 14,
-    lineHeight: 21,
+    ...CHILD_TEXT.subtitle,
     color: "#6B7280",
   },
 
@@ -119,18 +123,18 @@ export const styles = StyleSheet.create({
 
   heroSummaryValueGold: {
     flex: 1,
-    fontSize: 20,
+    ...CHILD_HEADING.h3,
     color: "#B46B00",
   },
 
   heroSummaryValueGreen: {
     flex: 1,
-    fontSize: 20,
+    ...CHILD_HEADING.h3,
     color: "#0F8A5F",
   },
 
   heroSummaryLabel: {
-    fontSize: 13,
+    ...CHILD_TEXT.bodySmall,
     color: "#6B7280",
   },
 
@@ -222,8 +226,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     flexShrink: 1,
     minWidth: 0,
-    fontSize: 20,
-    lineHeight: 25,
+    ...CHILD_HEADING.h3,
     color: "#374151",
   },
 
@@ -248,7 +251,7 @@ export const styles = StyleSheet.create({
   },
 
   lockedBadgeText: {
-    fontSize: 11,
+    ...CHILD_TEXT.caption,
     color: "#FFFFFF",
   },
 
@@ -266,12 +269,11 @@ export const styles = StyleSheet.create({
 
   completedBadgeText: {
     color: "#0F8A5F",
-    fontSize: 12,
+    ...CHILD_TEXT.bodySmall,
   },
 
   achievementSubtitle: {
-    fontSize: 15,
-    lineHeight: 21,
+    ...CHILD_TEXT.body,
     color: "#4B5563",
     marginBottom: 12,
   },
@@ -326,7 +328,7 @@ export const styles = StyleSheet.create({
   },
 
   rewardText: {
-    fontSize: 12,
+    ...CHILD_TEXT.bodySmall,
     color: "#6B7280",
   },
 
@@ -339,7 +341,7 @@ export const styles = StyleSheet.create({
   },
 
   progressText: {
-    fontSize: 13,
+    ...CHILD_TEXT.bodySmall,
     color: "#5B21B6",
   },
 
@@ -353,8 +355,7 @@ export const styles = StyleSheet.create({
   
   unlockedAtText: {
     marginTop: 8,
-    fontSize: 12,
-    lineHeight: 16,
+    ...CHILD_TEXT.bodySmall,
     color: "#64748B",
   },
 

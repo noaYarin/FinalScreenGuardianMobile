@@ -1,5 +1,10 @@
 import { StyleSheet } from "react-native";
 
+import {
+  CHILD_HEADING,
+  CHILD_TEXT,
+} from "@/src/theme/childTypography";
+
 export const styles = StyleSheet.create({
   bg: {
     flex: 1,
@@ -32,9 +37,9 @@ export const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  title: { fontSize: 18, color: "#0F172A" },
-  question: { marginTop: 10, fontSize: 16, color: "#0F172A", textAlign: "center" },
-  subText: { marginTop: 4, fontSize: 12, color: "#4767B5", textAlign: "center" },
+  title: { ...CHILD_HEADING.h2, color: "#0F172A" },
+  question: { marginTop: 10, ...CHILD_HEADING.h3, color: "#0F172A", textAlign: "center" },
+  subText: { marginTop: 4, ...CHILD_TEXT.bodySmall, color: "#4767B5", textAlign: "center" },
 
   bodyCard: {
     flex: 0,
@@ -120,8 +125,7 @@ export const styles = StyleSheet.create({
   },
 
   chipText: {
-    fontSize: 11,
-    lineHeight: 14,
+    ...CHILD_TEXT.caption,
     textAlign: "center",
     width: "100%",
   },
@@ -141,8 +145,8 @@ export const styles = StyleSheet.create({
     gap: 8,
   },
 
-  selectedTitle: { fontSize: 13, color: "#0F172A" },
-  selectedEmpty: { fontSize: 12, color: "#64748B" },
+  selectedTitle: { ...CHILD_TEXT.bodySmall, color: "#0F172A" },
+  selectedEmpty: { ...CHILD_TEXT.bodySmall, color: "#64748B" },
 
   selectedTagsRow: {
     flexDirection: "row",
@@ -160,7 +164,7 @@ export const styles = StyleSheet.create({
   },
 
   selectedTagText: {
-    fontSize: 11,
+    ...CHILD_TEXT.caption,
     color: "#1E3A8A",
   },
 
@@ -188,7 +192,7 @@ export const styles = StyleSheet.create({
     gap: 10,
   },
 
-  saveText: { color: "#064E3B", fontSize: 15 },
+  saveText: { color: "#064E3B", ...CHILD_HEADING.h4 },
 
   loadingRow: {
     paddingVertical: 12,
@@ -198,7 +202,7 @@ export const styles = StyleSheet.create({
     gap: 10,
   },
 
-  loadingText: { color: "#1E3A8A", fontSize: 13 },
+  loadingText: { color: "#1E3A8A", ...CHILD_TEXT.bodySmall },
 
   errorBox: {
     alignItems: "center",
@@ -207,7 +211,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
 
-  errorTitle: { color: "#0F172A", fontSize: 16 },
-  errorText: { marginTop: 6, color: "#64748B", fontSize: 12, textAlign: "center" },
+  errorTitle: { color: "#0F172A", ...CHILD_HEADING.h3 },
+  errorText: { marginTop: 6, color: "#64748B", ...CHILD_TEXT.bodySmall, textAlign: "center" },
 });
 

@@ -10,6 +10,7 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 
+import { CHILD_TEXT } from "@/src/theme/childTypography";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import { apiGetDevicePolicyForChild } from "../../../api/device";
@@ -261,7 +262,7 @@ export default function AppsScreen() {
                               <AppText
                                 weight="bold"
                                 style={{
-                                  fontSize: 11,
+                                  ...CHILD_TEXT.caption,
                                   color: "#64748B",
                                 }}
                               >
