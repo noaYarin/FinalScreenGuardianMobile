@@ -6,7 +6,7 @@ import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import { RoleCard } from "../RoleCardScreen/RoleCardScreen";
 import { styles } from "./roleSelection.styles";
-import { COLORS } from "../../../../constants/theme";
+import { APP_COLORS, COLORS } from "../../../../constants/theme";
 
 export const RoleSelectionScreen: React.FC = () => {
   const router = useRouter();
@@ -21,7 +21,7 @@ export const RoleSelectionScreen: React.FC = () => {
   };
 
   return (
-    <ScreenLayout>
+    <ScreenLayout scrollable={false} backgroundColor={APP_COLORS.screenBg}>
       <View style={styles.container}>
         <AppText weight="extraBold" style={styles.title}>
           Welcome

@@ -2,12 +2,17 @@ import { StyleSheet } from "react-native";
 import { APP_COLORS, COLORS } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
+  screenRoot: {
+    flex: 1,
+    backgroundColor: APP_COLORS.screenBg,
+  },
+
   container: {
     flex: 1,
     width: "100%",
-    backgroundColor: COLORS.light.background,
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
 
   content: {
@@ -23,7 +28,7 @@ export const styles = StyleSheet.create({
 
   mainScrollContent: {
     flexGrow: 1,
-    paddingBottom: 8,
+    paddingBottom: 16,
   },
   header: {
     position: "relative",
@@ -367,9 +372,8 @@ export const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#EFF6FF",
-    borderWidth: 1,
-    borderColor: "#D6E6FF",
+    backgroundColor: COLORS.light.tint,
+    borderWidth: 0,
   },
 
   btnSecondaryText: {

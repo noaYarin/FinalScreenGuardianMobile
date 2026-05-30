@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { router } from "expo-router";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
@@ -19,18 +20,19 @@ import { styles } from "./styles";
 import type { RootState, AppDispatch } from "@/src/redux/store/types";
 import { updateCurrentChildProfileThunk } from "@/src/redux/thunks/childrenThunks";
 import { showErrorToast, showSuccessToast } from "@/src/utils/appToast";
+import { APP_COLORS } from "@/constants/theme";
 
 type GenderValue = "boy" | "girl" | "other";
 
-type GenderOption = {
+const GENDER_OPTIONS: {
   key: GenderValue;
+  icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
   label: string;
-};
-
-const GENDER_OPTIONS: GenderOption[] = [
-  { key: "boy", label: "Boy" },
-  { key: "girl", label: "Girl" },
-  { key: "other", label: "Other" },
+  accessibilityLabel: string;
+}[] = [
+  { key: "boy", icon: "human-male", label: "Boy", accessibilityLabel: "Select boy" },
+  { key: "girl", icon: "human-female", label: "Girl", accessibilityLabel: "Select girl" },
+  { key: "other", icon: "human-greeting-variant", label: "Other", accessibilityLabel: "Select other" },
 ];
 
 function formatDateForDisplay(date: Date) {
@@ -135,7 +137,7 @@ export default function EditChildProfileScreen() {
   };
 
   return (
-    <ScreenLayout>
+    <ScreenLayout backgroundColor={APP_COLORS.screenBg}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -221,28 +223,24 @@ export default function EditChildProfileScreen() {
                     <Pressable
                       key={option.key}
                       onPress={() => setGender(option.key)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Select gender: ${option.label}`}
-                      style={({ pressed }) => [
-                        styles.genderChip,
-                        isSelected && styles.genderChipSelected,
-                        pressed && styles.genderChipPressed,
+                      style={[
+                        styles.genderButton,
+                        isSelected && styles.genderButtonActive,
                       ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={option.accessibilityLabel}
                     >
-                      <View
-                        style={[
-                          styles.genderIndicator,
-                          isSelected && styles.genderIndicatorSelected,
-                        ]}
-                      >
-                        {isSelected ? <View style={styles.genderIndicatorInner} /> : null}
-                      </View>
+                      <MaterialCommunityIcons
+                        name={option.icon}
+                        size={16}
+                        color={isSelected ? "#2563EB" : "#475569"}
+                      />
 
                       <AppText
-                        weight={isSelected ? "extraBold" : "medium"}
+                        weight="bold"
                         style={[
-                          styles.genderChipText,
-                          isSelected && styles.genderChipTextSelected,
+                          styles.genderButtonText,
+                          isSelected && styles.genderButtonTextActive,
                         ]}
                       >
                         {option.label}
@@ -263,7 +261,7 @@ export default function EditChildProfileScreen() {
               style={[styles.saveButton, isLoading && styles.disabledButton]}
             >
               {isLoading ? (
-                <ActivityIndicator color="#ffffff" />
+                <ActivityIndicator color="#1D4ED8" />
               ) : (
                 <AppText style={styles.saveButtonText} weight="bold">
                   Save

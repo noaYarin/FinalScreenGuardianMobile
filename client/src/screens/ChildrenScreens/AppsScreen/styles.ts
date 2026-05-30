@@ -1,5 +1,11 @@
 import { StyleSheet } from "react-native";
 
+import {
+  CHILD_DISPLAY,
+  CHILD_HEADING,
+  CHILD_TEXT,
+} from "@/src/theme/childTypography";
+
 const COLORS = {
   white: "#FFFFFF",
   bg: "#F8FAFC",
@@ -77,14 +83,12 @@ export const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 24,
-    lineHeight: 31,
+    ...CHILD_HEADING.h1,
     color: COLORS.text,
   },
 
   subtitle: {
-    fontSize: 14,
-    lineHeight: 21,
+    ...CHILD_TEXT.subtitle,
     color: COLORS.muted,
   },
 
@@ -112,12 +116,12 @@ export const styles = StyleSheet.create({
   },
 
   statNumber: {
-    fontSize: 28,
+    ...CHILD_DISPLAY.stat,
     color: COLORS.text,
   },
 
   statLabel: {
-    fontSize: 13,
+    ...CHILD_TEXT.bodySmall,
     marginTop: 4,
     color: COLORS.muted,
   },
@@ -134,7 +138,7 @@ export const styles = StyleSheet.create({
 
   refreshText: {
     color: COLORS.white,
-    fontSize: 15,
+    ...CHILD_HEADING.h4,
   },
 
   lockedSection: {
@@ -153,14 +157,13 @@ export const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 18,
+    ...CHILD_HEADING.h2,
     color: COLORS.text,
   },
 
   sectionHint: {
-    fontSize: 14,
+    ...CHILD_TEXT.body,
     color: COLORS.muted,
-    lineHeight: 21,
   },
 
   lockedChipsWrap: {
@@ -183,7 +186,7 @@ export const styles = StyleSheet.create({
 
   lockedChipText: {
     color: COLORS.red,
-    fontSize: 13,
+    ...CHILD_TEXT.bodySmall,
   },
 
   searchCard: {
@@ -201,7 +204,7 @@ export const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     color: COLORS.text,
-    fontSize: 15,
+    ...CHILD_TEXT.body,
     paddingVertical: 8,
   },
 
@@ -248,12 +251,12 @@ export const styles = StyleSheet.create({
   },
 
   appName: {
-    fontSize: 16,
+    ...CHILD_HEADING.h3,
     color: COLORS.text,
   },
 
   packageName: {
-    fontSize: 12,
+    ...CHILD_TEXT.bodySmall,
     color: COLORS.muted,
   },
 
@@ -274,7 +277,7 @@ export const styles = StyleSheet.create({
   },
 
   statusBadgeText: {
-    fontSize: 13,
+    ...CHILD_TEXT.bodySmall,
   },
 
   openBadgeText: {
@@ -296,14 +299,13 @@ export const styles = StyleSheet.create({
   },
 
   emptyTitle: {
-    fontSize: 18,
+    ...CHILD_HEADING.h2,
     color: COLORS.text,
     textAlign: "center",
   },
 
   stateText: {
-    fontSize: 14,
-    lineHeight: 21,
+    ...CHILD_TEXT.body,
     color: COLORS.muted,
     textAlign: "center",
   },

@@ -1,125 +1,163 @@
 import { StyleSheet } from "react-native";
 
+import {
+  CHILD_DISPLAY,
+  CHILD_HEADING,
+  CHILD_TEXT,
+} from "@/src/theme/childTypography";
+
 export const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 28,
+    paddingBottom: 32,
   },
 
   container: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 16,
-    gap: 16,
+    paddingTop: 8,
+    gap: 18,
   },
 
   headerBlock: {
+    gap: 6,
+  },
+
+  headerTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+
+  headerIconBadge: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    backgroundColor: "#FAE8FF",
+    borderWidth: 2,
+    borderColor: "#F0ABFC",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  headerTextWrap: {
+    flex: 1,
+    minWidth: 0,
     gap: 4,
   },
 
   title: {
-    fontSize: 28,
-    lineHeight: 34,
+    ...CHILD_HEADING.h1,
     color: "#1E293B",
   },
 
   subtitle: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...CHILD_TEXT.subtitle,
     color: "#64748B",
   },
 
-  balanceSection: {
-    gap: 12,
-  },
-
-  balanceLabel: {
-    fontSize: 18,
-    color: "#111827",
-  },
-
-  balanceCard: {
+  balanceHero: {
     width: "100%",
-    minHeight: 110,
-    borderRadius: 26,
-    paddingHorizontal: 22,
-    paddingVertical: 20,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E7EFFA",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 2,
+    borderRadius: 28,
+    paddingHorizontal: 20,
+    paddingVertical: 22,
+    borderWidth: 2,
+    borderColor: "#FCD34D",
+    overflow: "hidden",
+    shadowColor: "#F59E0B",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
+    elevation: 4,
+  },
+
+  balanceHeroInner: {
     flexDirection: "row",
     alignItems: "center",
     gap: 16,
   },
 
-  balanceBadge: {
-    width: 58,
-    height: 58,
+  coinCircle: {
+    width: 72,
+    height: 72,
     borderRadius: 999,
-    backgroundColor: "#EAF2FF",
-    borderWidth: 1,
-    borderColor: "#D6E6FF",
+    backgroundColor: "rgba(255, 255, 255, 0.72)",
+    borderWidth: 2,
+    borderColor: "#FDE68A",
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#B45309",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 2,
   },
 
   balanceTextWrap: {
     flex: 1,
     justifyContent: "center",
+    gap: 2,
+  },
+
+  balanceLabel: {
+    ...CHILD_HEADING.h4,
+    color: "#92400E",
+    letterSpacing: 0.3,
   },
 
   balanceAmount: {
-    fontSize: 38,
-    color: "#111827",
-    lineHeight: 42,
+    ...CHILD_DISPLAY.amount,
+    color: "#78350F",
   },
 
   balanceSub: {
-    fontSize: 17,
-    color: "#5A6B7A",
-    marginTop: 4,
+    ...CHILD_TEXT.body,
+    color: "#A16207",
+    marginTop: 2,
   },
 
   rewardsContainer: {
-    gap: 12,
-    paddingBottom: 10,
+    gap: 14,
+    paddingBottom: 8,
+  },
+
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 2,
   },
 
   sectionTitle: {
-    fontSize: 18,
-    color: "#111827",
+    ...CHILD_HEADING.h2,
+    color: "#1E293B",
   },
 
   rewardCard: {
-    borderRadius: 22,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    borderWidth: 1,
+    borderRadius: 24,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderWidth: 2,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-    gap: 14,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    elevation: 3,
+    gap: 12,
   },
 
-  rewardRow: {
+  rewardTopRow: {
     width: "100%",
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 12,
   },
 
   iconBox: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
-    borderWidth: 1,
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -127,131 +165,135 @@ export const styles = StyleSheet.create({
   textBox: {
     flex: 1,
     minWidth: 0,
+    paddingTop: 2,
   },
 
   rewardTitle: {
-    fontSize: 16,
-    color: "#111827",
+    ...CHILD_HEADING.h3,
+    color: "#0F172A",
   },
 
   rewardSub: {
-    fontSize: 13,
-    color: "#5A6B7A",
-    marginTop: 3,
-    lineHeight: 18,
+    ...CHILD_TEXT.bodySmall,
+    color: "#475569",
+    marginTop: 4,
   },
 
-  statusRow: {
-    marginTop: 8,
+  metaRow: {
     flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     flexWrap: "wrap",
-    gap: 8,
-  },
-
-  availablePill: {
-    borderRadius: 999,
-    backgroundColor: "#ECFDF5",
-    borderWidth: 1,
-    borderColor: "#BBF7D0",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-
-  availablePillText: {
-    fontSize: 12,
-    color: "#15803D",
-  },
-
-  disabledPill: {
-    borderRadius: 999,
-    backgroundColor: "#F8FAFC",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-
-  disabledPillText: {
-    fontSize: 12,
-    color: "#64748B",
-  },
-
-  priceBox: {
-    minWidth: 108,
-    alignItems: "flex-end",
+    gap: 10,
   },
 
   pricePill: {
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 6,
+    borderRadius: 999,
+    borderWidth: 2,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
   },
 
   rewardPrice: {
-    fontSize: 16,
-    color: "#111827",
-    lineHeight: 18,
+    ...CHILD_HEADING.h2,
+    color: "#78350F",
   },
 
-  rewardCoins: {
-    fontSize: 12,
-    color: "#5A6B7A",
-    marginTop: 2,
+  statusPill: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+
+  statusPillReady: {
+    backgroundColor: "#ECFDF5",
+    borderWidth: 1,
+    borderColor: "#86EFAC",
+  },
+
+  statusPillLocked: {
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+
+  statusPillTextReady: {
+    ...CHILD_TEXT.bodySmall,
+    color: "#15803D",
+  },
+
+  statusPillTextLocked: {
+    ...CHILD_TEXT.bodySmall,
+    color: "#64748B",
   },
 
   redeemButton: {
-    minHeight: 46,
-    borderRadius: 16,
-    backgroundColor: "#315BFF",
+    minHeight: 50,
+    borderRadius: 18,
+    overflow: "hidden",
+  },
+
+  redeemButtonInner: {
+    minHeight: 50,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+  },
+
+  redeemButtonDisabled: {
+    minHeight: 50,
+    borderRadius: 18,
+    backgroundColor: "#CBD5E1",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
   },
 
-  redeemButtonDisabled: {
-    backgroundColor: "#A5B4FC",
-  },
-
   redeemButtonText: {
-    fontSize: 14,
+    ...CHILD_HEADING.h3,
     color: "#FFFFFF",
   },
 
+  redeemButtonTextDisabled: {
+    ...CHILD_HEADING.h3,
+    color: "#F8FAFC",
+  },
+
   emptyState: {
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#E7EEF7",
-    backgroundColor: "#FBFDFF",
-    paddingVertical: 28,
-    paddingHorizontal: 18,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: "#F0ABFC",
+    backgroundColor: "#FDF4FF",
+    paddingVertical: 32,
+    paddingHorizontal: 20,
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 10,
   },
 
   emptyStateTitle: {
-    fontSize: 16,
-    color: "#243447",
+    ...CHILD_HEADING.h3,
+    color: "#6B21A8",
   },
 
   emptyStateText: {
     textAlign: "center",
-    fontSize: 13,
-    lineHeight: 20,
-    color: "#64748B",
+    ...CHILD_TEXT.body,
+    color: "#7C3AED",
   },
 
   pressed: {
-    opacity: 0.88,
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
   },
 });

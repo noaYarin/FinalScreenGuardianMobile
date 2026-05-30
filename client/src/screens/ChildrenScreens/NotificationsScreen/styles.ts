@@ -1,5 +1,10 @@
 import { StyleSheet } from "react-native";
 
+import {
+  CHILD_HEADING,
+  CHILD_TEXT,
+} from "@/src/theme/childTypography";
+
 const COLORS = {
   white: "#FFFFFF",
   text: "#0F172A",
@@ -63,13 +68,12 @@ export const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 26,
+    ...CHILD_HEADING.h1,
     color: COLORS.text,
   },
 
   subtitle: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...CHILD_TEXT.subtitle,
     color: COLORS.muted,
   },
 
@@ -94,7 +98,7 @@ export const styles = StyleSheet.create({
   },
 
   filterText: {
-    fontSize: 14,
+    ...CHILD_HEADING.h4,
     color: COLORS.muted,
   },
 
@@ -141,18 +145,17 @@ export const styles = StyleSheet.create({
 
   notificationTitle: {
     flex: 1,
-    fontSize: 16,
+    ...CHILD_HEADING.h3,
     color: COLORS.text,
   },
 
   notificationMessage: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...CHILD_TEXT.body,
     color: COLORS.muted,
   },
 
   timeLabel: {
-    fontSize: 12,
+    ...CHILD_TEXT.bodySmall,
     color: COLORS.muted,
   },
 
@@ -164,7 +167,7 @@ export const styles = StyleSheet.create({
   },
 
   newBadgeText: {
-    fontSize: 11,
+    ...CHILD_TEXT.caption,
     color: COLORS.greenText,
   },
 });

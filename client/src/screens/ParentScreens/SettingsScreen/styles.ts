@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native";
-import { COLORS } from "@/constants/theme";
+import { APP_COLORS, COLORS } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
   screenRoot: {
@@ -9,7 +9,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 32,
-    backgroundColor: COLORS.light.background,
+    backgroundColor: APP_COLORS.screenBg,
     gap: 16,
   },
 

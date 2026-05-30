@@ -19,6 +19,7 @@ import type { AppDispatch } from "@/src/redux/store/types";
 import { addChildThunk } from "@/src/redux/thunks/childrenThunks";
 import { clearChildrenError } from "@/src/redux/slices/children-slice";
 import { showErrorToast } from "@/src/utils/appToast";
+import { APP_COLORS } from "@/constants/theme";
 
 
 type GenderOption = "boy" | "girl" | "other";
@@ -119,7 +120,7 @@ export default function AddChildScreen() {
   };
 
   return (
-    <ScreenLayout>
+    <ScreenLayout scrollable={false} backgroundColor={APP_COLORS.screenBg}>
       <View style={styles.container}>
         <View style={[styles.content, { maxWidth: maxContentWidth }]}>
           <View style={styles.heroCard}>
@@ -247,7 +248,7 @@ export default function AddChildScreen() {
             accessibilityLabel="Save child"
           >
             {isLoading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color="#1D4ED8" />
             ) : (
               <AppText weight="extraBold" style={styles.saveButtonText}>
                 Save

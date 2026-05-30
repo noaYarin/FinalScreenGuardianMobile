@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Pressable } from "react-native";
+import { View, Pressable, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import AppText from "../AppText/AppText";
 import { styles } from "./styles";
@@ -10,6 +10,8 @@ type EmptyStateCardProps = {
   subtitle?: string;
   buttonLabel?: string;
   onPressButton?: () => void;
+  buttonStyle?: StyleProp<ViewStyle>;
+  buttonTextStyle?: StyleProp<TextStyle>;
 };
 
 export default function EmptyStateCard({
@@ -18,6 +20,8 @@ export default function EmptyStateCard({
   subtitle,
   buttonLabel,
   onPressButton,
+  buttonStyle,
+  buttonTextStyle,
 }: EmptyStateCardProps) {
   return (
     <View style={styles.card}>
@@ -42,10 +46,11 @@ export default function EmptyStateCard({
           accessibilityLabel={buttonLabel}
           style={({ pressed }) => [
             styles.button,
+            buttonStyle,
             pressed && styles.buttonPressed,
           ]}
         >
-          <AppText weight="extraBold" style={styles.buttonText}>
+          <AppText weight="extraBold" style={[styles.buttonText, buttonTextStyle]}>
             {buttonLabel}
           </AppText>
         </Pressable>

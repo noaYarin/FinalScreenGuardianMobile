@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import AppText from "../AppText/AppText";
 import { styles } from "./styles";
 import { getAchievementIconByKey } from "@/src/utils/achievementIcons";
+import CoinIcon from "@/src/components/CoinIcon/CoinIcon";
 
 export type UnlockedAchievement = {
     key?: string;
@@ -57,11 +58,15 @@ export default function AchievementUnlockedModal({
                     )}
 
                     <View style={styles.rewardPill}>
-                        <MaterialCommunityIcons
-                            name={getAchievementIconByKey(achievement?.key)}
-                            size={44}
-                            color="#B46B00"
-                        />
+                        {achievement?.key === "saved_100_coins" ? (
+                            <CoinIcon size={44} color="#B46B00" />
+                        ) : (
+                            <MaterialCommunityIcons
+                                name={getAchievementIconByKey(achievement?.key)}
+                                size={44}
+                                color="#B46B00"
+                            />
+                        )}
                         <AppText weight="extraBold" style={styles.rewardText}>
                             +{achievement?.xpReward ?? 0} XP
                         </AppText>

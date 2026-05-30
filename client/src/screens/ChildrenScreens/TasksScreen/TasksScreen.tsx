@@ -6,12 +6,14 @@ import * as ImagePicker from "expo-image-picker";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
+import CoinIcon from "@/src/components/CoinIcon/CoinIcon";
 import { styles } from "./styles";
 import {
   getChildTasksThunk,
   submitTaskThunk,
 } from "../../../redux/thunks/tasksThunks";
 import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
+import ErrorStateCard from "../../../components/ErrorStateCard/ErrorStateCard";
 import {
   showSuccessToast,
   showErrorToast,
@@ -19,7 +21,6 @@ import {
 } from "@/src/utils/appToast";
 
 const ICON = {
-  coin: "circle-multiple",
   check: "check",
   checkCircle: "check-circle-outline",
   camera: "camera-outline",
@@ -54,6 +55,10 @@ export default function TasksScreen() {
   const dispatch = useDispatch<any>();
 
   const childTasks = useSelector((state: any) => state?.tasks?.childTasks ?? []);
+  const tasksError = useSelector((state: any) => state?.tasks?.error ?? null);
+  const isLoadingTasks = useSelector(
+    (state: any) => state?.tasks?.isLoadingChildTasks ?? false
+  );
 
   const [activeTab, setActiveTab] = useState<"done" | "todo">("todo");
   const [submittingTaskId, setSubmittingTaskId] = useState<string | null>(null);
@@ -229,7 +234,12 @@ export default function TasksScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
           >
-            {filteredTasks.length === 0 ? (
+            {tasksError ? (
+              <ErrorStateCard
+                title="Could not load tasks"
+                message={String(tasksError)}
+              />
+            ) : !isLoadingTasks && filteredTasks.length === 0 ? (
               <EmptyStateCard
                 icon={
                   activeTab === "todo"
@@ -249,7 +259,8 @@ export default function TasksScreen() {
               />
             ) : null}
 
-            {filteredTasks.map((task) => {
+            {!tasksError &&
+              filteredTasks.map((task) => {
               const isSubmitting = submittingTaskId === task.id;
               const ActionIcon = task.requireProof
                 ? ICON.camera
@@ -267,11 +278,7 @@ export default function TasksScreen() {
                     </AppText>
 
                     <View style={styles.coinsBadge}>
-                      <MaterialCommunityIcons
-                        name={ICON.coin}
-                        size={18}
-                        color="#F59E0B"
-                      />
+                      <CoinIcon size={18} />
                       <AppText weight="extraBold" style={styles.coinsText}>
                         {task.coins}
                       </AppText>
@@ -355,14 +362,11 @@ export default function TasksScreen() {
               );
             })}
 
+            {!tasksError ? (
             <View style={styles.weekBox}>
               <View style={styles.weekInner}>
                 <View style={styles.weekIconCircle}>
-                  <MaterialCommunityIcons
-                    name={ICON.coin}
-                    size={18}
-                    color="#F59E0B"
-                  />
+                  <CoinIcon size={18} />
                 </View>
 
                 <AppText weight="extraBold" style={styles.weekText}>
@@ -370,6 +374,7 @@ export default function TasksScreen() {
                 </AppText>
               </View>
             </View>
+            ) : null}
           </ScrollView>
         </View>
       </View>

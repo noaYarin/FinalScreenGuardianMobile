@@ -1,5 +1,10 @@
 import { StyleSheet } from "react-native";
 
+import {
+  CHILD_HEADING,
+  CHILD_TEXT,
+} from "@/src/theme/childTypography";
+
 const TILE = {
   blueBg: "#EAF2FF",
   blueBorder: "#D6E6FF",
@@ -116,14 +121,14 @@ export const styles = StyleSheet.create({
   },
 
   titleText: {
-    fontSize: 28,
+    ...CHILD_HEADING.h1,
     color: "#111827",
     marginBottom: 6,
     textAlign: "center",
   },
 
   subtitle: {
-    fontSize: 16,
+    ...CHILD_HEADING.h3,
     color: "rgba(17, 24, 39, 0.72)",
     textAlign: "center",
   },
@@ -163,13 +168,13 @@ export const styles = StyleSheet.create({
   },
 
   sendToLabel: {
-    fontSize: 14,
+    ...CHILD_HEADING.h4,
     color: "rgba(17, 24, 39, 0.72)",
     marginBottom: 4,
   },
 
   sendToValue: {
-    fontSize: 20,
+    ...CHILD_HEADING.h3,
     color: TILE.blueIcon,
   },
 
@@ -188,7 +193,7 @@ export const styles = StyleSheet.create({
   },
 
   warningText: {
-    fontSize: 14,
+    ...CHILD_HEADING.h4,
     color: TILE.beigeIcon,
     flexShrink: 1,
     textAlign: "center",

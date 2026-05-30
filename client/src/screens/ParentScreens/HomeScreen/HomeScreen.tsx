@@ -11,7 +11,6 @@ import { Image } from "expo-image";
 
 import { getChildProfileImageUri } from "@/src/utils/childProfileImage";
 
-import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import { styles } from "./styles";
 
@@ -190,7 +189,7 @@ export default function HomeParentScreen() {
     } as never);
 
   return (
-    <ScreenLayout scrollable={false}>
+    <View style={styles.screenRoot}>
       <View style={styles.container}>
         <View style={styles.content}>
           <ScrollView
@@ -255,6 +254,8 @@ export default function HomeParentScreen() {
                 subtitle="Add your first child to start tracking screen time, limits, and device status."
                 buttonLabel="Add Child"
                 onPressButton={onPressAddChild}
+                buttonStyle={styles.btnSecondary}
+                buttonTextStyle={styles.btnSecondaryText}
               />
             ) : (
               <View style={styles.cardsWrap}>
@@ -371,6 +372,6 @@ export default function HomeParentScreen() {
           <View style={styles.bottomSpacer} />
         </View>
       </View>
-    </ScreenLayout>
+    </View>
   );
 }

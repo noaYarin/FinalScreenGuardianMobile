@@ -1,5 +1,11 @@
 import { StyleSheet } from "react-native";
 
+import {
+  CHILD_DISPLAY,
+  CHILD_HEADING,
+  CHILD_TEXT,
+} from "@/src/theme/childTypography";
+
 export const TILE_COLORS = {
   apps: { bg: "#EAF2FF", badge: "#CFE3FF", icon: "#2F6DEB", border: "#D6E6FF" },
   extend: { bg: "#E0F7FA", badge: "#B2EBF2", icon: "#00838F", border: "#B2DFDB" },
@@ -166,8 +172,7 @@ export const styles = StyleSheet.create({
 
   avatarLetter: {
     color: "#FFFFFF",
-    fontSize: 42,
-    lineHeight: 46,
+    ...CHILD_DISPLAY.amount,
     includeFontPadding: false,
     textAlign: "center",
   },
@@ -259,7 +264,7 @@ export const styles = StyleSheet.create({
 
   cardTitle: {
     color: "#0F172A",
-    fontSize: 16,
+    ...CHILD_HEADING.h3,
     includeFontPadding: false,
     textAlign: "left",
     writingDirection: "ltr",
@@ -416,8 +421,7 @@ export const styles = StyleSheet.create({
 
   panicText: {
     color: "#FFFFFF",
-    fontSize: 18,
-    lineHeight: 20,
+    ...CHILD_HEADING.h2,
     includeFontPadding: false,
     textAlign: "center",
   },
@@ -544,7 +548,7 @@ export const styles = StyleSheet.create({
   },
 
   avatarInfoTitle: {
-    fontSize: 21,
+    ...CHILD_HEADING.h2,
     color: "#2F4A7D",
     textAlign: "center",
     marginBottom: 4,
@@ -552,7 +556,7 @@ export const styles = StyleSheet.create({
   },
 
   avatarInfoSubtitle: {
-    fontSize: 14,
+    ...CHILD_TEXT.subtitle,
     color: "#7B8CA8",
     textAlign: "center",
     marginBottom: 14,
@@ -720,13 +724,13 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
 
-  helloPhone: { fontSize: 22 },
-  helloTablet: { fontSize: 26 },
-  helloLarge: { fontSize: 28 },
+  helloPhone: { ...CHILD_HEADING.h1 },
+  helloTablet: { ...CHILD_HEADING.h1 },
+  helloLarge: { ...CHILD_HEADING.h1 },
 
-  timerValueFontPhone: { fontSize: 34 },
-  timerValueFontTablet: { fontSize: 40 },
-  timerValueFontLarge: { fontSize: 44 },
+  timerValueFontPhone: { ...CHILD_DISPLAY.timer },
+  timerValueFontTablet: { fontSize: 40, lineHeight: 44 },
+  timerValueFontLarge: { fontSize: 44, lineHeight: 48 },
 
   avatarWrapPhone: { width: 92, height: 92 },
   avatarWrapTablet: { width: 108, height: 108 },
@@ -762,14 +766,12 @@ export const styles = StyleSheet.create({
     gap: 12,
   },
   permissionModalTitle: {
-    fontSize: 22,
-    lineHeight: 28,
+    ...CHILD_HEADING.h1,
     color: "#0F172A",
     textAlign: "center",
   },
   permissionModalBody: {
-    fontSize: 16,
-    lineHeight: 23,
+    ...CHILD_HEADING.h3,
     color: "#475569",
     textAlign: "center",
   },
@@ -808,7 +810,7 @@ export const styles = StyleSheet.create({
   },
 
   avatarInfoSlideTitle: {
-    fontSize: 18,
+    ...CHILD_HEADING.h2,
     color: "#0F172A",
     textAlign: "center",
     includeFontPadding: false,
@@ -816,8 +818,7 @@ export const styles = StyleSheet.create({
 
   avatarInfoSlideDescription: {
     marginTop: 8,
-    fontSize: 14,
-    lineHeight: 20,
+    ...CHILD_TEXT.body,
     color: "#64748B",
     textAlign: "center",
     includeFontPadding: false,

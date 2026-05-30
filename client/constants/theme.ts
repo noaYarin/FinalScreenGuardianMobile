@@ -9,6 +9,7 @@ export const APP_COLORS = {
   childMenuPrimary: '#375AF6',
   beige: '#EAD2AC',
   primaryBlue: '#3B82F6',
+  screenBg: '#EEF2FF',
 };
 
 export const COLORS = {

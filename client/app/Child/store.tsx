@@ -8,7 +8,7 @@ export default function StoreRoute() {
     <>
       <Stack.Screen
         options={{
-          title: "Store",
+          title: "Reward Shop",
           headerTitleAlign: "center",
           headerShadowVisible: false,
           headerRight: () => (

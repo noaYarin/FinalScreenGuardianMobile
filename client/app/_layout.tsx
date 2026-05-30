@@ -8,7 +8,7 @@ import { RootSiblingParent } from "react-native-root-siblings";
 import { registerFcmNotificationTapHandlers, shouldBlockDefaultRedirect } from "@/src/notifications/fcmNavigation";
 import { useAndroidPostNotificationsPermission } from "@/src/hooks/useAndroidPostNotificationsPermission";
 import { Alert } from "react-native";
-import { COLORS } from "@/constants/theme";
+import { COLORS, APP_COLORS } from "@/constants/theme";
 import Initializer from "../src/components/Initializer";
 import {
   isAchievementUnlockedNotification,
@@ -298,7 +298,7 @@ const unsubscribeNotifications = onEvent(
           contentStyle: {
             backgroundColor: onChildSegment
               ? childPalette.screenBg
-              : COLORS.light.background,
+              : APP_COLORS.screenBg,
           },
           headerStyle: {
             backgroundColor: onChildSegment

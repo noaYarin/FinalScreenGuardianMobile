@@ -1,5 +1,11 @@
 import { StyleSheet } from "react-native";
 
+import {
+  CHILD_DISPLAY,
+  CHILD_HEADING,
+  CHILD_TEXT,
+} from "@/src/theme/childTypography";
+
 export const CHILD_MOOD_COLORS = {
   great: "#22C55E",
   good: "#14B8A6",
@@ -29,7 +35,7 @@ export const childChartStyles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 18,
+    ...CHILD_HEADING.h2,
     color: CHILD_MOOD_COLORS.text,
     textAlign: "center",
   },
@@ -58,7 +64,7 @@ export const childChartStyles = StyleSheet.create({
   },
 
   legendChipText: {
-    fontSize: 12,
+    ...CHILD_TEXT.bodySmall,
     color: CHILD_MOOD_COLORS.text,
   },
 
@@ -104,19 +110,18 @@ export const childChartStyles = StyleSheet.create({
   },
 
   storyDay: {
-    fontSize: 15,
+    ...CHILD_HEADING.h4,
     color: CHILD_MOOD_COLORS.text,
   },
 
   storyMessage: {
-    fontSize: 14,
+    ...CHILD_TEXT.body,
     color: CHILD_MOOD_COLORS.muted,
   },
 
   storyTime: {
-    fontSize: 14,
+    ...CHILD_HEADING.h4,
     color: CHILD_MOOD_COLORS.text,
-    fontWeight: "700",
   },
 
   pieWrap: {
@@ -126,13 +131,13 @@ export const childChartStyles = StyleSheet.create({
   },
 
   centerLabel: {
-    fontSize: 13,
+    ...CHILD_TEXT.bodySmall,
     color: CHILD_MOOD_COLORS.muted,
     textAlign: "center",
   },
 
   centerValue: {
-    fontSize: 22,
+    ...CHILD_DISPLAY.stat,
     color: CHILD_MOOD_COLORS.text,
     textAlign: "center",
     marginTop: 4,
@@ -143,15 +148,13 @@ export const childChartStyles = StyleSheet.create({
   },
 
   donutNote: {
-    fontSize: 14,
+    ...CHILD_TEXT.body,
     color: CHILD_MOOD_COLORS.muted,
     textAlign: "center",
-    lineHeight: 20,
     paddingHorizontal: 4,
   },
 
   donutNoteOver: {
     color: CHILD_MOOD_COLORS.over,
-    fontWeight: "600",
   },
 });

@@ -1,10 +1,12 @@
 import { StyleSheet } from "react-native";
 import { APP_COLORS, COLORS, SIZES } from "../../../../constants/theme";
 
-const SPACING_XS = 8;
-const SPACING_SM = 12;
-
 export const styles = StyleSheet.create({
+  screenRoot: {
+    flex: 1,
+    backgroundColor: APP_COLORS.beige,
+  },
+
   container: {
     flex: 1,
     justifyContent: "space-between",
@@ -12,7 +14,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 56,
     paddingBottom: 40,
-    backgroundColor: APP_COLORS.beige,
   },
 
   heroBlock: {

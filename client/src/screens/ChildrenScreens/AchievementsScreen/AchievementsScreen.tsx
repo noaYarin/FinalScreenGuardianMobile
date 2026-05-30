@@ -8,11 +8,13 @@ import type { AppDispatch, RootState } from "@/src/redux/store/types";
 import type { Child } from "@/src/redux/slices/children-slice";
 import type { AchievementUiItem } from "@/src/api/achievements";
 import { fetchChildAchievementsThunk } from "@/src/redux/thunks/achievementsThunks";
+import { CHILD_TEXT } from "@/src/theme/childTypography";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
 import { styles } from "./styles";
 import { getAchievementIconByKey } from "@/src/utils/achievementIcons";
+import CoinIcon from "@/src/components/CoinIcon/CoinIcon";
 import { getLockedAchievementHint } from "@/src/utils/achievementText";
 
 type AchievementFilter = "all" | "unlocked" | "locked";
@@ -179,10 +181,6 @@ export default function AchievementsScreen() {
           </View>
 
           <View style={styles.heroTextBlock}>
-            <AppText weight="extraBold" style={styles.heroTitle}>
-              My Achievements
-            </AppText>
-
             <AppText weight="medium" style={styles.heroSubtitle}>
               Complete activities and unlock new achievements!
             </AppText>
@@ -266,7 +264,7 @@ export default function AchievementsScreen() {
                 <AppText
                   weight="bold"
                   style={{
-                    fontSize: 12,
+                    ...CHILD_TEXT.bodySmall,
                     color: isSelected ? "#FFFFFF" : "#475569",
                   }}
                   numberOfLines={1}
@@ -336,17 +334,30 @@ export default function AchievementsScreen() {
                           : styles.achievementIconBoxLocked,
                       ]}
                     >
-                      <MaterialCommunityIcons
-                        name={item.icon}
-                        size={28}
-                        color={
-                          isUnlocked
-                            ? isGold
-                              ? "#A17B00"
-                              : "#7C3AED"
-                            : "#A19AB8"
-                        }
-                      />
+                      {item.key === "saved_100_coins" ? (
+                        <CoinIcon
+                          size={28}
+                          color={
+                            isUnlocked
+                              ? isGold
+                                ? "#CA8A04"
+                                : "#7C3AED"
+                              : "#A19AB8"
+                          }
+                        />
+                      ) : (
+                        <MaterialCommunityIcons
+                          name={item.icon}
+                          size={28}
+                          color={
+                            isUnlocked
+                              ? isGold
+                                ? "#A17B00"
+                                : "#7C3AED"
+                              : "#A19AB8"
+                          }
+                        />
+                      )}
                     </View>
 
                     <View style={styles.achievementTextArea}>

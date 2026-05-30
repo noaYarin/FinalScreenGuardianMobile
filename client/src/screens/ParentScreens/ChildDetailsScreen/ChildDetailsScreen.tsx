@@ -26,12 +26,11 @@ import { ChildDetailsProfileCard } from "@/src/components/ChildDetails/ChildDeta
 import { ChildDetailsDevicesSection } from "@/src/components/ChildDetails/ChildDetailsDevicesSection";
 import { mapDevicesToRows } from "@/src/components/ChildDetails/mapDevicesToRows";
 import { childDetailsStyles as styles } from "@/src/components/ChildDetails/childDetails.styles";
+import { APP_COLORS } from "@/constants/theme";
 import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
 import { parseRouteParam } from "./childDetailsRouteParams";
 import ConfirmDialog from "@/src/components/ConfirmDialog/ConfirmDialog";
 import { showErrorToast, showInfoToast, showSuccessToast } from "@/src/utils/appToast";
-import { emitEvent } from "@/src/services/socket";
-import { DELETE_DEVICE } from "@/src/constants/socketEvents";
 import InfoHint from "../../../components/InfoHint/InfoHint";
 
 
@@ -286,7 +285,7 @@ export default function ChildDetailsScreen() {
 
   if (showFullScreenLoader) {
     return (
-      <ScreenLayout scrollable={false}>
+      <ScreenLayout scrollable={false} backgroundColor={APP_COLORS.screenBg}>
         <View style={[styles.container, { alignItems: "center", paddingTop: 40 }]}>
           <ActivityIndicator />
           <AppText style={styles.loadingHint}>Loading children…</AppText>
@@ -297,7 +296,7 @@ export default function ChildDetailsScreen() {
 
   if (showChildrenFetchError) {
     return (
-      <ScreenLayout>
+      <ScreenLayout backgroundColor={APP_COLORS.screenBg}>
         <View style={[styles.container, { paddingTop: 24 }]}>
           <AppText style={styles.childMeta}>{errorMessage || "Could not load children."}</AppText>
 
@@ -317,7 +316,7 @@ export default function ChildDetailsScreen() {
 
   if (showEmptyState) {
     return (
-      <ScreenLayout>
+      <ScreenLayout backgroundColor={APP_COLORS.screenBg}>
         <View style={[styles.container, { paddingTop: 24 }]}>
           <EmptyStateCard
             icon="account-child-outline"
@@ -330,7 +329,7 @@ export default function ChildDetailsScreen() {
   }
 
   return (
-    <ScreenLayout scrollable={false}>
+    <ScreenLayout scrollable={false} backgroundColor={APP_COLORS.screenBg}>
       <ConfirmDialog
         visible={deviceDeleteDialog != null}
         title={

@@ -33,9 +33,6 @@ export default function IdeasScreen() {
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [currentIdeaIdByInterest, setCurrentIdeaIdByInterest] = useState<Record<string, string>>({});
 
-  const pickOne = <T,>(items: T[]) =>
-    items.length > 0 ? items[Math.floor(Math.random() * items.length)] : undefined;
-
   const uniqSelectedKeys = (keys: string[]) =>
     Array.from(new Set((Array.isArray(keys) ? keys : []).map((k) => String(k || "").trim()).filter(Boolean))).slice(
       0,
@@ -185,12 +182,17 @@ export default function IdeasScreen() {
     }, [])
   );
 
-  const selectedInterestsText = useMemo(() => {
-    if (!selectedKeys || selectedKeys.length === 0) return "No interest tags yet";
-    const labels = selectedKeys
-      .slice(0, 4)
-      .map((k) => CHILD_INTERESTS_BY_KEY[k]?.label || k);
-    return labels.join(", ") + (selectedKeys.length > 4 ? "..." : "");
+  const selectedInterestItems = useMemo(() => {
+    return uniqSelectedKeys(selectedKeys).map((key) => {
+      const meta = CHILD_INTERESTS_BY_KEY[key];
+      return {
+        key,
+        label: meta?.label || key,
+        icon: meta?.icon || "tag-outline",
+        color: meta?.color || "#2563EB",
+        softColor: meta?.softColor || "#EAF2FF",
+      };
+    });
   }, [selectedKeys]);
 
   return (
@@ -219,94 +221,149 @@ export default function IdeasScreen() {
                 Ideas tailored for you
               </AppText>
 
-              <View style={s.selectedHintRow}>
-                <MaterialCommunityIcons name="tag-outline" size={18} color="#1E40AF" />
-                <AppText weight="bold" style={s.selectedHintText}>
-                  {selectedInterestsText}
+              <View style={s.interestsSection}>
+                <AppText weight="bold" style={s.interestsSectionLabel}>
+                  Your interests
                 </AppText>
+
+                {selectedInterestItems.length === 0 ? (
+                  <View style={s.interestsEmptyBox}>
+                    <MaterialCommunityIcons
+                      name="tag-outline"
+                      size={20}
+                      color="#1E40AF"
+                    />
+                    <AppText weight="bold" style={s.interestsEmptyText}>
+                      No interest tags yet
+                    </AppText>
+                  </View>
+                ) : (
+                  <View style={s.interestsGrid}>
+                    {selectedInterestItems.map((item) => (
+                      <View
+                        key={item.key}
+                        style={[
+                          s.interestChip,
+                          {
+                            backgroundColor: item.softColor,
+                            borderColor: item.color,
+                          },
+                        ]}
+                      >
+                        <MaterialCommunityIcons
+                          name={item.icon}
+                          size={18}
+                          color={item.color}
+                        />
+                        <AppText
+                          weight="bold"
+                          style={s.interestChipText}
+                          numberOfLines={2}
+                        >
+                          {item.label}
+                        </AppText>
+                      </View>
+                    ))}
+                  </View>
+                )}
               </View>
             </View>
 
-            <View style={s.list}>
-              {loading ? (
-                <View style={s.loadingRow}>
-                  <ActivityIndicator color="#1E40AF" />
-                  <AppText weight="bold" style={s.loadingText}>
-                    Loading ideas...
-                  </AppText>
-                </View>
-              ) : error ? (
-                <View style={s.errorBox}>
-                  <AppText weight="extraBold" style={s.errorTitle}>
-                    Oops
-                  </AppText>
-                  <AppText weight="bold" style={s.errorText}>
-                    {error}
-                  </AppText>
-                </View>
-              ) : (
-                ideas.map((idea) => (
-                  <View key={idea.id} style={s.ideaCard}>
-                    <View style={s.ideaTextSide}>
-                      <AppText weight="extraBold" style={s.ideaTitle}>
-                        {idea.title}
-                      </AppText>
-                      {idea.description ? (
-                        <AppText weight="bold" style={s.ideaDesc}>
-                          {idea.description}
-                        </AppText>
-                      ) : null}
-                    </View>
-
-                    <View
-                      style={[
-                        s.ideaIconWrap,
-                        idea.softColor
-                          ? { backgroundColor: idea.softColor, borderColor: idea.accentColor }
-                          : null,
-                      ]}
-                    >
-                      <MaterialCommunityIcons
-                        name={idea.icon ?? "lightbulb-on-outline"}
-                        size={22}
-                        color={idea.accentColor || "#1E40AF"}
-                      />
-                    </View>
+            <View style={s.activitiesPanel}>
+              <View style={s.list}>
+                {loading ? (
+                  <View style={s.loadingRow}>
+                    <ActivityIndicator color="#1E40AF" />
+                    <AppText weight="bold" style={s.loadingText}>
+                      Loading ideas...
+                    </AppText>
                   </View>
-                ))
-              )}
+                ) : error ? (
+                  <View style={s.errorBox}>
+                    <AppText weight="extraBold" style={s.errorTitle}>
+                      Oops
+                    </AppText>
+                    <AppText weight="bold" style={s.errorText}>
+                      {error}
+                    </AppText>
+                  </View>
+                ) : (
+                  ideas.map((idea) => (
+                    <View key={idea.id} style={s.ideaCard}>
+                      <View style={s.ideaTextSide}>
+                        <AppText weight="extraBold" style={s.ideaTitle}>
+                          {idea.title}
+                        </AppText>
+                        {idea.description ? (
+                          <AppText weight="bold" style={s.ideaDesc}>
+                            {idea.description}
+                          </AppText>
+                        ) : null}
+                      </View>
+
+                      <View
+                        style={[
+                          s.ideaIconWrap,
+                          idea.softColor
+                            ? {
+                                backgroundColor: idea.softColor,
+                                borderColor: idea.accentColor,
+                              }
+                            : null,
+                        ]}
+                      >
+                        <MaterialCommunityIcons
+                          name={idea.icon ?? "lightbulb-on-outline"}
+                          size={26}
+                          color={idea.accentColor || "#1E40AF"}
+                        />
+                      </View>
+                    </View>
+                  ))
+                )}
+              </View>
             </View>
           </ScrollView>
 
-          {selectedKeys.length > 0 ? (
+          <View style={s.footerActions}>
+            {selectedKeys.length > 0 ? (
+              <Pressable
+                onPress={handleShuffle}
+                accessibilityRole="button"
+                accessibilityLabel="Shuffle ideas"
+                style={({ pressed }) => [
+                  s.footerButton,
+                  s.shuffleButton,
+                  pressed && s.primaryPressed,
+                ]}
+              >
+                <View style={s.primaryButtonInner}>
+                  <AppText weight="extraBold" style={s.footerButtonText}>
+                    Shuffle
+                  </AppText>
+                  <MaterialCommunityIcons name="shuffle-variant" size={18} color="#064E3B" />
+                </View>
+              </Pressable>
+            ) : null}
+
             <Pressable
-              onPress={handleShuffle}
+              onPress={() => router.push("/Child/interests" as Href)}
               accessibilityRole="button"
-              accessibilityLabel="Shuffle ideas"
-              style={({ pressed }) => [s.shuffleButton, pressed && s.primaryPressed]}
+              accessibilityLabel="Add interest tags"
+              style={({ pressed }) => [
+                s.footerButton,
+                s.interestButton,
+                pressed && s.primaryPressed,
+              ]}
             >
               <View style={s.primaryButtonInner}>
-                <AppText weight="extraBold" style={s.shuffleButtonText}>
-                  Shuffle
+                <AppText weight="extraBold" style={s.footerButtonText}>
+                  Add Interest Tags
                 </AppText>
-                <MaterialCommunityIcons name="shuffle-variant" size={18} color="#064E3B" />
+                <MaterialCommunityIcons name="tag" size={18} color="#064E3B" />
               </View>
             </Pressable>
-          ) : null}
-
-          <Pressable
-            onPress={() => router.push("/Child/interests" as Href)}
-            accessibilityRole="button"
-            accessibilityLabel="Add interest tags"
-            style={({ pressed }) => [s.primaryButton, pressed && s.primaryPressed]}
-          >
-            <View style={s.primaryButtonInner}>
-              <AppText weight="extraBold" style={s.primaryButtonText}>
-                Add Interest Tags
-              </AppText>
-              <MaterialCommunityIcons name="tag" size={18} color="#064E3B" />
-            </View>
-          </Pressable>
+          </View>
         </View>
       </View>
     </ScreenLayout>

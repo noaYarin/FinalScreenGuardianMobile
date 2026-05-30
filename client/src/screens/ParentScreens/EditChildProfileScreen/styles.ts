@@ -1,9 +1,11 @@
 import { StyleSheet } from "react-native";
+import { APP_COLORS, COLORS } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 40,
+    backgroundColor: APP_COLORS.screenBg,
   },
 
   disabledButton: {
@@ -90,60 +92,37 @@ export const styles = StyleSheet.create({
   genderRow: {
     width: "100%",
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
+    flexWrap: "nowrap",
+    gap: 6,
+    justifyContent: "space-between",
   },
 
-  genderChip: {
-    minHeight: 52,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: "#DCE7F2",
-    backgroundColor: "#F9FBFE",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-
-  genderChipSelected: {
-    backgroundColor: "#EEF6FF",
-    borderColor: "#2C6FD6",
-  },
-
-  genderChipPressed: {
-    opacity: 0.9,
-  },
-
-  genderIndicator: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1.8,
-    borderColor: "#91A4B8",
+  genderButton: {
+    flex: 1,
+    minWidth: 0,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 6,
+    paddingVertical: 10,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    gap: 4,
   },
 
-  genderIndicatorSelected: {
-    borderColor: "#2C6FD6",
+  genderButtonActive: {
+    backgroundColor: "#EFF6FF",
+    borderColor: "#BFDBFE",
   },
 
-  genderIndicatorInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "#2C6FD6",
+  genderButtonText: {
+    fontSize: 12,
+    color: "#334155",
   },
 
-  genderChipText: {
-    fontSize: 16,
-    color: "#34485E",
-  },
-
-  genderChipTextSelected: {
-    color: "#1F5FBE",
+  genderButtonTextActive: {
+    color: "#2563EB",
   },
 
   selectedChildPreview: {
@@ -167,15 +146,10 @@ export const styles = StyleSheet.create({
     maxWidth: 420,
     minHeight: 56,
     borderRadius: 18,
-    backgroundColor: "#5FA9EA",
+    backgroundColor: COLORS.light.tint,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
-    shadowColor: "#2B6CB3",
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
   },
 
   saveButtonPressed: {
@@ -185,7 +159,7 @@ export const styles = StyleSheet.create({
 
   saveButtonText: {
     fontSize: 20,
-    color: "#FFFFFF",
+    color: "#1D4ED8",
   },
 
   dateFieldButton: {

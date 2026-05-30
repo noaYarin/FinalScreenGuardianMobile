@@ -27,6 +27,7 @@ import {
 import ConfirmDialog from "@/src/components/ConfirmDialog/ConfirmDialog";
 import { showErrorToast, showSuccessToast } from "@/src/utils/appToast";
 import { getChildProfileImageUri } from "@/src/utils/childProfileImage";
+import { APP_COLORS } from "@/constants/theme";
 
 type ActionCard = {
   key: string;
@@ -233,7 +234,7 @@ export default function ChildProfileScreen() {
         onConfirm={confirmDeleteChild}
       />
 
-      <ScreenLayout>
+      <ScreenLayout scrollable={false} backgroundColor={APP_COLORS.screenBg}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}

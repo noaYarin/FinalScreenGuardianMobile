@@ -14,7 +14,7 @@ import {
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import { OnboardingButton } from "../../../components/OnboardingButton";
-import { COLORS } from "../../../../constants/theme";
+import { APP_COLORS, COLORS } from "../../../../constants/theme";
 import { styles } from "./onboarding.styles";
 
 const NEXT_ROUTE = "/Entering/roleSelectionRoute";
@@ -131,7 +131,7 @@ export const OnboardingScreen: React.FC = () => {
   };
 
   return (
-    <ScreenLayout>
+    <ScreenLayout scrollable={false} backgroundColor={APP_COLORS.screenBg}>
       <View style={styles.safeArea} onLayout={handleLayout}>
         <View style={styles.slideWrapper}>
           <ScrollView

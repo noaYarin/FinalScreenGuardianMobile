@@ -1,10 +1,10 @@
 import { StyleSheet } from "react-native";
-import { COLORS, Fonts, SIZES } from "../../../../constants/theme";
+import { APP_COLORS, COLORS, Fonts, SIZES } from "../../../../constants/theme";
 
 export const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.light.background,
+    backgroundColor: APP_COLORS.screenBg,
     justifyContent: "space-between",
   },
 
@@ -16,6 +16,7 @@ export const styles = StyleSheet.create({
 
   slideScroll: {
     flex: 1,
+    backgroundColor: APP_COLORS.screenBg,
   },
 
   slideContainer: {
@@ -126,5 +127,6 @@ export const styles = StyleSheet.create({
     height: "20%",
     paddingHorizontal: SIZES.padding,
     paddingVertical: SIZES.padding,
+    backgroundColor: APP_COLORS.screenBg,
   },
 });

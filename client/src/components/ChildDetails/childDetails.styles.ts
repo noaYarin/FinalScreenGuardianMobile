@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native";
-import { APP_COLORS, COLORS } from "@/constants/theme";
+import { APP_COLORS } from "@/constants/theme";
 
 export const childDetailsIconColors = {
   deleteTrash: "#ffffff",
@@ -12,14 +12,14 @@ export const childDetailsStyles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: 16,
     paddingTop: 12,
-    backgroundColor: COLORS.light.background,
+    backgroundColor: APP_COLORS.screenBg,
     alignItems: "stretch",
   },
 
   scrollRoot: {
     flex: 1,
     width: "100%",
-    backgroundColor: COLORS.light.background,
+    backgroundColor: APP_COLORS.screenBg,
   },
 
   scrollContent: {
@@ -29,7 +29,7 @@ export const childDetailsStyles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 24,
     alignItems: "stretch",
-    backgroundColor: COLORS.light.background,
+    backgroundColor: APP_COLORS.screenBg,
   },
 
   content: {

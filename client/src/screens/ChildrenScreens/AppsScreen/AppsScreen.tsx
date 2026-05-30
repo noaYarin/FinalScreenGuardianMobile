@@ -10,6 +10,7 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 
+import { CHILD_TEXT } from "@/src/theme/childTypography";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import { apiGetDevicePolicyForChild } from "../../../api/device";
@@ -135,22 +136,6 @@ export default function AppsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.container, isWide && styles.containerWide]}>
-          <View style={styles.heroCard}>
-            <View style={styles.heroIcon}>
-              <MaterialCommunityIcons name="lock" size={32} color="#2563EB" />
-            </View>
-
-            <View style={styles.heroText}>
-              <AppText weight="extraBold" style={styles.title}>
-                Locked Apps
-              </AppText>
-
-              <AppText weight="medium" style={styles.subtitle}>
-                These are the apps currently locked by your parent.
-              </AppText>
-            </View>
-          </View>
-
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
               <AppText weight="extraBold" style={styles.statNumber}>
@@ -277,7 +262,7 @@ export default function AppsScreen() {
                               <AppText
                                 weight="bold"
                                 style={{
-                                  fontSize: 11,
+                                  ...CHILD_TEXT.caption,
                                   color: "#64748B",
                                 }}
                               >
