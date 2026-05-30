@@ -6,6 +6,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import { styles } from "./styles";
+import { APP_COLORS } from "@/constants/theme";
 
 type LimitItem = {
   key: string;
@@ -76,7 +77,7 @@ export default function LimitsScreen() {
   };
 
   return (
-    <ScreenLayout>
+    <ScreenLayout backgroundColor={APP_COLORS.screenBg}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}

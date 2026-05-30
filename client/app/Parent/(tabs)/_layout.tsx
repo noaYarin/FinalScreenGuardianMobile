@@ -1,7 +1,7 @@
 import React from "react";
 import { Tabs, router, type Href } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { COLORS } from "@/constants/theme";
+import { COLORS, APP_COLORS } from "@/constants/theme";
 import { useSelector } from "react-redux";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -30,7 +30,7 @@ export default function ParentTabsLayout() {
       screenOptions={() => {
         return {
           sceneContainerStyle: {
-            backgroundColor: COLORS.light.background,
+            backgroundColor: APP_COLORS.screenBg,
           },
 
           headerStyle: {

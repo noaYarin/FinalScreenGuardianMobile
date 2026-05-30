@@ -12,6 +12,7 @@ import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import { MENU_ITEMS, type HomeMenuItem } from "@/data/homeMenuItems";
 import { styles } from "./styles";
+import { APP_COLORS } from "@/constants/theme";
 
 function getMenuLabel(item: HomeMenuItem) {
   switch (item.key) {
@@ -63,7 +64,7 @@ export default function HomeMenuScreen() {
   };
 
   return (
-    <ScreenLayout scrollable={false}>
+    <ScreenLayout scrollable={false} backgroundColor={APP_COLORS.screenBg}>
       <ScrollView
         style={styles.scrollRoot}
         contentContainerStyle={styles.scrollContent}

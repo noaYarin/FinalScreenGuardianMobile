@@ -1,11 +1,14 @@
 import { StyleSheet } from "react-native";
 
+import { APP_COLORS } from "@/constants/theme";
+
 export const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 16,
     paddingTop: 18,
     paddingBottom: 32,
+    backgroundColor: APP_COLORS.screenBg,
   },
 
   container: {

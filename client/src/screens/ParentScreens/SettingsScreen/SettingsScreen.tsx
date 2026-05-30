@@ -15,6 +15,7 @@ import { useDispatch, useSelector } from "react-redux";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import { styles } from "./styles";
+import { APP_COLORS } from "@/constants/theme";
 
 import { logoutParent } from "@/src/redux/thunks/authThunks";
 import {
@@ -94,7 +95,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScreenLayout scrollable={false}>
+    <ScreenLayout scrollable={false} backgroundColor={APP_COLORS.screenBg}>
       <View style={[styles.screenRoot, isTablet && styles.containerTablet]}>
         <ScrollView
           style={styles.mainScroll}

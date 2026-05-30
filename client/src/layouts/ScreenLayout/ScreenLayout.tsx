@@ -1,26 +1,33 @@
 import React from "react";
-import { ScrollView, View } from "react-native";
+import { ScrollView, View, type StyleProp, type ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { styles } from "./styles";
 
 interface ScreenLayoutProps {
   children: React.ReactNode;
   scrollable?: boolean;
+  backgroundColor?: string;
 }
 
 export default function ScreenLayout({
   children,
   scrollable = true,
+  backgroundColor,
 }: ScreenLayoutProps) {
   const insets = useSafeAreaInsets();
 
   const bottomSafePadding = 24 + insets.bottom;
 
+  const pageStyle: StyleProp<ViewStyle> = [
+    styles.page,
+    backgroundColor ? { backgroundColor } : null,
+  ];
+
   if (!scrollable) {
     return (
       <View
         style={[
-          styles.page,
+          pageStyle,
           styles.nonScrollableContent,
           {
             paddingBottom: bottomSafePadding,
@@ -34,9 +41,10 @@ export default function ScreenLayout({
 
   return (
     <ScrollView
-      style={styles.page}
+      style={pageStyle}
       contentContainerStyle={[
         styles.content,
+        backgroundColor ? { backgroundColor } : null,
         {
           paddingBottom: bottomSafePadding,
         },

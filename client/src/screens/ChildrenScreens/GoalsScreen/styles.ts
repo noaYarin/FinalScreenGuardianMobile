@@ -22,6 +22,7 @@ export const styles = StyleSheet.create({
     maxWidth: 560,
     alignSelf: "center",
     gap: 18,
+    paddingHorizontal: 16,
     paddingBottom: 8,
   },
 

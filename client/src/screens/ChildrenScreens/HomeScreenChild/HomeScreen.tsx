@@ -749,7 +749,7 @@ export default function HomeScreen() {
 
             <Tile
               iconName={ICON.goals}
-              label="Goals"
+              label="Badges"
               colorKey="goals"
               onPress={() => router.push("/Child/goals" as Href)}
             />
