@@ -44,7 +44,7 @@ const ACTIONS: ActionCard[] = [
     subtitle: "View limits",
     accessibilityLabel: "Go to screen time limits screen",
     icon: "clock-outline",
-    route: "/Parent/limits",
+    route: "/Parent/limitsEntering",
   },
   {
     key: "location",
