@@ -68,6 +68,8 @@ export async function createRewards(parentId, payload) {
     }
   }
 
+  const assignedToAll = payload?.assignedToAll === true;
+
   const docs = assignedChildIds.map((childId) => ({
     title: trimmedTitle,
     description: normalizedDescription,
@@ -77,6 +79,7 @@ export async function createRewards(parentId, payload) {
     parentId,
     childId,
     redeemedAt: null,
+    assignedToAll,
   }));
 
   const createdRewards = await createManyRewards(docs);

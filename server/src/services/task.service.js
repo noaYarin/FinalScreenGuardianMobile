@@ -89,6 +89,8 @@ export async function createTask(parentId, payload) {
     });
   }
 
+  const assignedToAll = payload?.assignedToAll === true;
+
   const tasks = await createTasksForChildren(parentId, {
     title,
     description,
@@ -97,6 +99,7 @@ export async function createTask(parentId, payload) {
     isRecurring,
     recurrenceType,
     requireProof,
+    assignedToAll,
   });
   for (const task of tasks) {
     await sendAuditLog({

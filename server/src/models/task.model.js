@@ -31,6 +31,7 @@ export const TaskSchema = new mongoose.Schema(
 
     isTemporary: { type: Boolean, default: false },
     requireProof: { type: Boolean, default: false },
+    assignedToAll: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

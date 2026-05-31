@@ -10,6 +10,7 @@ export const RewardSchema = new mongoose.Schema(
         parentId: { type: mongoose.Schema.Types.ObjectId, ref: "Parent", required: true },
         childId: { type: mongoose.Schema.Types.ObjectId, required: true },
         redeemedAt: { type: Date, default: null },
+        assignedToAll: { type: Boolean, default: false },
 
     }, { timestamps: true }
 );

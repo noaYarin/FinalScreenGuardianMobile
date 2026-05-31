@@ -38,6 +38,7 @@ export async function createTasksForChildren(parentId, payload) {
     recurrenceType,
     isTemporary: !isRecurring,
     requireProof: payload.requireProof === true,
+    assignedToAll: payload.assignedToAll === true,
   }));
 
   return TaskModel.insertMany(docs);
@@ -181,6 +182,7 @@ export async function renewExpiredRecurringTasks(parentIdOrChildId, role) {
         recurrenceType: task.recurrenceType,
         isTemporary: false,
         requireProof: task.requireProof,
+        assignedToAll: task.assignedToAll === true,
       });
     }
   }
