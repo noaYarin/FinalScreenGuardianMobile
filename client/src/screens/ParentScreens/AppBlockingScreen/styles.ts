@@ -1,4 +1,9 @@
 import { StyleSheet } from "react-native";
+import {
+  PARENT_DISPLAY,
+  PARENT_HEADING,
+  PARENT_TEXT,
+} from "@/src/theme/parentTypography";
 
 const COLORS = {
   white: "#FFFFFF",
@@ -66,14 +71,12 @@ export const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 22,
-    lineHeight: 29,
+    ...PARENT_HEADING.h1,
     color: COLORS.text,
   },
 
   subtitle: {
-    fontSize: 14,
-    lineHeight: 21,
+    ...PARENT_TEXT.subtitle,
     color: COLORS.muted,
   },
 
@@ -94,12 +97,12 @@ export const styles = StyleSheet.create({
   },
 
   summaryNumber: {
-    fontSize: 22,
+    ...PARENT_DISPLAY.stat,
     color: COLORS.text,
   },
 
   summaryLabel: {
-    fontSize: 12,
+    ...PARENT_TEXT.bodySmall,
     color: COLORS.muted,
     marginTop: 4,
   },
@@ -154,7 +157,7 @@ export const styles = StyleSheet.create({
   },
 
   filterChipText: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: COLORS.muted,
   },
 
@@ -193,7 +196,7 @@ export const styles = StyleSheet.create({
   },
 
   appName: {
-    fontSize: 16,
+    ...PARENT_HEADING.h3,
     color: COLORS.text,
   },
 
@@ -284,7 +287,7 @@ export const styles = StyleSheet.create({
   },
 
   emptyTitle: {
-    fontSize: 17,
+    ...PARENT_HEADING.h1,
     color: COLORS.text,
     textAlign: "center",
   },

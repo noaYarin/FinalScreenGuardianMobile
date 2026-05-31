@@ -1,4 +1,9 @@
 import { StyleSheet } from "react-native";
+import {
+  PARENT_DISPLAY,
+  PARENT_HEADING,
+  PARENT_TEXT,
+} from "@/src/theme/parentTypography";
 
 export const styles = StyleSheet.create({
   scrollContent: {
@@ -42,13 +47,12 @@ export const styles = StyleSheet.create({
   },
 
   heroTitle: {
-    fontSize: 28,
+    ...PARENT_HEADING.h1,
     color: "#111827",
   },
 
   heroSubtitle: {
-    fontSize: 14,
-    lineHeight: 21,
+    ...PARENT_TEXT.subtitle,
     color: "#6B7280",
   },
 
@@ -83,12 +87,12 @@ export const styles = StyleSheet.create({
   },
 
   summaryLabel: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#6B7280",
   },
 
   summaryValue: {
-    fontSize: 24,
+    ...PARENT_DISPLAY.stat,
     color: "#111827",
   },
 
@@ -101,7 +105,7 @@ export const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 18,
+    ...PARENT_HEADING.h2,
     color: "#111827",
   },
 
@@ -149,7 +153,7 @@ export const styles = StyleSheet.create({
   },
 
   resultCount: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#6B7280",
   },
 
@@ -201,7 +205,7 @@ export const styles = StyleSheet.create({
   },
 
   activityTitle: {
-    fontSize: 18,
+    ...PARENT_HEADING.h3,
     color: "#111827",
   },
 
@@ -243,13 +247,12 @@ export const styles = StyleSheet.create({
   },
 
   emptyTitle: {
-    fontSize: 18,
+    ...PARENT_HEADING.h1,
     color: "#111827",
   },
 
   emptySubtitle: {
-    fontSize: 14,
-    lineHeight: 21,
+    ...PARENT_TEXT.subtitle,
     color: "#6B7280",
     textAlign: "center",
   },

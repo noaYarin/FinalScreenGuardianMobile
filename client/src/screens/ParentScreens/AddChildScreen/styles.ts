@@ -1,4 +1,8 @@
 import { StyleSheet } from "react-native";
+import {
+  PARENT_HEADING,
+  PARENT_TEXT,
+} from "@/src/theme/parentTypography";
 import { COLORS } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
@@ -30,7 +34,7 @@ export const styles = StyleSheet.create({
   },
 
   formTitle: {
-    fontSize: 22,
+    ...PARENT_HEADING.h1,
     color: "#0F172A",
     textAlign: "center",
   },
@@ -46,8 +50,7 @@ export const styles = StyleSheet.create({
   },
 
   fieldHint: {
-    fontSize: 13,
-    lineHeight: 18,
+    ...PARENT_TEXT.bodySmall,
     color: "#64748B",
   },
 

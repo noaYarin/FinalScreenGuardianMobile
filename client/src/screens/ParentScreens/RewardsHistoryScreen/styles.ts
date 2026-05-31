@@ -1,4 +1,8 @@
 import { StyleSheet } from "react-native";
+import {
+  PARENT_HEADING,
+  PARENT_TEXT,
+} from "@/src/theme/parentTypography";
 
 export const styles = StyleSheet.create({
   scrollContent: {
@@ -37,7 +41,7 @@ export const styles = StyleSheet.create({
   },
 
   panelLabel: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#64748B",
   },
 
@@ -49,13 +53,13 @@ export const styles = StyleSheet.create({
   },
 
   listHeaderTitle: {
-    fontSize: 15,
+    ...PARENT_HEADING.h2,
     color: "#0F172A",
   },
 
   listHeaderSubtitle: {
     marginTop: 2,
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#64748B",
   },
 
@@ -90,14 +94,12 @@ export const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 28,
-    lineHeight: 34,
+    ...PARENT_HEADING.h1,
     color: "#1E293B",
   },
 
   subtitle: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...PARENT_TEXT.subtitle,
     color: "#64748B",
   },
 
@@ -162,15 +164,13 @@ export const styles = StyleSheet.create({
   },
 
   listTitle: {
-    fontSize: 22,
-    lineHeight: 28,
+    ...PARENT_HEADING.h1,
     color: "#1E293B",
   },
 
   listSubtitle: {
     marginTop: 4,
-    fontSize: 13,
-    lineHeight: 18,
+    ...PARENT_TEXT.subtitle,
     color: "#64748B",
   },
 
@@ -212,8 +212,7 @@ export const styles = StyleSheet.create({
   },
 
   rewardTitle: {
-    fontSize: 16,
-    lineHeight: 22,
+    ...PARENT_HEADING.h3,
     color: "#1E293B",
   },
 
@@ -280,14 +279,13 @@ export const styles = StyleSheet.create({
   },
 
   emptyStateTitle: {
-    fontSize: 16,
+    ...PARENT_HEADING.h1,
     color: "#243447",
   },
 
   emptyStateText: {
     textAlign: "center",
-    fontSize: 13,
-    lineHeight: 20,
+    ...PARENT_TEXT.subtitle,
     color: "#64748B",
   },
 

@@ -1,4 +1,8 @@
 import { StyleSheet } from "react-native";
+import {
+  PARENT_HEADING,
+  PARENT_TEXT,
+} from "@/src/theme/parentTypography";
 
 export const styles = StyleSheet.create({
   page: {
@@ -74,13 +78,13 @@ export const styles = StyleSheet.create({
   title: {
     marginTop: 16,
     textAlign: "center",
-    fontSize: 24,
+    ...PARENT_HEADING.h1,
     color: "#0F172A",
   },
 
   subtitle: {
     textAlign: "center",
-    fontSize: 16,
+    ...PARENT_TEXT.subtitle,
     color: "#334155",
     marginBottom: 10,
     marginTop: 8,

@@ -512,7 +512,7 @@ export default function ActivityHistoryScreen() {
           </View>
 
           <View style={styles.selectorSection}>
-            <AppText weight="bold" style={styles.sectionTitle}>
+            <AppText weight="extraBold" style={styles.sectionTitle}>
               Choose child
             </AppText>
 
@@ -577,7 +577,7 @@ export default function ActivityHistoryScreen() {
           </View>
 
           <View style={styles.filtersSection}>
-            <AppText weight="bold" style={styles.sectionTitle}>
+            <AppText weight="extraBold" style={styles.sectionTitle}>
               Filter activity
             </AppText>
 
@@ -614,7 +614,7 @@ export default function ActivityHistoryScreen() {
 
           <View style={styles.listSection}>
             <View style={styles.listHeaderRow}>
-              <AppText weight="bold" style={styles.sectionTitle}>
+              <AppText weight="extraBold" style={styles.sectionTitle}>
                 Recent activity
               </AppText>
 
@@ -690,7 +690,7 @@ export default function ActivityHistoryScreen() {
 
                           <View style={styles.activityTextWrap}>
                             <AppText
-                              weight="bold"
+                              weight="extraBold"
                               style={styles.activityTitle}
                             >
                               {title}
@@ -707,7 +707,7 @@ export default function ActivityHistoryScreen() {
                       </View>
 
                       <View style={styles.timeWrap}>
-                        <AppText weight="bold" style={styles.timeText}>
+                        <AppText weight="extraBold" style={styles.timeText}>
                           {time}
                         </AppText>
 

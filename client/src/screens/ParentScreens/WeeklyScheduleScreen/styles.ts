@@ -1,5 +1,10 @@
 import { StyleSheet } from "react-native";
 import { APP_COLORS, COLORS } from "@/constants/theme";
+import {
+  PARENT_DISPLAY,
+  PARENT_HEADING,
+  PARENT_TEXT,
+} from "@/src/theme/parentTypography";
 
 export const styles = StyleSheet.create({
   screen: {
@@ -55,13 +60,12 @@ export const styles = StyleSheet.create({
   },
 
   heroTitle: {
-    fontSize: 21,
+    ...PARENT_HEADING.h1,
     color: "#172033",
   },
 
   heroSubtitle: {
-    fontSize: 13.5,
-    lineHeight: 20,
+    ...PARENT_TEXT.subtitle,
     color: "#64748B",
   },
 
@@ -83,14 +87,13 @@ export const styles = StyleSheet.create({
   },
 
   scheduleToggleTitle: {
-    fontSize: 15,
+    ...PARENT_HEADING.h2,
     color: "#172033",
     marginBottom: 3,
   },
 
   scheduleToggleSubtitle: {
-    fontSize: 12.5,
-    lineHeight: 18,
+    ...PARENT_TEXT.subtitle,
     color: "#64748B",
   },
 
@@ -157,7 +160,7 @@ export const styles = StyleSheet.create({
   },
 
   statValue: {
-    fontSize: 22,
+    ...PARENT_DISPLAY.stat,
     color: "#172033",
   },
 
@@ -173,7 +176,7 @@ export const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 17,
+    ...PARENT_HEADING.h2,
     color: "#172033",
   },
 
@@ -291,7 +294,7 @@ export const styles = StyleSheet.create({
 
   weeklyOverviewSimpleDay: {
     flex: 1,
-    fontSize: 13.5,
+    ...PARENT_HEADING.h3,
     color: "#172033",
   },
 
@@ -370,7 +373,7 @@ export const styles = StyleSheet.create({
   },
 
   dayName: {
-    fontSize: 17,
+    ...PARENT_HEADING.h3,
     color: "#172033",
   },
 

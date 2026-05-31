@@ -1,5 +1,9 @@
 import { StyleSheet } from "react-native";
 import { COLORS } from "@/constants/theme";
+import {
+  PARENT_HEADING,
+  PARENT_TEXT,
+} from "@/src/theme/parentTypography";
 
 export const styles = StyleSheet.create({
   scrollContent: {
@@ -71,7 +75,7 @@ export const styles = StyleSheet.create({
   },
 
   panelLabel: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#64748B",
   },
 
@@ -83,7 +87,7 @@ export const styles = StyleSheet.create({
   },
 
   listHeaderTitle: {
-    fontSize: 15,
+    ...PARENT_HEADING.h2,
     color: "#0F172A",
   },
 
@@ -98,19 +102,18 @@ export const styles = StyleSheet.create({
   },
 
   countPillText: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#4C6FFF",
   },
 
   title: {
-    fontSize: 22,
-    lineHeight: 28,
+    ...PARENT_HEADING.h1,
     color: "#0F172A",
     textAlign: "center",
   },
 
   sectionLabel: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#64748B",
   },
 
@@ -319,8 +322,7 @@ export const styles = StyleSheet.create({
   },
 
   taskTitle: {
-    fontSize: 17,
-    lineHeight: 24,
+    ...PARENT_HEADING.h3,
     color: "#0F172A",
   },
 
@@ -331,7 +333,7 @@ export const styles = StyleSheet.create({
   },
 
   cardMetaLabel: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#64748B",
     minWidth: 64,
   },
@@ -386,7 +388,7 @@ export const styles = StyleSheet.create({
   },
 
   proofPillText: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#4C6FFF",
   },
 
@@ -459,14 +461,13 @@ export const styles = StyleSheet.create({
   },
 
   emptyStateTitle: {
-    fontSize: 16,
+    ...PARENT_HEADING.h1,
     color: "#243447",
   },
 
   emptyStateText: {
     textAlign: "center",
-    fontSize: 14,
-    lineHeight: 20,
+    ...PARENT_TEXT.subtitle,
     color: "#64748B",
   },
 

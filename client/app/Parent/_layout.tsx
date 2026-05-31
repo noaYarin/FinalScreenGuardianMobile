@@ -1,6 +1,7 @@
 import React from "react";
 import { Stack } from "expo-router";
 import { COLORS, APP_COLORS } from "@/constants/theme";
+import { PARENT_HEADING } from "@/src/theme/parentTypography";
 
 export default function ParentRootLayout() {
   return (
@@ -9,6 +10,7 @@ export default function ParentRootLayout() {
         headerTitleAlign: "center",
         headerShadowVisible: false,
         headerBackButtonDisplayMode: "minimal",
+        headerTitleStyle: PARENT_HEADING.h2,
         contentStyle: {
           flex: 1,
           backgroundColor: APP_COLORS.screenBg,

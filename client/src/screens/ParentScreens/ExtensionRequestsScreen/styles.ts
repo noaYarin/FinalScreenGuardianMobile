@@ -1,4 +1,8 @@
 import { StyleSheet } from "react-native";
+import {
+  PARENT_HEADING,
+  PARENT_TEXT,
+} from "@/src/theme/parentTypography";
 
 export const styles = StyleSheet.create({
   scrollContent: {
@@ -41,13 +45,12 @@ export const styles = StyleSheet.create({
   },
 
   heroTitle: {
-    fontSize: 22,
+    ...PARENT_HEADING.h1,
     color: "#FFFFFF",
   },
 
   heroSubtitle: {
-    fontSize: 15,
-    lineHeight: 22,
+    ...PARENT_TEXT.subtitle,
     color: "rgba(255,255,255,0.88)",
   },
 
@@ -73,7 +76,7 @@ export const styles = StyleSheet.create({
   },
 
   heroMetaText: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#FFFFFF",
   },
 
@@ -90,12 +93,12 @@ export const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 20,
+    ...PARENT_HEADING.h2,
     color: "#1D2433",
   },
 
   sectionSubtitle: {
-    fontSize: 14,
+    ...PARENT_TEXT.subtitle,
     color: "#6F7A8F",
   },
 
@@ -110,7 +113,7 @@ export const styles = StyleSheet.create({
   },
 
   countBadgeText: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#315BFF",
   },
 
@@ -167,12 +170,12 @@ export const styles = StyleSheet.create({
   },
 
   deviceName: {
-    fontSize: 20,
+    ...PARENT_HEADING.h3,
     color: "#1D2433",
   },
 
   childName: {
-    fontSize: 14,
+    ...PARENT_TEXT.subtitle,
     color: "#6F7A8F",
   },
 
@@ -326,13 +329,12 @@ export const styles = StyleSheet.create({
   },
 
   emptyTitle: {
-    fontSize: 20,
+    ...PARENT_HEADING.h1,
     color: "#1D2433",
   },
 
   emptySubtitle: {
-    fontSize: 14,
-    lineHeight: 21,
+    ...PARENT_TEXT.subtitle,
     color: "#6F7A8F",
     textAlign: "center",
   },

@@ -113,7 +113,7 @@ export default function LimitsScreen() {
 
           {LIMIT_SECTIONS.map((section) => (
             <View key={section.key} style={styles.sectionBlock}>
-              <AppText weight="bold" style={styles.sectionTitle}>
+              <AppText weight="extraBold" style={styles.sectionTitle}>
                 {section.title}
               </AppText>
 
@@ -148,7 +148,7 @@ export default function LimitsScreen() {
 
                           <View style={styles.textWrap}>
                             <AppText
-                              weight="bold"
+                              weight="extraBold"
                               style={[
                                 styles.rowTitle,
                                 !isPressable && styles.rowTitleDisabled,

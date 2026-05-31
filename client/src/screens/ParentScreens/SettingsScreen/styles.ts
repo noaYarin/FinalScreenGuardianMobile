@@ -1,4 +1,8 @@
 import { StyleSheet } from "react-native";
+import {
+  PARENT_HEADING,
+  PARENT_TEXT,
+} from "@/src/theme/parentTypography";
 import { APP_COLORS, COLORS } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
@@ -84,14 +88,12 @@ export const styles = StyleSheet.create({
   },
 
   deviceAppTitle: {
-    fontSize: 16,
-    lineHeight: 22,
+    ...PARENT_HEADING.h3,
     color: "#22324D",
   },
 
   deviceAppSubtitle: {
-    fontSize: 13,
-    lineHeight: 20,
+    ...PARENT_TEXT.subtitle,
     color: "#7A8599",
   },
 

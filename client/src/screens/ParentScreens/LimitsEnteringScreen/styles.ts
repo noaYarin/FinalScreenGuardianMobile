@@ -1,6 +1,10 @@
 import { StyleSheet } from "react-native";
 
 import { APP_COLORS } from "@/constants/theme";
+import {
+  PARENT_HEADING,
+  PARENT_TEXT,
+} from "@/src/theme/parentTypography";
 
 export const styles = StyleSheet.create({
   scrollContent: {
@@ -28,15 +32,13 @@ export const styles = StyleSheet.create({
   },
 
   introTitle: {
-    fontSize: 22,
-    lineHeight: 28,
+    ...PARENT_HEADING.h1,
     color: "#0F172A",
     marginBottom: 6,
   },
 
   introSubtitle: {
-    fontSize: 14,
-    lineHeight: 21,
+    ...PARENT_TEXT.subtitle,
     color: "#64748B",
   },
 
@@ -45,7 +47,7 @@ export const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 15,
+    ...PARENT_HEADING.h2,
     color: "#475569",
     paddingHorizontal: 4,
   },
@@ -106,8 +108,7 @@ export const styles = StyleSheet.create({
   },
 
   rowTitle: {
-    fontSize: 16,
-    lineHeight: 22,
+    ...PARENT_HEADING.h3,
     color: "#0F172A",
   },
 

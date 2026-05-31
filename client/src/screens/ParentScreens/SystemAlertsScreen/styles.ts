@@ -1,4 +1,9 @@
 import { StyleSheet } from "react-native";
+import {
+  PARENT_DISPLAY,
+  PARENT_HEADING,
+  PARENT_TEXT,
+} from "@/src/theme/parentTypography";
 
 export const ALERT_COLORS = {
   critical: {
@@ -59,13 +64,12 @@ export const styles = StyleSheet.create({
   },
 
   heroTitle: {
-    fontSize: 24,
+    ...PARENT_HEADING.h1,
     color: "#111827",
   },
 
   heroSubtitle: {
-    fontSize: 14,
-    lineHeight: 22,
+    ...PARENT_TEXT.subtitle,
     color: "#6B7280",
   },
 
@@ -98,12 +102,12 @@ export const styles = StyleSheet.create({
   },
 
   statValue: {
-    fontSize: 22,
+    ...PARENT_DISPLAY.stat,
     color: "#111827",
   },
 
   statLabel: {
-    fontSize: 12,
+    ...PARENT_TEXT.bodySmall,
     color: "#6B7280",
   },
 
@@ -195,7 +199,7 @@ export const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 16,
+    ...PARENT_HEADING.h2,
     color: "#111827",
   },
 
@@ -223,7 +227,7 @@ export const styles = StyleSheet.create({
   },
 
   filterChipText: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#4B5563",
     textTransform: "capitalize",
   },
@@ -275,8 +279,7 @@ export const styles = StyleSheet.create({
 
   alertTitle: {
     flex: 1,
-    fontSize: 16,
-    lineHeight: 22,
+    ...PARENT_HEADING.h3,
     color: "#0F172A",
     letterSpacing: -0.2,
   },
@@ -363,13 +366,12 @@ export const styles = StyleSheet.create({
   },
 
   emptyTitle: {
-    fontSize: 16,
+    ...PARENT_HEADING.h1,
     color: "#111827",
   },
 
   emptySubtitle: {
-    fontSize: 14,
-    lineHeight: 21,
+    ...PARENT_TEXT.subtitle,
     color: "#6B7280",
     textAlign: "center",
   },

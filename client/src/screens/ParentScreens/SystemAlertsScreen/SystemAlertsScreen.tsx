@@ -302,7 +302,7 @@ export default function SystemAlertsScreen() {
         </View>
       </View>
 
-      <AppText weight="bold" style={styles.sectionTitle}>
+      <AppText weight="extraBold" style={styles.sectionTitle}>
         Filter notifications
       </AppText>
 
@@ -343,7 +343,7 @@ export default function SystemAlertsScreen() {
               pressed ? styles.pressed : null,
             ]}
           >
-            <AppText weight="bold" style={styles.markAllReadText}>
+            <AppText weight="extraBold" style={styles.markAllReadText}>
               {markAllReadBusy ? "Marking..." : "Mark all read"}
             </AppText>
           </Pressable>
@@ -404,7 +404,7 @@ export default function SystemAlertsScreen() {
 
                 <View style={styles.alertTextWrap}>
                   <View style={styles.alertHeaderRow}>
-                    <AppText weight="bold" style={styles.alertTitle} numberOfLines={2}>
+                    <AppText weight="extraBold" style={styles.alertTitle} numberOfLines={2}>
                       {String(item.title || "")}
                     </AppText>
                   </View>
@@ -435,7 +435,7 @@ export default function SystemAlertsScreen() {
                     ]}
                   >
                     <AppText
-                      weight="bold"
+                      weight="extraBold"
                       style={[styles.severityText, { color: palette.accent }]}
                     >
                       {severity}

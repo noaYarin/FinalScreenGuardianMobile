@@ -1,4 +1,8 @@
 import { StyleSheet } from "react-native";
+import {
+  PARENT_HEADING,
+  PARENT_TEXT,
+} from "@/src/theme/parentTypography";
 
 export const styles = StyleSheet.create({
   scrollContent: {
@@ -24,14 +28,12 @@ export const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 28,
-    lineHeight: 34,
+    ...PARENT_HEADING.h1,
     color: "#1E293B",
   },
 
   subtitle: {
-    fontSize: 14,
-    lineHeight: 22,
+    ...PARENT_TEXT.subtitle,
     color: "#64748B",
   },
 
@@ -160,7 +162,7 @@ export const styles = StyleSheet.create({
   },
 
   chipText: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#243447",
   },
 
@@ -187,7 +189,7 @@ export const styles = StyleSheet.create({
   },
 
   childChipText: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#315BFF",
   },
 
@@ -206,7 +208,7 @@ export const styles = StyleSheet.create({
   },
 
   previewLabel: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#315BFF",
   },
 
@@ -219,8 +221,7 @@ export const styles = StyleSheet.create({
 
   previewTitle: {
     flex: 1,
-    fontSize: 17,
-    lineHeight: 22,
+    ...PARENT_HEADING.h3,
     color: "#1E293B",
   },
 
@@ -235,7 +236,7 @@ export const styles = StyleSheet.create({
   },
 
   previewCoinsText: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#7C5A06",
   },
 

@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { PARENT_HEADING } from "@/src/theme/parentTypography";
 
 export const styles = StyleSheet.create({
   scrollContent: {
@@ -62,8 +63,7 @@ export const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 22,
-    lineHeight: 28,
+    ...PARENT_HEADING.h2,
     color: "#25364A",
   },
 

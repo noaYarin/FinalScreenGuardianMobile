@@ -1,5 +1,9 @@
 import { StyleSheet } from "react-native";
 import { APP_COLORS, COLORS } from "@/constants/theme";
+import {
+  PARENT_HEADING,
+  PARENT_TEXT,
+} from "@/src/theme/parentTypography";
 
 export const styles = StyleSheet.create({
   screenRoot: {
@@ -102,8 +106,7 @@ export const styles = StyleSheet.create({
   },
 
   bigHello: {
-    fontSize: 28,
-    lineHeight: 34,
+    ...PARENT_HEADING.h1,
     color: "#0F172A",
     marginTop: 8,
     textAlign: "center",
@@ -159,13 +162,13 @@ export const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 16,
+    ...PARENT_HEADING.h2,
     color: "#0F172A",
   },
 
   sectionSub: {
     marginTop: 4,
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#334155",
     opacity: 0.75,
   },
@@ -210,16 +213,15 @@ export const styles = StyleSheet.create({
   },
 
   emptyTitle: {
-    fontSize: 18,
+    ...PARENT_HEADING.h1,
     color: "#0F172A",
     textAlign: "center",
   },
 
   emptySubtitle: {
-    fontSize: 14,
+    ...PARENT_TEXT.subtitle,
     color: "#64748B",
     textAlign: "center",
-    lineHeight: 20,
   },
 
   emptyButton: {
@@ -293,14 +295,13 @@ export const styles = StyleSheet.create({
   },
 
   childName: {
-    fontSize: 17,
-    lineHeight: 22,
+    ...PARENT_HEADING.h3,
     color: "#0F172A",
   },
 
   childSubtitle: {
     marginTop: 4,
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#64748B",
   },
 
@@ -328,7 +329,7 @@ export const styles = StyleSheet.create({
 
   timeSub: {
     marginTop: 4,
-    fontSize: 12,
+    ...PARENT_TEXT.bodySmall,
     color: "#64748B",
     textAlign: "right",
   },

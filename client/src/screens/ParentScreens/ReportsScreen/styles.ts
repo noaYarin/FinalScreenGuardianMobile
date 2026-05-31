@@ -1,5 +1,9 @@
 import { StyleSheet } from "react-native";
 import { COLORS } from "@/constants/theme";
+import {
+  PARENT_HEADING,
+  PARENT_TEXT,
+} from "@/src/theme/parentTypography";
 
 export const REPORTS_COLORS = {
   primary: "#4F46E5",
@@ -55,18 +59,17 @@ export const styles = StyleSheet.create({
   },
 
   emptyStateTitle: {
-    fontSize: 16,
+    ...PARENT_HEADING.h1,
     color: "#111827",
   },
 
   emptyStateText: {
-    fontSize: 14,
+    ...PARENT_TEXT.subtitle,
     color: REPORTS_COLORS.mutedText,
-    lineHeight: 20,
   },
 
   hintText: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: REPORTS_COLORS.mutedText,
     textAlign: "center",
   },
@@ -151,7 +154,7 @@ export const chartStyles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 18,
+    ...PARENT_HEADING.h1,
     color: "#111827",
   },
 
@@ -198,7 +201,7 @@ export const chartStyles = StyleSheet.create({
   },
 
   donutLegendText: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: REPORTS_COLORS.mutedText,
   },
 });

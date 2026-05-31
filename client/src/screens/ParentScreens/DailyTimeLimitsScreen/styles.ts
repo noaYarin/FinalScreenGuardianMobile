@@ -1,5 +1,9 @@
 import { StyleSheet } from "react-native";
 import { COLORS } from "@/constants/theme";
+import {
+  PARENT_HEADING,
+  PARENT_TEXT,
+} from "@/src/theme/parentTypography";
 
 export const styles = StyleSheet.create({
   scrollContent: {
@@ -55,12 +59,12 @@ export const styles = StyleSheet.create({
   },
 
   limitTitle: {
-    fontSize: 19,
+    ...PARENT_HEADING.h3,
     color: "#1F2A44",
   },
 
   limitMeta: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#7B879C",
   },
 
@@ -91,7 +95,7 @@ export const styles = StyleSheet.create({
   },
 
   timePillLabel: {
-    fontSize: 12,
+    ...PARENT_TEXT.bodySmall,
     color: "#7B879C",
     marginBottom: 6,
   },
@@ -110,7 +114,7 @@ export const styles = StyleSheet.create({
   },
 
   progressMetaText: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#6E7A90",
   },
 
@@ -229,7 +233,7 @@ export const styles = StyleSheet.create({
   },
 
   editorTitle: {
-    fontSize: 15,
+    ...PARENT_HEADING.h2,
     color: "#1F2A44",
   },
 
@@ -318,22 +322,20 @@ export const styles = StyleSheet.create({
   },
 
   emptyTitle: {
-    fontSize: 16,
+    ...PARENT_HEADING.h1,
     color: "#1F2A44",
     textAlign: "center",
   },
 
   editorHint: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#6B7890",
-    lineHeight: 19,
   },
 
   emptySubtitle: {
-    fontSize: 13,
+    ...PARENT_TEXT.subtitle,
     color: "#6B7280",
     textAlign: "center",
-    lineHeight: 18,
   },
 
   switchRow: {
@@ -349,9 +351,8 @@ export const styles = StyleSheet.create({
   },
 
   switchHint: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: "#6B7890",
-    lineHeight: 18,
     marginTop: 4,
   },
 

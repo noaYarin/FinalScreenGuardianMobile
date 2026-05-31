@@ -1,4 +1,8 @@
 import { StyleSheet } from "react-native";
+import {
+  PARENT_HEADING,
+  PARENT_TEXT,
+} from "@/src/theme/parentTypography";
 
 export const styles = StyleSheet.create({
   scrollContent: {
@@ -18,12 +22,12 @@ export const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 28,
+    ...PARENT_HEADING.h1,
     color: "#0F172A",
   },
 
   subtitle: {
-    fontSize: 15,
+    ...PARENT_TEXT.subtitle,
     color: "#64748B",
   },
 
@@ -49,7 +53,7 @@ export const styles = StyleSheet.create({
   },
 
   taskTitle: {
-    fontSize: 18,
+    ...PARENT_HEADING.h3,
     color: "#0F172A",
   },
 
@@ -117,7 +121,7 @@ export const styles = StyleSheet.create({
   },
 
   emptyTitle: {
-    fontSize: 17,
+    ...PARENT_HEADING.h1,
     color: "#0F172A",
   },
 

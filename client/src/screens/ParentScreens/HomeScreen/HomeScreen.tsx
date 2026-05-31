@@ -228,7 +228,7 @@ export default function HomeParentScreen() {
                 </View>
 
                 <View style={styles.summaryTextWrap}>
-                  <AppText weight="bold" style={styles.sectionTitle}>
+                  <AppText weight="extraBold" style={styles.sectionTitle}>
                     My Children
                   </AppText>
 

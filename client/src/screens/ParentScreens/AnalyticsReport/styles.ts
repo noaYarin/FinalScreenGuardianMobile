@@ -1,5 +1,10 @@
 import { StyleSheet } from "react-native";
 import { REPORTS_COLORS } from "@/src/screens/ParentScreens/ReportsScreen/styles";
+import {
+  PARENT_HEADING,
+  PARENT_TEXT,
+  PARENT_DISPLAY,
+} from "@/src/theme/parentTypography";
 
 export const analyticsStyles = StyleSheet.create({
   screen: {
@@ -34,13 +39,13 @@ export const analyticsStyles = StyleSheet.create({
     marginBottom: 12,
   },
   brand: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: REPORTS_COLORS.mutedText,
     letterSpacing: 0.5,
     textTransform: "uppercase",
   },
   title: {
-    fontSize: 22,
+    ...PARENT_HEADING.h1,
     color: "#111827",
     marginTop: 4,
   },
@@ -51,7 +56,7 @@ export const analyticsStyles = StyleSheet.create({
     lineHeight: 22,
   },
   sectionTitle: {
-    fontSize: 16,
+    ...PARENT_HEADING.h2,
     color: REPORTS_COLORS.primary,
     marginTop: 20,
     marginBottom: 8,
@@ -80,7 +85,7 @@ export const analyticsStyles = StyleSheet.create({
     color: REPORTS_COLORS.mutedText,
   },
   indicatorValue: {
-    fontSize: 20,
+    ...PARENT_DISPLAY.stat,
     color: "#111827",
     marginTop: 4,
   },
@@ -186,7 +191,7 @@ export const analyticsStyles = StyleSheet.create({
     gap: 6,
   },
   aiRiskLabel: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     color: REPORTS_COLORS.primary,
   },
 
@@ -224,12 +229,12 @@ export const analyticsStyles = StyleSheet.create({
   },
 
   smartTitle: {
-    fontSize: 17,
+    ...PARENT_HEADING.h3,
     color: "#111827",
   },
 
   smartSubtitle: {
-    fontSize: 12,
+    ...PARENT_TEXT.bodySmall,
     color: "#6B7280",
     marginTop: 2,
   },
@@ -296,12 +301,12 @@ export const analyticsStyles = StyleSheet.create({
 
   insightTitle: {
     flex: 1,
-    fontSize: 14,
+    ...PARENT_HEADING.h3,
     color: "#111827",
   },
 
   insightMessage: {
-    fontSize: 13,
+    ...PARENT_TEXT.bodySmall,
     lineHeight: 20,
     color: "#4B5563",
   },
@@ -316,12 +321,12 @@ export const analyticsStyles = StyleSheet.create({
   },
 
   sectionHeaderTitle: {
-    fontSize: 16,
+    ...PARENT_HEADING.h2,
     color: "#111827",
   },
 
   sectionHeaderSubtitle: {
-    fontSize: 12,
+    ...PARENT_TEXT.bodySmall,
     color: "#6B7280",
     marginTop: 3,
   },

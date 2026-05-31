@@ -1,5 +1,9 @@
 import { StyleSheet } from "react-native";
 import { APP_COLORS } from "@/constants/theme";
+import {
+  PARENT_HEADING,
+  PARENT_TEXT,
+} from "@/src/theme/parentTypography";
 
 export const styles = StyleSheet.create({
   scrollContent: {
@@ -80,7 +84,7 @@ export const styles = StyleSheet.create({
   },
 
   childName: {
-    fontSize: 28,
+    ...PARENT_HEADING.h1,
     color: "#223548",
     marginBottom: 6,
   },
@@ -196,15 +200,14 @@ export const styles = StyleSheet.create({
   },
 
   actionTitle: {
-    fontSize: 19,
+    ...PARENT_HEADING.h3,
     color: "#243447",
     marginBottom: 4,
   },
 
   actionSubtitle: {
-    fontSize: 14,
+    ...PARENT_TEXT.subtitle,
     color: "#7A8796",
-    lineHeight: 20,
   },
 
   iconBubble: {

@@ -45,36 +45,36 @@ export default function AnalyticsReportContent({
         {"\n"}Generated: {report.generatedAtLabel}
       </AppText>
 
-      <AppText weight="bold" style={styles.sectionTitle}>
+      <AppText weight="extraBold" style={styles.sectionTitle}>
         Executive summary
       </AppText>
       <AppText style={styles.paragraph}>{report.executiveSummary}</AppText>
 
-      <AppText weight="bold" style={styles.sectionTitle}>
+      <AppText weight="extraBold" style={styles.sectionTitle}>
         Key metrics
       </AppText>
       <View style={styles.indicatorGrid}>
         <View style={styles.indicatorCard}>
           <AppText style={styles.indicatorLabel}>Total screen time</AppText>
-          <AppText weight="bold" style={styles.indicatorValue}>
+          <AppText weight="extraBold" style={styles.indicatorValue}>
             {formatReportHours(report.indicators.totalMinutes)}
           </AppText>
         </View>
         <View style={styles.indicatorCard}>
           <AppText style={styles.indicatorLabel}>Daily average</AppText>
-          <AppText weight="bold" style={styles.indicatorValue}>
+          <AppText weight="extraBold" style={styles.indicatorValue}>
             {formatReportHours(report.indicators.dailyAverageMinutes)}
           </AppText>
         </View>
         <View style={styles.indicatorCard}>
           <AppText style={styles.indicatorLabel}>Limit exceedances</AppText>
-          <AppText weight="bold" style={styles.indicatorValue}>
+          <AppText weight="extraBold" style={styles.indicatorValue}>
             {report.indicators.limitExceededDays}
           </AppText>
         </View>
         <View style={styles.indicatorCard}>
           <AppText style={styles.indicatorLabel}>Tasks approved</AppText>
-          <AppText weight="bold" style={styles.indicatorValue}>
+          <AppText weight="extraBold" style={styles.indicatorValue}>
             {report.indicators.tasksApprovedCount}
           </AppText>
         </View>
@@ -83,7 +83,7 @@ export default function AnalyticsReportContent({
         <>
           <View style={styles.sectionHeaderCard}>
             <View>
-              <AppText weight="bold" style={styles.sectionHeaderTitle}>
+              <AppText weight="extraBold" style={styles.sectionHeaderTitle}>
                 Top applications
               </AppText>
               <AppText style={styles.sectionHeaderSubtitle}>
@@ -94,13 +94,13 @@ export default function AnalyticsReportContent({
 
           <View>
             <View style={styles.tableHeader}>
-              <AppText weight="bold" style={[styles.tableCell, styles.colApp]}>
+              <AppText weight="extraBold" style={[styles.tableCell, styles.colApp]}>
                 App
               </AppText>
-              <AppText weight="bold" style={[styles.tableCell, styles.colTime]}>
+              <AppText weight="extraBold" style={[styles.tableCell, styles.colTime]}>
                 Today
               </AppText>
-              <AppText weight="bold" style={[styles.tableCell, styles.colTime]}>
+              <AppText weight="extraBold" style={[styles.tableCell, styles.colTime]}>
                 Week
               </AppText>
             </View>
@@ -109,7 +109,7 @@ export default function AnalyticsReportContent({
               <View key={app.packageName || app.name} style={styles.tableRow}>
                 <View style={[styles.colApp, styles.appNameCell]}>
                   <View style={styles.appRankBadge}>
-                    <AppText weight="bold" style={styles.appRankText}>
+                    <AppText weight="extraBold" style={styles.appRankText}>
                       {index + 1}
                     </AppText>
                   </View>
@@ -138,7 +138,7 @@ export default function AnalyticsReportContent({
             </View>
 
             <View style={styles.smartHeaderText}>
-              <AppText weight="bold" style={styles.smartTitle}>
+              <AppText weight="extraBold" style={styles.smartTitle}>
                 Weekly smart insights
               </AppText>
               <AppText style={styles.smartSubtitle}>
@@ -161,7 +161,7 @@ export default function AnalyticsReportContent({
             </View>
 
             <View style={styles.smartHeaderText}>
-              <AppText weight="bold" style={styles.smartTitle}>
+              <AppText weight="extraBold" style={styles.smartTitle}>
                 Weekly smart insights
               </AppText>
               <AppText style={styles.smartSubtitle}>
@@ -170,7 +170,7 @@ export default function AnalyticsReportContent({
             </View>
 
             <View style={styles.attentionBadge}>
-              <AppText weight="bold" style={styles.attentionText}>
+              <AppText weight="extraBold" style={styles.attentionText}>
                 {aiInsights.riskLevel}
               </AppText>
             </View>
@@ -197,7 +197,7 @@ export default function AnalyticsReportContent({
                     color="#374151"
                   />
 
-                  <AppText weight="bold" style={styles.insightTitle}>
+                  <AppText weight="extraBold" style={styles.insightTitle}>
                     {insight.title}
                   </AppText>
                 </View>

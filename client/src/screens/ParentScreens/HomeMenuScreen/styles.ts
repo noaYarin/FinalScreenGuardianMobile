@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native";
 import { APP_COLORS } from "@/constants/theme";
+import { PARENT_HEADING } from "@/src/theme/parentTypography";
 
 export const styles = StyleSheet.create({
   scrollRoot: {
@@ -77,8 +78,7 @@ export const styles = StyleSheet.create({
   },
 
   menuText: {
-    fontSize: 17,
-    lineHeight: 24,
+    ...PARENT_HEADING.h3,
     color: "#243447",
   },
 

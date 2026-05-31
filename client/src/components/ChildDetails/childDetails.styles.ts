@@ -1,5 +1,9 @@
 import { StyleSheet } from "react-native";
 import { APP_COLORS, COLORS } from "@/constants/theme";
+import {
+  PARENT_HEADING,
+  PARENT_TEXT,
+} from "@/src/theme/parentTypography";
 
 export const childDetailsIconColors = {
   deleteTrash: "#ffffff",
@@ -149,8 +153,7 @@ export const childDetailsStyles = StyleSheet.create({
   },
 
   childName: {
-    fontSize: 24,
-    lineHeight: 30,
+    ...PARENT_HEADING.h1,
     color: "#0F172A",
   },
 
@@ -185,7 +188,7 @@ export const childDetailsStyles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 20,
+    ...PARENT_HEADING.h2,
     color: "#0F172A",
   },
 
@@ -253,7 +256,7 @@ export const childDetailsStyles = StyleSheet.create({
   },
 
   deviceName: {
-    fontSize: 18,
+    ...PARENT_HEADING.h3,
     color: "#1F2937",
   },
 
@@ -298,8 +301,7 @@ export const childDetailsStyles = StyleSheet.create({
   },
 
   deviceDetailLabel: {
-    fontSize: 12,
-    lineHeight: 16,
+    ...PARENT_TEXT.bodySmall,
     color: "#64748B",
     letterSpacing: 0.15,
     marginBottom: 8,
