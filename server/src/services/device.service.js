@@ -200,7 +200,9 @@ async function refreshScheduleLockIfNeeded(device, deviceId) {
     return device;
   }
 
-  return updateDeviceById(deviceId, {
+  const wasScheduleLockActive = device.scheduleLockActive === true;
+
+  const updatedDevice = await updateDeviceById(deviceId, {
     scheduleLockActive: nextScheduleLockActive,
     isLocked: recalculateDeviceLockState({
       manualLockEnabled: device.manualLockEnabled,
@@ -209,6 +211,33 @@ async function refreshScheduleLockIfNeeded(device, deviceId) {
       scheduleLockActive: nextScheduleLockActive,
     }),
   });
+
+  if (!wasScheduleLockActive && nextScheduleLockActive === true) {
+    try {
+      await notifyParent({
+        parentId: updatedDevice.parentId,
+        childId: updatedDevice.childId,
+        type: NotificationType.DEVICE_LOCKED,
+        severity: NotificationSeverity.CRITICAL,
+        title: "Screen Time schedule Started",
+        description: `${updatedDevice.name ?? "The device"
+          } was locked because the weekly screen-time schedule is active.`,
+        data: {
+          reason: "SCHEDULE_LOCK_ACTIVE",
+          limitMode: LimitMode.SCHEDULE,
+          deviceId: String(updatedDevice._id),
+          deviceName: updatedDevice.name ?? "The device",
+        },
+      });
+    } catch (err) {
+      console.error(
+        "notifyParent failed in refreshScheduleLockIfNeeded:",
+        err.message
+      );
+    }
+  }
+
+  return updatedDevice;
 }
 
 // If an old device has limits enabled but no limitMode yet, it falls back to DAILY.
@@ -741,11 +770,11 @@ export async function updateDeviceScreenTime(parentId, deviceId, body) {
 
   const screenTimeDescription =
     updatedLimitMode === LimitMode.DAILY
-      ? `Your daily screen-time limit was updated to ${Number(updatedDevice.screenTime?.dailyLimitMinutes ?? 0)} minutes.`
+      ? `Your daily screen-time limit was updated.`
       : updatedLimitMode === LimitMode.WEEKLY
-        ? `Your weekly screen-time limit was updated to ${Number(updatedDevice.screenTime?.weeklyLimitMinutes ?? 0)} minutes.`
+        ? `Your weekly screen-time limit was updated.`
         : updatedLimitMode === LimitMode.SCHEDULE
-          ? "Your weekly screen-time routine was updated."
+          ? "Your weekly screen-time schedule was updated."
           : "Screen-time limits were turned off.";
 
   try {
@@ -1239,6 +1268,12 @@ async function enforceWeeklyLimitReached({ deviceId, childName }) {
       severity: NotificationSeverity.CRITICAL,
       title: "Weekly Screen Time Limit Reached",
       description: `${childName} reached the weekly screen-time limit. ${lockedDevice.name ?? "The device"} was locked automatically.`,
+      data: {
+        reason: "WEEKLY_LIMIT_REACHED",
+        limitMode: LimitMode.WEEKLY,
+        deviceId: String(lockedDevice._id),
+        deviceName: lockedDevice.name ?? "The device",
+      },
     });
   } catch (err) {
     console.error(
@@ -1400,6 +1435,12 @@ export async function updateDeviceUsageByChild({
         severity: NotificationSeverity.CRITICAL,
         title: "Daily Screen Time Limit Reached",
         description: `${childName} reached the daily screen-time limit. ${lockedDevice.name ?? "The device"} was locked automatically.`,
+        data: {
+          reason: "DAILY_LIMIT_REACHED",
+          limitMode: LimitMode.DAILY,
+          deviceId: String(lockedDevice._id),
+          deviceName: lockedDevice.name ?? "The device",
+        },
       });
     } catch (err) {
       console.error("notifyParent failed in updateDeviceUsageByChild (ended)", err.message);

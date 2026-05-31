@@ -17,7 +17,9 @@ export type AuditActionType =
   | "TASK_REJECTED"
   | "TASK_DELETED"
   | "BLOCK_APPLICATION"
-  | "UNBLOCK_APPLICATION";
+  | "UNBLOCK_APPLICATION"
+  | "REWARD_CREATED"
+  | "REWARD_DELETED";
 
 export type AuditLog = {
   _id: string;

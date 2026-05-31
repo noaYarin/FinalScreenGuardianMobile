@@ -12,6 +12,8 @@ import { unlockAchievementsForChildService } from "./gamification.service.js";
 import { NotificationSeverity } from "../constants/severity.js";
 import { NotificationType } from "../constants/notificationType.js";
 import { notifyChild, notifyParent } from "./notification.service.js";
+import { sendAuditLog } from "./audit.service.js";
+import { AuditActionType } from "../constants/auditActionType.js";
 
 function badRequest(message) {
   const err = new Error(message);
@@ -95,8 +97,22 @@ export async function createRewards(parentId, payload) {
     } catch (err) {
       console.error("notifyChild failed in createRewards:", err.message);
     }
-  }
 
+    try {
+      await sendAuditLog({
+        parentId,
+        childId: reward.childId,
+        actionType: AuditActionType.REWARD_CREATED,
+        metadata: {
+          rewardId: String(reward._id),
+          rewardTitle: reward.title,
+          coins: Number(reward.coins ?? 0),
+        },
+      });
+    } catch (err) {
+      console.error("sendAuditLog failed in createRewards:", err.message);
+    }
+  }
   return {
     rewards: createdRewards,
   };
@@ -218,6 +234,39 @@ export async function deleteReward(parentId, rewardId) {
   }
 
   await deleteRewardById(rewardId);
+
+  try {
+    await sendAuditLog({
+      parentId,
+      childId: auditData.childId,
+      actionType: AuditActionType.REWARD_DELETED,
+      metadata: {
+        rewardId: String(rewardId),
+        rewardTitle: auditData.rewardTitle,
+        coins: auditData.coins,
+      },
+    });
+  } catch (err) {
+    console.error("sendAuditLog failed in deleteReward:", err.message);
+  }
+  try {
+    await notifyChild({
+      parentId,
+      childId: reward.childId,
+      type: NotificationType.REWARD_DELETED,
+      severity: NotificationSeverity.INFO,
+      title: "Reward removed",
+      description: `The reward "${reward.title}" was removed.`,
+      data: {
+        rewardId: String(rewardId),
+        rewardTitle: reward.title,
+        reason: "REWARD_DELETED",
+        link: "/Child/store",
+      },
+    });
+  } catch (err) {
+    console.error("notifyChild failed in deleteReward:", err.message);
+  }
 
   return {
     deletedRewardId: rewardId,

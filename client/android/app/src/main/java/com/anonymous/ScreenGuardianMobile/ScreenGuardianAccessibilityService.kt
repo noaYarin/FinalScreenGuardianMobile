@@ -244,6 +244,11 @@ val weeklyLimit = PolicyStore.getWeeklyLimit(applicationContext)
 
 val limitMode = PolicyStore.getLimitMode(applicationContext)
 
+if (currentPackage != null && isPackageAllowed(currentPackage)) {
+    Log.d(TAG, "Allowed package: $currentPackage")
+    return
+}
+
 val isBlockedApp =
     currentPackage != null &&
         PolicyStore.isAppBlocked(applicationContext, currentPackage)
@@ -272,12 +277,6 @@ Log.d(
 
         // No lock needed
         if (!shouldLock) return
-
-        // Do not block whitelisted/system/self packages
-        if (currentPackage != null && isPackageAllowed(currentPackage)) {
-            Log.d(TAG, "Allowed package: $currentPackage")
-            return
-        }
 
 // Report a blocked app attempt to the server only once per app within the debounce window.
 
@@ -335,10 +334,23 @@ Log.d(
     /**
      * Check whether a package is safe to allow even when device is blocked.
      */
-    private fun isPackageAllowed(packageName: String): Boolean {
-        val selfPackage = applicationContext.packageName
+ private fun isPackageAllowed(packageName: String): Boolean {
+    val selfPackage = applicationContext.packageName
 
-        return packageName == selfPackage ||
-            allowedPackages.contains(packageName)
-    }
+    return packageName == selfPackage ||
+        allowedPackages.contains(packageName) ||
+        isLauncherPackage(packageName)
+}
+
+private fun isLauncherPackage(packageName: String): Boolean {
+    return packageName.startsWith("com.android.launcher") ||
+        packageName.startsWith("com.google.android.apps.nexuslauncher") ||
+        packageName.startsWith("com.sec.android.app.launcher") ||
+        packageName.startsWith("com.samsung.android.launcher") ||
+        packageName.startsWith("com.miui.home") ||
+        packageName.startsWith("com.huawei.android.launcher") ||
+        packageName.startsWith("com.oppo.launcher") ||
+        packageName.startsWith("com.vivo.launcher") ||
+        packageName.startsWith("com.oneplus.launcher")
+}
 }

@@ -122,46 +122,46 @@ const AVATAR_INFO_SLIDES: {
   iconBgColor: string;
   iconColor: string;
 }[] = [
-  {
-    icon: "trophy-outline",
-    title: "Achievements",
-    description:
-      "Check your achievements to earn XP and celebrate your progress.",
-    bgColor: "#FFF7ED",
-    borderColor: "#FED7AA",
-    iconBgColor: "#FFE8C2",
-    iconColor: "#B45309",
-  },
-  {
-    icon: "star-circle",
-    title: "XP",
-    description:
-      "XP helps your avatar level up as you complete goals and unlock achievements.",
-    bgColor: "#EEF4FF",
-    borderColor: "#CFE3FF",
-    iconBgColor: "#DBEAFE",
-    iconColor: "#2563EB",
-  },
-  {
-    icon: "trending-up",
-    title: "Levels",
-    description:
-      "The more XP you collect, the higher your avatar level becomes.",
-    bgColor: "#F3EDFF",
-    borderColor: "#E0D2FF",
-    iconBgColor: "#E9D5FF",
-    iconColor: "#6D28D9",
-  },
-  {
-    icon: "palette-outline",
-    title: "Avatar stages",
-    description: "At special levels, your avatar grows and gets a new look.",
-    bgColor: "#EEFFF4",
-    borderColor: "#CFF7DD",
-    iconBgColor: "#DCFCE7",
-    iconColor: "#16A34A",
-  },
-];
+    {
+      icon: "trophy-outline",
+      title: "Achievements",
+      description:
+        "Check your achievements to earn XP and celebrate your progress.",
+      bgColor: "#FFF7ED",
+      borderColor: "#FED7AA",
+      iconBgColor: "#FFE8C2",
+      iconColor: "#B45309",
+    },
+    {
+      icon: "star-circle",
+      title: "XP",
+      description:
+        "XP helps your avatar level up as you complete goals and unlock achievements.",
+      bgColor: "#EEF4FF",
+      borderColor: "#CFE3FF",
+      iconBgColor: "#DBEAFE",
+      iconColor: "#2563EB",
+    },
+    {
+      icon: "trending-up",
+      title: "Levels",
+      description:
+        "The more XP you collect, the higher your avatar level becomes.",
+      bgColor: "#F3EDFF",
+      borderColor: "#E0D2FF",
+      iconBgColor: "#E9D5FF",
+      iconColor: "#6D28D9",
+    },
+    {
+      icon: "palette-outline",
+      title: "Avatar stages",
+      description: "At special levels, your avatar grows and gets a new look.",
+      bgColor: "#EEFFF4",
+      borderColor: "#CFF7DD",
+      iconBgColor: "#DCFCE7",
+      iconColor: "#16A34A",
+    },
+  ];
 
 export default function HomeScreen() {
   const params = useLocalSearchParams<{ initialName?: string }>();
@@ -426,7 +426,7 @@ export default function HomeScreen() {
               usageStats,
             })
           ).unwrap();
-          
+
         } else {
           console.log("DeviceControl.getAppUsageStats is not available");
         }
@@ -551,6 +551,20 @@ export default function HomeScreen() {
   const isScheduleMode = screenTime.limitMode === "SCHEDULE";
   const isWeeklyMode = screenTime.limitMode === "WEEKLY";
 
+  const isDailyMode = screenTime.limitMode === "DAILY";
+
+  const isDailyLimitReached =
+    screenTime.limitEnabled &&
+    isDailyMode &&
+    (screenTime.dailyLimitLockActive === true ||
+      screenTime.remainingMinutes <= 0);
+
+  const isWeeklyLimitReached =
+    screenTime.limitEnabled &&
+    isWeeklyMode &&
+    (screenTime.weeklyLimitLockActive === true ||
+      screenTime.remainingMinutes <= 0);
+
   const isBlockedBySchedule =
     isScheduleMode && screenTime.isBlockedNow === true;
 
@@ -559,14 +573,17 @@ export default function HomeScreen() {
     : isWeeklyMode
       ? "Weekly time left"
       : "Time left";
-
   const timerMainText = !screenTime.limitEnabled
     ? "No limit"
     : isScheduleMode
       ? isBlockedBySchedule
         ? "Blocked now"
         : "Open now"
-      : formatTime(screenTime.remainingMinutes);
+      : isDailyLimitReached
+        ? "Daily limit reached"
+        : isWeeklyLimitReached
+          ? "Weekly limit reached"
+          : formatTime(screenTime.remainingMinutes);
 
   const timerSubText = !screenTime.limitEnabled
     ? "There is no active limit right now"
@@ -578,9 +595,15 @@ export default function HomeScreen() {
         : screenTime.nextBlockAt
           ? `Next block at ${screenTime.nextBlockAt}`
           : "You can use the device right now"
-      : isWeeklyMode
-        ? "Weekly screen time limit is active"
-        : "Your time is almost over";
+      : isDailyLimitReached
+        ? "You used all your screen time for today"
+        : isWeeklyLimitReached
+          ? "You used all your screen time for this week"
+          : isWeeklyMode
+            ? "Weekly screen time limit is active"
+            : screenTime.remainingMinutes <= 5
+              ? "Your time is almost over"
+              : "Use your screen time wisely";
 
   const shouldShowProgress =
     screenTime.limitEnabled && !isScheduleMode;
@@ -776,30 +799,30 @@ export default function HomeScreen() {
             />
           </View>
 
-<Pressable
-  onPress={() => router.push("/Child/sos" as Href)}
-  style={({ pressed }) => [
-    styles.panicBtn,
-    pressed && styles.panicPressed,
-  ]}
-  accessibilityRole="button"
-  accessibilityLabel="Send SOS alert"
-  accessibilityState={{ disabled: false }}
->
-  <View style={styles.panicContent}>
-    <View style={styles.panicIconBadge}>
-      <MaterialCommunityIcons
-        name={ICON.panic}
-        size={24}
-        color="#fff"
-      />
-    </View>
+          <Pressable
+            onPress={() => router.push("/Child/sos" as Href)}
+            style={({ pressed }) => [
+              styles.panicBtn,
+              pressed && styles.panicPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Send SOS alert"
+            accessibilityState={{ disabled: false }}
+          >
+            <View style={styles.panicContent}>
+              <View style={styles.panicIconBadge}>
+                <MaterialCommunityIcons
+                  name={ICON.panic}
+                  size={24}
+                  color="#fff"
+                />
+              </View>
 
-    <AppText weight="extraBold" style={styles.panicText}>
-      SOS
-    </AppText>
-  </View>
-</Pressable>
+              <AppText weight="extraBold" style={styles.panicText}>
+                SOS
+              </AppText>
+            </View>
+          </Pressable>
 
           <Modal
             visible={avatarInfoVisible}
@@ -811,7 +834,7 @@ export default function HomeScreen() {
               style={styles.avatarModalOverlay}
               onPress={() => setAvatarInfoVisible(false)}
             >
-              <Pressable style={styles.avatarInfoCard} onPress={() => {}}>
+              <Pressable style={styles.avatarInfoCard} onPress={() => { }}>
                 <View style={styles.avatarInfoImageWrap}>
                   <Image
                     source={homeAvatarImage}
