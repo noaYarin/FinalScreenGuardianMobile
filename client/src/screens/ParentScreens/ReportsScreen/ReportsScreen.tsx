@@ -23,6 +23,7 @@ import {
   buildEmptyUsageReport,
   buildReportsDatasetFromReport,
   pickRepresentativeDevice,
+  reportHasChartUsage,
 } from "./buildReportsDataset";
 import ReportsContent from "@/src/components/ReportsScreen/ReportsContent";
 import ReportsMetricRow from "@/src/components/ReportsScreen/ReportsMetricRow";
@@ -129,6 +130,11 @@ export default function ParentReportsScreen() {
     dispatch(fetchDevicesByChild(effectiveChildId));
   }, [dispatch, effectiveChildId]);
 
+  useEffect(() => {
+    setUsageReport(null);
+    setLoadError(null);
+  }, [effectiveChildId, selectedDeviceId]);
+
   const firstDeviceId =
     devicesForChild.length > 0 ? String(devicesForChild[0]._id) : "";
 
@@ -216,11 +222,7 @@ export default function ParentReportsScreen() {
     return buildReportsDatasetFromReport(selectedTimeRange, usageReport);
   }, [selectedTimeRange, usageReport]);
 
-  const hasUsageData =
-    (usageReport?.weeklyTotalMinutes ?? 0) > 0 ||
-    (usageReport?.monthlyTotalMinutes ?? 0) > 0 ||
-    (usageReport?.days?.some((day) => day.hasData) ?? false) ||
-    (usageReport?.weeks?.some((week) => week.hasData) ?? false);
+  const hasUsageData = usageReport ? reportHasChartUsage(usageReport) : false;
 
   const onPressAddChild = () => router.push("/Parent/addChild" as Href);
 

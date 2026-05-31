@@ -394,6 +394,9 @@ export function buildScreenTimeUsageReport(device, now = new Date()) {
   const monthlyTotalMinutes = weeks.reduce((total, week) => total + week.usedMinutes, 0);
   const daysWithData = days.filter((day) => day.hasData).length;
   const weeksWithData = weeks.filter((week) => week.hasData).length;
+  const hasChartUsage =
+    days.some((day) => day.usedMinutes > 0) ||
+    weeks.some((week) => week.usedMinutes > 0);
 
   return {
     days,
@@ -404,7 +407,7 @@ export function buildScreenTimeUsageReport(device, now = new Date()) {
       daysWithData > 0 ? Math.round(weeklyTotalMinutes / daysWithData) : 0,
     monthlyAverageMinutes:
       weeksWithData > 0 ? Math.round(monthlyTotalMinutes / weeksWithData) : 0,
-    topApp: findTopApp(device?.applications) ?? null,
+    topApp: hasChartUsage ? findTopApp(device?.applications) ?? null : null,
     hasLinkedDevice: true
   };
 }

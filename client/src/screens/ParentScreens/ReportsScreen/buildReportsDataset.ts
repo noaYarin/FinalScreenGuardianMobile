@@ -12,6 +12,13 @@ const CHART_TITLE = {
 
 const NO_DATA = "No data yet";
 
+export function reportHasChartUsage(report: ScreenTimeUsageReport): boolean {
+  return (
+    (report.days?.some((day) => (day.usedMinutes ?? 0) > 0) ?? false) ||
+    (report.weeks?.some((week) => (week.usedMinutes ?? 0) > 0) ?? false)
+  );
+}
+
 type AppUsage = {
   name: string;
   usedTodayMinutes: number;
@@ -113,6 +120,9 @@ export function buildReportsDatasetFromReport(
   timeRange: ReportsTimeRange,
   report: ScreenTimeUsageReport
 ): ReportsDataset {
+  const hasChartUsage = reportHasChartUsage(report);
+  const topAppLabel =
+    hasChartUsage && report.topApp?.trim() ? report.topApp : NO_DATA;
 
   if (timeRange === "weekly") {
     const bars = (report.weeks ?? buildEmptyWeeks()).map((week) => ({
@@ -126,10 +136,10 @@ export function buildReportsDatasetFromReport(
       chartTitle: CHART_TITLE.weekly,
       bars,
       isWeeklyChart: true,
-      metrics: { 
+      metrics: {
         dailyAverageMinutes: report.monthlyAverageMinutes ?? 0,
         weeklyTotalMinutes: report.monthlyTotalMinutes ?? 0,
-        topApp: report.topApp?.trim() ? report.topApp : NO_DATA,
+        topApp: topAppLabel,
       },
     };
   }
@@ -147,7 +157,7 @@ export function buildReportsDatasetFromReport(
     metrics: {
       dailyAverageMinutes: report.dailyAverageMinutes ?? 0,
       weeklyTotalMinutes: report.weeklyTotalMinutes ?? 0,
-      topApp: report.topApp?.trim() ? report.topApp : NO_DATA,
+      topApp: topAppLabel,
     },
   };
 }
