@@ -5,13 +5,14 @@ import {
   getChildrenController,
   setChildActiveController,
   getChildController,
-  deleteChildController 
+  deleteChildController
 } from "../controllers/child.controller.js";
 import { requireParent } from "../middlewares/requireParent.js";
 import {
   getChildScreenTimeReportsController,
   getParentAnalyticsReportController,
-  getParentHomeSummaryController
+  getParentHomeSummaryController,
+  getParentAiInsightsController
 } from "../controllers/parent.controller.js";
 
 const router = Router();
@@ -38,6 +39,14 @@ router.get(
   authJwt,
   requireParent,
   getParentAnalyticsReportController
+);
+
+// GET /api/v1/parent/children/:childId/analytics-report/ai-insights
+router.get(
+  "/children/:childId/analytics-report/ai-insights",
+  authJwt,
+  requireParent,
+  getParentAiInsightsController
 );
 
 // GET /api/v1/parent/children/:childId

@@ -17,7 +17,10 @@ import {
   isDeviceDayResetDue,
   resetDailyScreenTimeWithHistory
 } from "./screenTimeHistory.service.js";
+
 const MAX_REPORT_RANGE_DAYS = 35;
+
+const MAX_TOP_APPLICATIONS = 3;
 
 function pickRepresentativeDevice(devices) {
   if (!Array.isArray(devices) || devices.length === 0) {
@@ -74,6 +77,45 @@ function getDailyLimitMinutes(screenTime) {
   }
 
   return daily + extra;
+}
+
+function normalizeNumber(value, fallback = 0) {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : fallback;
+}
+
+function buildTopApplications(device) {
+  const applications = Array.isArray(device?.applications)
+    ? device.applications
+    : [];
+
+  return applications
+    .map((app) => {
+      const screenTime = app?.screenTime || {};
+      const usedTodayMinutes = normalizeNumber(screenTime.usedTodayMinutes);
+      const usedWeekMinutes = normalizeNumber(screenTime.usedWeekMinutes);
+
+      return {
+        name: String(app?.name || "Unknown app"),
+        packageName: String(app?.packageName || ""),
+        usedTodayMinutes,
+        usedWeekMinutes,
+        dailyLimitMinutes: normalizeNumber(screenTime.dailyLimitMinutes),
+        weeklyLimitMinutes: normalizeNumber(screenTime.weeklyLimitMinutes),
+        isBlocked: app?.isBlocked === true,
+        isLimitEnabled: screenTime.isLimitEnabled === true,
+        limitMode: screenTime.limitMode || "NONE",
+        lastUsedAt: app?.lastUsedAt || null
+      };
+    })
+    .filter((app) => app.usedTodayMinutes > 0 || app.usedWeekMinutes > 0)
+    .sort((a, b) => {
+      const aUsage = a.usedWeekMinutes || a.usedTodayMinutes;
+      const bUsage = b.usedWeekMinutes || b.usedTodayMinutes;
+
+      return bUsage - aUsage;
+    })
+    .slice(0, MAX_TOP_APPLICATIONS);
 }
 
 function countTasksApprovedInRange(tasks, fromKey, toKey) {
@@ -247,6 +289,7 @@ function buildReportPayload({
       tasksApprovedCount,
       extensionRequestsCount
     },
+    topApplications: buildTopApplications(device),
     trendPercent
   };
 }
@@ -351,8 +394,8 @@ export async function buildParentAnalyticsReport(
   const trendPercent =
     previousTotal > 0
       ? Math.round(
-          ((usageSummary.totalMinutes - previousTotal) / previousTotal) * 100
-        )
+        ((usageSummary.totalMinutes - previousTotal) / previousTotal) * 100
+      )
       : null;
 
   const tasks = await getTasksByChildId(childId);
