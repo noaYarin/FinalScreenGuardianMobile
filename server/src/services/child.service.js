@@ -105,13 +105,26 @@ export function validateAndBuildChildDoc(body = {}) {
 }
 
 
-export function validateChildProfileUpdate(birthDate, gender) {
+export function validateChildProfileUpdate({ name, birthDate, gender } = {}) {
 
-  if (birthDate === undefined && gender === undefined) {
+  if (name === undefined && birthDate === undefined && gender === undefined) {
     throw new AppError(CommonErrors.VALIDATION_AT_LEAST_ONE_FIELD_REQUIRED);
   }
 
+  let parsedName;
   let parsedBirthDate;
+
+  if (name !== undefined) {
+    if (typeof name !== "string" || !name.trim()) {
+      throw new AppError(CommonErrors.VALIDATION_NAME_REQUIRED);
+    }
+
+    if (name.trim().length > 30) {
+      throw new AppError(CommonErrors.VALIDATION_NAME_TOO_LONG);
+    }
+
+    parsedName = name.trim();
+  }
 
   if (birthDate !== undefined) {
     parsedBirthDate = validateBirthDate(birthDate);
@@ -122,19 +135,19 @@ export function validateChildProfileUpdate(birthDate, gender) {
   }
 
   return {
+    name: parsedName,
     birthDate: parsedBirthDate,
     gender,
   };
 }
 
-export async function updateCurrentChildProfile(parentId, childId, birthDate, gender) {
-  const validated = validateChildProfileUpdate(birthDate, gender);
+export async function updateCurrentChildProfile(parentId, childId, payload = {}) {
+  const validated = validateChildProfileUpdate(payload);
 
   const updated = await updateCurrentChildProfileByParentId(
     parentId,
     childId,
-    validated.birthDate,
-    validated.gender
+    validated
   );
 
   if (!updated) {

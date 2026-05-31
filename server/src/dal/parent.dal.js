@@ -138,23 +138,36 @@ export async function updateChildInterestsByParentId(parentId, childId, interest
 }
 
 
-export async function updateCurrentChildProfileByParentId(parentId, childId, birthDate, gender) {
+export async function updateCurrentChildProfileByParentId(parentId, childId, updates = {}) {
   assertValidObjectId(parentId, CommonErrors.INVALID_PARENT_ID);
   assertValidObjectId(childId, CommonErrors.INVALID_CHILD_ID);
 
+  const $set = {};
+
+  if (updates.name !== undefined) {
+    $set["children.$.name"] = updates.name;
+  }
+
+  if (updates.birthDate !== undefined) {
+    $set["children.$.birthDate"] = updates.birthDate;
+  }
+
+  if (updates.gender !== undefined) {
+    $set["children.$.gender"] = updates.gender;
+  }
+
+  if (Object.keys($set).length === 0) {
+    return null;
+  }
+
   const updated = await ParentModel.findOneAndUpdate(
     { _id: parentId, "children._id": childId },
-  { 
-    $set: { 
-      "children.$.birthDate": birthDate, 
-      "children.$.gender": gender 
-    } 
-  },
-  { 
-    new: true, 
-    projection: { children: { $elemMatch: { _id: childId } } } 
-  }
-).lean();
+    { $set },
+    {
+      new: true,
+      projection: { children: { $elemMatch: { _id: childId } } },
+    }
+  ).lean();
 
   if (!updated) {
     return null;

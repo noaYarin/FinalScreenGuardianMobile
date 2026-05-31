@@ -307,8 +307,8 @@ export async function getChildScreenTimeReports(parentId, childId, deviceId = nu
   return buildScreenTimeUsageReport(device);
 }
 
-export async function updateCurrentChildProfile(parentId, childId, name, birthDate, gender) {
-  const updated = await updateCurrentChildProfileByParentId(parentId, childId, name, birthDate, gender);
+export async function updateCurrentChildProfile(parentId, childId, payload = {}) {
+  const updated = await updateCurrentChildProfileByParentId(parentId, childId, payload);
 
   if (!updated) {
     throw new AppError(CommonErrors.CHILD_NOT_FOUND);
