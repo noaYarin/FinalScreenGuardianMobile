@@ -17,6 +17,7 @@ export const styles = StyleSheet.create({
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
     elevation: 3,
+    marginTop: 10,
   },
 
   iconBox: {
