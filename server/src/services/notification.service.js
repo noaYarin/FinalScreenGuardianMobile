@@ -134,7 +134,6 @@ function shouldSendParentPush(type, data = {}) {
     return true;
   }
 
-  // If screen time ending is implemented as DEVICE_LOCKED in your code
   if (type === NotificationType.DEVICE_LOCKED) {
     const reason = String(data?.reason ?? "").toUpperCase();
 
