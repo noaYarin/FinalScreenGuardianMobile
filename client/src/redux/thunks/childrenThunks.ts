@@ -92,16 +92,21 @@ export const fetchCurrentChildProfileThunk = createAsyncThunk<
 
 export const updateCurrentChildProfileThunk = createAsyncThunk<
   Child, // What returned
-  { childId: string; birthDate: string; gender: string }, // Payload
+  { childId: string; name: string; birthDate: string; gender: string }, // Payload
   { rejectValue: string }
 >("children/updateCurrentChildProfile", async (payload, thunkAPI) => {
   try {
-    const { childId, birthDate, gender } = payload;
-    const response: any = await childApi.updateCurrentChildProfile(childId, birthDate, gender);
-    const parentData = response.child; 
-    const rawChild = parentData?.children?.find(
-      (c: any) => String(c._id) === String(childId)
-    );
+    const { childId, name, birthDate, gender } = payload;
+    const response: any = await childApi.updateCurrentChildProfile(childId, {
+      name,
+      birthDate,
+      gender,
+    });
+    const parentData = response.child;
+    const rawChild =
+      parentData?.children?.find(
+        (c: { _id?: string }) => String(c._id) === String(childId)
+      ) ?? parentData?.children?.[0];
 
     if (!rawChild) {
       return thunkAPI.rejectWithValue("children.profile_failed");

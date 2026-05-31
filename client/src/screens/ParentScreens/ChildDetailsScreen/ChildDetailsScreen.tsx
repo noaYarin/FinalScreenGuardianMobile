@@ -335,7 +335,7 @@ export default function ChildDetailsScreen() {
   }
 
   return (
-    <ScreenLayout scrollable={false} backgroundColor={APP_COLORS.screenBg}>
+    <View style={styles.screenRoot}>
       <ConfirmDialog
         visible={deviceDeleteDialog != null}
         title={
@@ -354,6 +354,7 @@ export default function ChildDetailsScreen() {
       <ScrollView
         style={styles.scrollRoot}
         contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={devicesRefreshing}
@@ -407,8 +408,9 @@ export default function ChildDetailsScreen() {
             onSetDeviceLocked={handleSetDeviceLocked}
             onRenameDevice={handleRenameDevice}
           />
+          {isDevicesExpanded ? <View style={styles.devicesBottomSpacer} /> : null}
         </View>
       </ScrollView>
-    </ScreenLayout>
+    </View>
   );
 }

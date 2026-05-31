@@ -208,6 +208,21 @@ export const childDetailsStyles = StyleSheet.create({
   devicesList: {
     marginTop: 14,
     gap: 14,
+    paddingBottom: 8,
+  },
+
+  devicesListExpanded: {
+    paddingBottom: 20,
+  },
+
+  devicesBottomSpacer: {
+    height: 24,
+  },
+
+  screenRoot: {
+    flex: 1,
+    width: "100%",
+    backgroundColor: APP_COLORS.screenBg,
   },
 
   deviceCard: {

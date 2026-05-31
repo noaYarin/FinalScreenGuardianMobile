@@ -299,7 +299,7 @@ export default function ChildProfileScreen() {
                   onPress={() =>
                     router.push({
                       pathname: "/Parent/editChildProfile",
-                      params: { childId: childId },
+                      params: { id: childId, childId },
                     } as never)
                   }
                   accessibilityRole="button"

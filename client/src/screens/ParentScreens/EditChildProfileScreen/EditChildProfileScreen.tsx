@@ -1,31 +1,31 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
-  ScrollView,
   Pressable,
+  TextInput,
+  ScrollView,
   useWindowDimensions,
   ActivityIndicator,
-  TouchableOpacity,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import InlineDatePicker from "../../../components/InlineDatePicker/InlineDatePicker";
-import ChildSelector from "../../../components/ChildSelector/ChildSelector";
-import { styles } from "./styles";
+import { styles } from "../AddChildScreen/styles";
 
 import type { RootState, AppDispatch } from "@/src/redux/store/types";
-import { updateCurrentChildProfileThunk } from "@/src/redux/thunks/childrenThunks";
+import { getMyChildrenThunk, updateCurrentChildProfileThunk } from "@/src/redux/thunks/childrenThunks";
 import { showErrorToast, showSuccessToast } from "@/src/utils/appToast";
 import { APP_COLORS } from "@/constants/theme";
+import { parseRouteParam } from "../ChildDetailsScreen/childDetailsRouteParams";
 
-type GenderValue = "boy" | "girl" | "other";
+type GenderOption = "boy" | "girl" | "other";
 
 const GENDER_OPTIONS: {
-  key: GenderValue;
+  key: GenderOption;
   icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
   label: string;
   accessibilityLabel: string;
@@ -49,7 +49,10 @@ function calculateAge(date: Date) {
   let age = today.getFullYear() - date.getFullYear();
   const monthDiff = today.getMonth() - date.getMonth();
 
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())) {
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < date.getDate())
+  ) {
     age--;
   }
 
@@ -66,50 +69,88 @@ function formatDateForApi(date: Date) {
 export default function EditChildProfileScreen() {
   const { width } = useWindowDimensions();
   const dispatch = useDispatch<AppDispatch>();
-
-  const isTablet = width >= 768;
-  const isLargeTablet = width >= 1100;
+  const params = useLocalSearchParams<{ childId?: string; id?: string }>();
 
   const children = useSelector(
     (state: RootState) => state.children.childrenList ?? []
   );
   const { isLoading } = useSelector((state: RootState) => state.children);
 
-  const [selectedChildId, setSelectedChildId] = useState<string>("");
+  const routeChildId = useMemo(() => {
+    return (
+      parseRouteParam(params.childId) ||
+      parseRouteParam(params.id)
+    );
+  }, [params.childId, params.id]);
+
+  const [childId, setChildId] = useState("");
+  const [childName, setChildName] = useState("");
   const [birthDate, setBirthDate] = useState<Date>(new Date());
-  const [gender, setGender] = useState<GenderValue>("girl");
+  const [gender, setGender] = useState<GenderOption>("boy");
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const hydratedChildIdRef = useRef("");
+
+  const maxContentWidth = Math.min(900, Math.max(340, width - 32));
 
   useEffect(() => {
-    if (!children || children.length === 0) return;
+    dispatch(getMyChildrenThunk());
+  }, [dispatch]);
 
-    const targetId = selectedChildId || String(children[0]._id);
-    const currentChild = children.find((c) => String(c._id) === targetId);
+  useEffect(() => {
+    hydratedChildIdRef.current = "";
+  }, [routeChildId]);
 
-    if (!currentChild) return;
-
-    if (!selectedChildId) {
-      setSelectedChildId(String(currentChild._id));
+  useEffect(() => {
+    if (children.length === 0) {
+      return;
     }
+
+    const targetId = routeChildId || String(children[0]._id);
+
+    const currentChild = children.find(
+      (child) => String(child._id) === String(targetId)
+    );
+
+    if (!currentChild) {
+      return;
+    }
+
+    const currentChildId = String(currentChild._id);
+
+    if (hydratedChildIdRef.current === currentChildId) {
+      return;
+    }
+
+    hydratedChildIdRef.current = currentChildId;
+    setChildId(currentChildId);
+    setChildName(currentChild.name ?? "");
 
     if (currentChild.birthDate) {
-      const newDate = new Date(currentChild.birthDate);
-      if (birthDate.getTime() !== newDate.getTime()) {
-        setBirthDate(newDate);
-      }
+      setBirthDate(new Date(currentChild.birthDate));
     }
 
-    if (currentChild.gender && currentChild.gender !== gender) {
-      setGender(currentChild.gender as GenderValue);
+    if (
+      currentChild.gender === "boy" ||
+      currentChild.gender === "girl" ||
+      currentChild.gender === "other"
+    ) {
+      setGender(currentChild.gender);
     }
-  }, [children, selectedChildId]);
+  }, [children, routeChildId]);
 
   const formattedBirthDate = useMemo(() => {
     return formatDateForDisplay(birthDate);
   }, [birthDate]);
 
-  const handleSave = async () => {
-    if (!selectedChildId || !birthDate) return;
+  const onSave = async () => {
+    if (!childId) {
+      return;
+    }
+
+    if (!childName.trim()) {
+      showErrorToast("Please enter a name", "Error");
+      return;
+    }
 
     const age = calculateAge(birthDate);
 
@@ -121,51 +162,62 @@ export default function EditChildProfileScreen() {
     try {
       await dispatch(
         updateCurrentChildProfileThunk({
-          childId: selectedChildId,
+          childId,
+          name: childName.trim(),
           birthDate: formatDateForApi(birthDate),
           gender,
         })
       ).unwrap();
+
       showSuccessToast("Child profile updated successfully.");
       router.back();
     } catch (error) {
       showErrorToast(
-        typeof error === "string" ? error : "Could not update the child profile. Please try again.",
+        typeof error === "string"
+          ? error
+          : "Could not update the child profile. Please try again.",
         "Error"
       );
     }
   };
 
   return (
-    <ScreenLayout backgroundColor={APP_COLORS.screenBg}>
+    <ScreenLayout scrollable={false} backgroundColor={APP_COLORS.screenBg}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View
-          style={[
-            styles.container,
-            isTablet && styles.containerTablet,
-            isLargeTablet && styles.containerLargeTablet,
-          ]}
-        >
-          <ChildSelector
-            selectedChildId={selectedChildId}
-            onSelectChild={setSelectedChildId}
-          />
+        <View style={[styles.content, { maxWidth: maxContentWidth }]}>
+          <View style={styles.formCard}>
+            <View style={styles.fieldBlock}>
+              <AppText weight="bold" style={styles.label}>
+                Child's name
+              </AppText>
 
-          <View style={[styles.formGrid, isTablet && styles.formGridTablet]}>
-            <View style={[styles.sectionCard, isTablet && styles.sectionCardHalf]}>
-              <View style={styles.sectionHeader}>
-                <AppText weight="extraBold" style={styles.sectionTitle}>
-                  Birth Date
-                </AppText>
-              </View>
+              <TextInput
+                value={childName}
+                onChangeText={setChildName}
+                placeholder="e.g. Leo"
+                placeholderTextColor="#94A3B8"
+                style={styles.input}
+                maxLength={30}
+                autoCapitalize="words"
+                autoCorrect={false}
+                editable={!isLoading}
+                accessibilityLabel="Child name field"
+              />
+            </View>
+
+            <View style={styles.fieldBlock}>
+              <AppText weight="bold" style={styles.label}>
+                Birth date
+              </AppText>
 
               <Pressable
                 onPress={() => setShowDatePicker(true)}
                 accessibilityRole="button"
-                accessibilityLabel="Choose birth date"
+                accessibilityLabel="Birth date field"
                 style={({ pressed }) => [
                   styles.dateFieldButton,
                   pressed && styles.dateFieldButtonPressed,
@@ -174,18 +226,16 @@ export default function EditChildProfileScreen() {
                 <View style={styles.dateFieldContent}>
                   <View style={styles.dateFieldLeft}>
                     <View style={styles.dateIconWrap}>
-                      <AppText style={styles.dateIconEmoji}>📅</AppText>
+                      <MaterialCommunityIcons
+                        name="calendar-outline"
+                        size={22}
+                        color="#2563EB"
+                      />
                     </View>
 
-                    <View style={styles.dateTextWrap}>
-                      <AppText weight="medium" style={styles.dateFieldLabel}>
-                        Child birth date
-                      </AppText>
-
-                      <AppText weight="extraBold" style={styles.dateFieldValue}>
-                        {formattedBirthDate}
-                      </AppText>
-                    </View>
+                    <AppText weight="bold" style={styles.dateFieldValue}>
+                      {formattedBirthDate}
+                    </AppText>
                   </View>
 
                   <AppText weight="bold" style={styles.dateFieldChangeText}>
@@ -194,30 +244,29 @@ export default function EditChildProfileScreen() {
                 </View>
               </Pressable>
 
+              <AppText style={styles.fieldHint}>
+                The child must be between 6 and 17 years old.
+              </AppText>
+
               <InlineDatePicker
                 visible={showDatePicker}
-                value={birthDate ?? new Date()}
+                value={birthDate}
                 maximumDate={new Date()}
                 onChange={setBirthDate}
                 onRequestClose={() => setShowDatePicker(false)}
                 doneLabel="Done"
                 doneAccessibilityLabel="Confirm birth date"
-                footerContainerStyle={styles.iosPickerFooter}
-                donePressableStyle={styles.iosPickerDoneButton}
-                doneLabelStyle={styles.iosPickerDoneText}
               />
             </View>
 
-            <View style={[styles.sectionCard, isTablet && styles.sectionCardHalf]}>
-              <View style={styles.sectionHeader}>
-                <AppText weight="extraBold" style={styles.sectionTitle}>
-                  Gender
-                </AppText>
-              </View>
+            <View style={styles.fieldBlock}>
+              <AppText weight="bold" style={styles.label}>
+                Gender
+              </AppText>
 
               <View style={styles.genderRow}>
                 {GENDER_OPTIONS.map((option) => {
-                  const isSelected = option.key === gender;
+                  const isSelected = gender === option.key;
 
                   return (
                     <Pressable
@@ -233,7 +282,7 @@ export default function EditChildProfileScreen() {
                       <MaterialCommunityIcons
                         name={option.icon}
                         size={16}
-                        color={isSelected ? "#2563EB" : "#475569"}
+                        color={isSelected ? "#1D4ED8" : "#64748B"}
                       />
 
                       <AppText
@@ -250,24 +299,22 @@ export default function EditChildProfileScreen() {
                 })}
               </View>
             </View>
-          </View>
 
-          <View style={styles.footer}>
-            <TouchableOpacity
-              onPress={handleSave}
+            <Pressable
+              style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
+              onPress={onSave}
               disabled={isLoading}
               accessibilityRole="button"
-              accessibilityLabel="Save child profile settings"
-              style={[styles.saveButton, isLoading && styles.disabledButton]}
+              accessibilityLabel="Save child profile"
             >
               {isLoading ? (
                 <ActivityIndicator color="#1D4ED8" />
               ) : (
-                <AppText style={styles.saveButtonText} weight="bold">
-                  Save
+                <AppText weight="extraBold" style={styles.saveButtonText}>
+                  Save Changes
                 </AppText>
               )}
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </ScrollView>

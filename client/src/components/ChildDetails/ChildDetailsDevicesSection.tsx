@@ -81,7 +81,12 @@ export function ChildDetailsDevicesSection({
       </View>
 
       {expanded && (
-        <View style={styles.devicesList}>
+        <View
+          style={[
+            styles.devicesList,
+            expanded && styles.devicesListExpanded,
+          ]}
+        >
           {devicesLoading ? (
             <ActivityIndicator style={{ marginVertical: 12 }} />
           ) : (

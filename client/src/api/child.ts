@@ -17,10 +17,13 @@ export async function updateMyInterests(interests: string[]): Promise<{ interest
 }
 
 // Update current child profile by id
-export async function updateCurrentChildProfile(childId: string, birthDate: string, gender: string): Promise<{
+export async function updateCurrentChildProfile(
+  childId: string,
+  payload: { name: string; birthDate: string; gender: string }
+): Promise<{
   child: Child;
 }> {
-  return api.put<{ child: Child }>(`/api/v1/child/${childId}/profile`, { birthDate, gender }, {
+  return api.put<{ child: Child }>(`/api/v1/child/${childId}/profile`, payload, {
     requireAuth: true,
     role: "PARENT",
   });

@@ -7,7 +7,7 @@ export default function EditChildProfileRoute() {
     <>
       <Stack.Screen
         options={{
-          title: "Child Profile Setup",
+          title: "Edit Child",
           headerTitleAlign: "center",
           headerShadowVisible: false,
           contentStyle: { backgroundColor: APP_COLORS.screenBg },
