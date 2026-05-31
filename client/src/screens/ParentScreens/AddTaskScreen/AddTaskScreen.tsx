@@ -16,7 +16,9 @@ import { useDispatch, useSelector } from "react-redux";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
+import CoinIcon from "../../../components/CoinIcon/CoinIcon";
 import { styles } from "./styles";
+import { getMyChildrenThunk } from "../../../redux/thunks/childrenThunks";
 import {
   createTaskThunk,
   getParentTasksThunk,
@@ -28,12 +30,6 @@ type UiChild = {
 };
 
 type RecurrenceType = "daily" | "weekly";
-
-const FALLBACK_CHILDREN: UiChild[] = [
-  { id: "child-1", name: "Emma" },
-  { id: "child-2", name: "Noah" },
-  { id: "child-3", name: "Mia" },
-];
 
 const RECURRENCE_OPTIONS: {
   label: string;
@@ -62,8 +58,12 @@ export default function AddTaskScreen() {
       }));
     }
 
-    return FALLBACK_CHILDREN;
+    return [];
   }, [reduxChildren]);
+
+  useEffect(() => {
+    dispatch(getMyChildrenThunk());
+  }, [dispatch]);
 
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
@@ -71,27 +71,42 @@ export default function AddTaskScreen() {
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrenceType, setRecurrenceType] =
     useState<RecurrenceType>("daily");
-  const [assignedChildIds, setAssignedChildIds] = useState<string[]>([]);
   const [requireProof, setRequireProof] = useState(false);
+  const [selectedChildIds, setSelectedChildIds] = useState<string[]>([]);
 
-  useEffect(() => {
-    if (children.length > 0 && assignedChildIds.length === 0) {
-      setAssignedChildIds([children[0].id]);
+  const appliesToAllChildren = selectedChildIds.length === 0;
+
+  const childIdsToAssign = useMemo(
+    () =>
+      selectedChildIds.length === 0
+        ? children.map((child) => child.id)
+        : selectedChildIds,
+    [children, selectedChildIds]
+  );
+
+  const assignedChildrenLabel = useMemo(() => {
+    if (children.length === 0) {
+      return "No children";
     }
-  }, [children, assignedChildIds.length]);
+
+    if (appliesToAllChildren) {
+      return "All children";
+    }
+
+    if (selectedChildIds.length === 1) {
+      const child = children.find((item) => item.id === selectedChildIds[0]);
+      return child?.name ?? "1 child";
+    }
+
+    return `${selectedChildIds.length} children`;
+  }, [appliesToAllChildren, children, selectedChildIds]);
 
   const toggleAssignedChild = (childId: string) => {
-    setAssignedChildIds((prev) => {
-      if (prev.includes(childId)) {
-        if (prev.length === 1) {
-          return prev;
-        }
-
-        return prev.filter((id) => id !== childId);
-      }
-
-      return [...prev, childId];
-    });
+    setSelectedChildIds((prev) =>
+      prev.includes(childId)
+        ? prev.filter((id) => id !== childId)
+        : [...prev, childId]
+    );
   };
 
   const handleCreateTask = async () => {
@@ -103,8 +118,8 @@ export default function AddTaskScreen() {
       return;
     }
 
-    if (assignedChildIds.length === 0) {
-      showWarningToast("Please select at least one child.", "No child selected");
+    if (children.length === 0) {
+      showWarningToast("Add a child first to assign this task.", "No children");
       return;
     }
 
@@ -118,7 +133,8 @@ export default function AddTaskScreen() {
           coinsReward: coins,
           isRecurring,
           recurrenceType: normalizedRecurrenceType,
-          assignedChildIds,
+          assignedChildIds: childIdsToAssign,
+          assignedToAll: appliesToAllChildren,
           requireProof,
         })
       ).unwrap();
@@ -132,7 +148,7 @@ export default function AddTaskScreen() {
       setCoins(25);
       setIsRecurring(false);
       setRecurrenceType("daily");
-      setAssignedChildIds(children.length > 0 ? [children[0].id] : []);
+      setSelectedChildIds([]);
       setRequireProof(false);
 
       router.back();
@@ -157,16 +173,6 @@ export default function AddTaskScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.container}>
-          <View style={styles.headerCard}>
-            <AppText weight="extraBold" style={styles.title}>
-              Create a New Task
-            </AppText>
-
-            <AppText weight="medium" style={styles.subtitle}>
-              Define the task, choose who gets it, and set the reward.
-            </AppText>
-          </View>
-
           <View style={styles.card}>
             <View style={styles.formGroup}>
               <AppText weight="bold" style={styles.label}>
@@ -223,11 +229,7 @@ export default function AddTaskScreen() {
                 </Pressable>
 
                 <View style={styles.coinsValueBox}>
-                  <MaterialCommunityIcons
-                    name="star-circle"
-                    size={20}
-                    color="#F59E0B"
-                  />
+                  <CoinIcon size={20} />
 
                   <AppText weight="extraBold" style={styles.coinsValueText}>
                     {coins} coins
@@ -395,45 +397,57 @@ export default function AddTaskScreen() {
                 Assign to children
               </AppText>
 
-              <View style={styles.chipsWrap}>
-                {children.map((child) => {
-                  const isSelected = assignedChildIds.includes(child.id);
+              {children.length === 0 ? (
+                <AppText weight="medium" style={styles.subtitle}>
+                  {"No children yet.\nAdd a child first to assign this task."}
+                </AppText>
+              ) : (
+                <>
+                  <AppText weight="medium" style={styles.subtitle}>
+                    Optional. If none are selected, the task goes to all children.
+                  </AppText>
 
-                  return (
-                    <Pressable
-                      key={child.id}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Assign to ${child.name}`}
-                      onPress={() => toggleAssignedChild(child.id)}
-                      style={({ pressed }) => [
-                        styles.childChip,
-                        isSelected && styles.childChipActive,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <MaterialCommunityIcons
-                        name={
-                          isSelected
-                            ? "check-circle"
-                            : "account-circle-outline"
-                        }
-                        size={18}
-                        color={isSelected ? "#FFFFFF" : "#315BFF"}
-                      />
+                  <View style={styles.chipsWrap}>
+                    {children.map((child) => {
+                      const isSelected = selectedChildIds.includes(child.id);
 
-                      <AppText
-                        weight={isSelected ? "bold" : "medium"}
-                        style={[
-                          styles.childChipText,
-                          isSelected && styles.childChipTextActive,
-                        ]}
-                      >
-                        {child.name}
-                      </AppText>
-                    </Pressable>
-                  );
-                })}
-              </View>
+                      return (
+                        <Pressable
+                          key={child.id}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Assign to ${child.name}`}
+                          onPress={() => toggleAssignedChild(child.id)}
+                          style={({ pressed }) => [
+                            styles.childChip,
+                            isSelected && styles.childChipActive,
+                            pressed && styles.pressed,
+                          ]}
+                        >
+                          <MaterialCommunityIcons
+                            name={
+                              isSelected
+                                ? "check-circle"
+                                : "account-circle-outline"
+                            }
+                            size={18}
+                            color={isSelected ? "#FFFFFF" : "#315BFF"}
+                          />
+
+                          <AppText
+                            weight={isSelected ? "bold" : "medium"}
+                            style={[
+                              styles.childChipText,
+                              isSelected && styles.childChipTextActive,
+                            ]}
+                          >
+                            {child.name}
+                          </AppText>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </>
+              )}
             </View>
 
             <View style={styles.previewCard}>
@@ -447,11 +461,7 @@ export default function AddTaskScreen() {
                 </AppText>
 
                 <View style={styles.previewCoinsPill}>
-                  <MaterialCommunityIcons
-                    name="star-circle"
-                    size={16}
-                    color="#F59E0B"
-                  />
+                  <CoinIcon size={16} />
 
                   <AppText weight="bold" style={styles.previewCoinsText}>
                     {coins}
@@ -473,8 +483,7 @@ export default function AddTaskScreen() {
 
                 <View style={styles.previewMetaPill}>
                   <AppText weight="bold" style={styles.previewMetaText}>
-                    {assignedChildIds.length} child
-                    {assignedChildIds.length > 1 ? "ren" : ""}
+                    {assignedChildrenLabel}
                   </AppText>
                 </View>
               </View>

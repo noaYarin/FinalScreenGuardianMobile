@@ -10,8 +10,68 @@ export const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
     paddingHorizontal: 16,
-    paddingTop: 16,
-    gap: 14,
+    paddingTop: 8,
+    gap: 12,
+  },
+
+  mainPanel: {
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E7EEF7",
+    overflow: "hidden",
+  },
+
+  panelSection: {
+    padding: 16,
+    gap: 10,
+  },
+
+  panelListSection: {
+    backgroundColor: "#FAFBFE",
+  },
+
+  panelDivider: {
+    height: 1,
+    backgroundColor: "#E8EEF7",
+  },
+
+  panelLabel: {
+    fontSize: 13,
+    color: "#64748B",
+  },
+
+  listHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+
+  listHeaderTitle: {
+    fontSize: 15,
+    color: "#0F172A",
+  },
+
+  listHeaderSubtitle: {
+    marginTop: 2,
+    fontSize: 13,
+    color: "#64748B",
+  },
+
+  countPill: {
+    minWidth: 28,
+    height: 28,
+    borderRadius: 999,
+    backgroundColor: "#EEF3FF",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8,
+  },
+
+  countPillText: {
+    fontSize: 13,
+    color: "#4C6FFF",
   },
 
   headerRow: {

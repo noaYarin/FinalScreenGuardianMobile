@@ -15,6 +15,7 @@ import {
 } from "@/src/utils/appToast";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
+import CoinIcon from "../../../components/CoinIcon/CoinIcon";
 import { styles } from "./styles";
 import { getMyChildrenThunk } from "../../../redux/thunks/childrenThunks";
 import {
@@ -26,12 +27,6 @@ type UiChild = {
   id: string;
   name: string;
 };
-
-const FALLBACK_CHILDREN: UiChild[] = [
-  { id: "child-1", name: "Emma" },
-  { id: "child-2", name: "Noah" },
-  { id: "child-3", name: "Mia" },
-];
 
 export default function AddRewardScreen() {
   const dispatch = useDispatch<any>();
@@ -52,35 +47,51 @@ export default function AddRewardScreen() {
       }));
     }
 
-    return FALLBACK_CHILDREN;
+    return [];
   }, [reduxChildren]);
 
   const [rewardTitle, setRewardTitle] = useState("");
   const [rewardDescription, setRewardDescription] = useState("");
   const [coins, setCoins] = useState(50);
-  const [assignedChildIds, setAssignedChildIds] = useState<string[]>([]);
+  const [selectedChildIds, setSelectedChildIds] = useState<string[]>([]);
 
   useEffect(() => {
     dispatch(getMyChildrenThunk());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (children.length > 0 && assignedChildIds.length === 0) {
-      setAssignedChildIds([children[0].id]);
+  const appliesToAllChildren = selectedChildIds.length === 0;
+
+  const childIdsToAssign = useMemo(
+    () =>
+      selectedChildIds.length === 0
+        ? children.map((child) => child.id)
+        : selectedChildIds,
+    [children, selectedChildIds]
+  );
+
+  const assignedChildrenLabel = useMemo(() => {
+    if (children.length === 0) {
+      return "No children";
     }
-  }, [children, assignedChildIds.length]);
+
+    if (appliesToAllChildren) {
+      return "All children";
+    }
+
+    if (selectedChildIds.length === 1) {
+      const child = children.find((item) => item.id === selectedChildIds[0]);
+      return child?.name ?? "1 child";
+    }
+
+    return `${selectedChildIds.length} children`;
+  }, [appliesToAllChildren, children, selectedChildIds]);
 
   const toggleAssignedChild = (childId: string) => {
-    setAssignedChildIds((prev) => {
-      if (prev.includes(childId)) {
-        if (prev.length === 1) {
-          return prev;
-        }
-        return prev.filter((id) => id !== childId);
-      }
-
-      return [...prev, childId];
-    });
+    setSelectedChildIds((prev) =>
+      prev.includes(childId)
+        ? prev.filter((id) => id !== childId)
+        : [...prev, childId]
+    );
   };
 
   const handleCreateReward = async () => {
@@ -92,8 +103,8 @@ export default function AddRewardScreen() {
       return;
     }
 
-    if (assignedChildIds.length === 0) {
-      showWarningToast("Please select at least one child.", "No child selected");
+    if (children.length === 0) {
+      showWarningToast("Add a child first to assign this reward.", "No children");
       return;
     }
 
@@ -103,7 +114,8 @@ export default function AddRewardScreen() {
           title: trimmedTitle,
           description: trimmedDescription,
           coins,
-          assignedChildIds,
+          assignedChildIds: childIdsToAssign,
+          assignedToAll: appliesToAllChildren,
         })
       ).unwrap();
 
@@ -114,7 +126,7 @@ export default function AddRewardScreen() {
       setRewardTitle("");
       setRewardDescription("");
       setCoins(50);
-      setAssignedChildIds(children.length > 0 ? [children[0].id] : []);
+      setSelectedChildIds([]);
 
       router.back();
     } catch (error: any) {
@@ -132,15 +144,6 @@ export default function AddRewardScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.container}>
-          <View style={styles.headerCard}>
-            <AppText weight="extraBold" style={styles.title}>
-              Create a New Reward
-            </AppText>
-            <AppText weight="medium" style={styles.subtitle}>
-              Add a reward that children can unlock using their coins.
-            </AppText>
-          </View>
-
           <View style={styles.card}>
             <View style={styles.formGroup}>
               <AppText weight="bold" style={styles.label}>
@@ -191,11 +194,7 @@ export default function AddRewardScreen() {
                 </Pressable>
 
                 <View style={styles.coinsValueBox}>
-                  <MaterialCommunityIcons
-                    name="star-circle"
-                    size={20}
-                    color="#F59E0B"
-                  />
+                  <CoinIcon size={20} />
                   <AppText weight="extraBold" style={styles.coinsValueText}>
                     {coins} coins
                   </AppText>
@@ -220,40 +219,56 @@ export default function AddRewardScreen() {
                 Assign to children
               </AppText>
 
-              <View style={styles.chipsWrap}>
-                {children.map((child) => {
-                  const isSelected = assignedChildIds.includes(child.id);
+              {children.length === 0 ? (
+                <AppText weight="medium" style={styles.subtitle}>
+                  {"No children yet,\nAdd a child first to assign this reward."}
+                </AppText>
+              ) : (
+                <>
+                  <AppText weight="medium" style={styles.subtitle}>
+                    Optional. If none are selected, the reward goes to all children.
+                  </AppText>
 
-                  return (
-                    <Pressable
-                      key={child.id}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Assign to ${child.name}`}
-                      onPress={() => toggleAssignedChild(child.id)}
-                      style={({ pressed }) => [
-                        styles.childChip,
-                        isSelected && styles.childChipActive,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <MaterialCommunityIcons
-                        name={isSelected ? "check-circle" : "account-circle-outline"}
-                        size={18}
-                        color={isSelected ? "#FFFFFF" : "#315BFF"}
-                      />
-                      <AppText
-                        weight={isSelected ? "bold" : "medium"}
-                        style={[
-                          styles.childChipText,
-                          isSelected && styles.childChipTextActive,
-                        ]}
-                      >
-                        {child.name}
-                      </AppText>
-                    </Pressable>
-                  );
-                })}
-              </View>
+                  <View style={styles.chipsWrap}>
+                    {children.map((child) => {
+                      const isSelected = selectedChildIds.includes(child.id);
+
+                      return (
+                        <Pressable
+                          key={child.id}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Assign to ${child.name}`}
+                          onPress={() => toggleAssignedChild(child.id)}
+                          style={({ pressed }) => [
+                            styles.childChip,
+                            isSelected && styles.childChipActive,
+                            pressed && styles.pressed,
+                          ]}
+                        >
+                          <MaterialCommunityIcons
+                            name={
+                              isSelected
+                                ? "check-circle"
+                                : "account-circle-outline"
+                            }
+                            size={18}
+                            color={isSelected ? "#FFFFFF" : "#315BFF"}
+                          />
+                          <AppText
+                            weight={isSelected ? "bold" : "medium"}
+                            style={[
+                              styles.childChipText,
+                              isSelected && styles.childChipTextActive,
+                            ]}
+                          >
+                            {child.name}
+                          </AppText>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </>
+              )}
             </View>
 
             <View style={styles.previewCard}>
@@ -267,11 +282,7 @@ export default function AddRewardScreen() {
                 </AppText>
 
                 <View style={styles.previewCoinsPill}>
-                  <MaterialCommunityIcons
-                    name="star-circle"
-                    size={16}
-                    color="#F59E0B"
-                  />
+                  <CoinIcon size={16} />
                   <AppText weight="bold" style={styles.previewCoinsText}>
                     {coins}
                   </AppText>
@@ -286,8 +297,7 @@ export default function AddRewardScreen() {
               <View style={styles.previewMetaRow}>
                 <View style={styles.previewMetaPill}>
                   <AppText weight="bold" style={styles.previewMetaText}>
-                    {assignedChildIds.length} child
-                    {assignedChildIds.length > 1 ? "ren" : ""}
+                    {assignedChildrenLabel}
                   </AppText>
                 </View>
               </View>

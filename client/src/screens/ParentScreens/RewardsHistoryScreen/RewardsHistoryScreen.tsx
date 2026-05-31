@@ -5,10 +5,12 @@ import { useDispatch, useSelector } from "react-redux";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
+import CoinIcon from "../../../components/CoinIcon/CoinIcon";
 import ChildDeviceSelector from "../../../components/ChildDeviceSelector/ChildDeviceSelector";
 import { styles } from "./styles";
 import { getMyChildrenThunk } from "../../../redux/thunks/childrenThunks";
 import { getParentRewardsThunk } from "../../../redux/thunks/rewardsThunks";
+import { resolveAssignedChildLabel } from "@/src/utils/assignedChildLabel";
 
 type UiChild = {
   id: string;
@@ -24,12 +26,6 @@ type RewardHistoryItem = {
   redeemedAtLabel: string;
   note: string;
 };
-
-const FALLBACK_CHILDREN: UiChild[] = [
-  { id: "child-1", name: "Emma" },
-  { id: "child-2", name: "Noah" },
-  { id: "child-3", name: "Mia" },
-];
 
 function formatRedeemedLabel(value: string | null | undefined) {
   if (!value) {
@@ -67,7 +63,7 @@ export default function RewardsHistoryScreen() {
       }));
     }
 
-    return FALLBACK_CHILDREN;
+    return [];
   }, [reduxChildren]);
 
   const [viewMode, setViewMode] = useState<"all" | "single">("all");
@@ -95,18 +91,23 @@ export default function RewardsHistoryScreen() {
         const childId = String(reward?.childId ?? "");
         const childName =
           children.find((child) => child.id === childId)?.name ?? "Child";
+        const childDisplayName = resolveAssignedChildLabel(
+          reward,
+          childName,
+          viewMode
+        );
 
         return {
           id: String(reward?._id ?? reward?.id ?? Math.random()),
           title: reward?.title ?? "Untitled reward",
           childId,
-          childName,
+          childName: childDisplayName,
           coins: Number(reward?.coins ?? 0),
           redeemedAtLabel: formatRedeemedLabel(reward?.redeemedAt),
           note: "This reward was already redeemed.",
         };
       });
-  }, [parentRewards, children]);
+  }, [parentRewards, children, viewMode]);
 
   const visibleRewards = useMemo(() => {
     if (viewMode === "all") {
@@ -128,94 +129,90 @@ export default function RewardsHistoryScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.container}>
-          <View style={[styles.headerRow, isWide && styles.headerRowWide]}>
-            <View style={styles.titleBlock}>
-              <AppText weight="extraBold" style={styles.title}>
-                Reward History
-              </AppText>
-              <AppText weight="medium" style={styles.subtitle}>
-                Review rewards that were already redeemed.
-              </AppText>
-            </View>
-          </View>
 
-          <View style={styles.filterCard}>
-            <View style={styles.filterModeRow}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Show reward history for all children"
-                onPress={() => setViewMode("all")}
-                style={({ pressed }) => [
-                  styles.filterModeButton,
-                  viewMode === "all" && styles.filterModeButtonActive,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <AppText
-                  weight={viewMode === "all" ? "extraBold" : "medium"}
-                  style={[
-                    styles.filterModeButtonText,
-                    viewMode === "all" && styles.filterModeButtonTextActive,
+          <View style={styles.mainPanel}>
+            <View style={styles.panelSection}>
+              <AppText weight="bold" style={styles.panelLabel}>
+                Filter by child
+              </AppText>
+
+              <View style={styles.filterModeRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Show reward history for all children"
+                  onPress={() => setViewMode("all")}
+                  style={({ pressed }) => [
+                    styles.filterModeButton,
+                    viewMode === "all" && styles.filterModeButtonActive,
+                    pressed && styles.pressed,
                   ]}
                 >
-                  All Children
-                </AppText>
-              </Pressable>
+                  <AppText
+                    weight={viewMode === "all" ? "extraBold" : "medium"}
+                    style={[
+                      styles.filterModeButtonText,
+                      viewMode === "all" && styles.filterModeButtonTextActive,
+                    ]}
+                  >
+                    All Children
+                  </AppText>
+                </Pressable>
 
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Show reward history for one child"
-                onPress={() => setViewMode("single")}
-                style={({ pressed }) => [
-                  styles.filterModeButton,
-                  viewMode === "single" && styles.filterModeButtonActive,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <AppText
-                  weight={viewMode === "single" ? "extraBold" : "medium"}
-                  style={[
-                    styles.filterModeButtonText,
-                    viewMode === "single" && styles.filterModeButtonTextActive,
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Show reward history for one child"
+                  onPress={() => setViewMode("single")}
+                  style={({ pressed }) => [
+                    styles.filterModeButton,
+                    viewMode === "single" && styles.filterModeButtonActive,
+                    pressed && styles.pressed,
                   ]}
                 >
-                  One Child
-                </AppText>
-              </Pressable>
+                  <AppText
+                    weight={viewMode === "single" ? "extraBold" : "medium"}
+                    style={[
+                      styles.filterModeButtonText,
+                      viewMode === "single" && styles.filterModeButtonTextActive,
+                    ]}
+                  >
+                    One Child
+                  </AppText>
+                </Pressable>
+              </View>
+
+              {viewMode === "single" ? (
+                <View style={styles.selectorWrap}>
+                  <ChildDeviceSelector
+                    selectedChildId={selectedChildId}
+                    onSelectChild={setSelectedChildId}
+                    showDevices={false}
+                  />
+                </View>
+              ) : null}
             </View>
 
-            {viewMode === "single" ? (
-              <View style={styles.selectorWrap}>
-                <ChildDeviceSelector
-                  selectedChildId={selectedChildId}
-                  onSelectChild={setSelectedChildId}
-                  showDevices={false}
-                />
-              </View>
-            ) : null}
-          </View>
+            <View style={styles.panelDivider} />
 
-          <View style={styles.listSection}>
-            <View style={styles.listHeader}>
-              <View>
-                <AppText weight="extraBold" style={styles.listTitle}>
-                  Redeemed Rewards
-                </AppText>
-                <AppText weight="medium" style={styles.listSubtitle}>
-                  {viewMode === "all"
-                    ? "Showing all children"
-                    : `Showing ${selectedChildName}`}
-                </AppText>
+            <View style={[styles.panelSection, styles.panelListSection]}>
+              <View style={styles.listHeaderRow}>
+                <View style={{ flex: 1 }}>
+                  <AppText weight="bold" style={styles.listHeaderTitle}>
+                    Redeemed rewards
+                  </AppText>
+                  <AppText weight="medium" style={styles.listHeaderSubtitle}>
+                    {viewMode === "all"
+                      ? "All children"
+                      : selectedChildName}
+                  </AppText>
+                </View>
+                <View style={styles.countPill}>
+                  <AppText weight="bold" style={styles.countPillText}>
+                    {visibleRewards.length}
+                  </AppText>
+                </View>
               </View>
 
-              <View style={styles.listCountPill}>
-                <AppText weight="bold" style={styles.listCountPillText}>
-                  {visibleRewards.length} items
-                </AppText>
-              </View>
-            </View>
-
-            <View style={styles.listContent}>
+              <View style={styles.listContent}>
               {visibleRewards.length > 0 ? (
                 visibleRewards.map((reward) => (
                   <View key={reward.id} style={styles.rewardCard}>
@@ -230,11 +227,7 @@ export default function RewardsHistoryScreen() {
                       </View>
 
                       <View style={styles.coinsBadge}>
-                        <MaterialCommunityIcons
-                          name="star-circle"
-                          size={16}
-                          color="#F59E0B"
-                        />
+                        <CoinIcon size={16} />
                         <AppText weight="bold" style={styles.coinsBadgeText}>
                           {reward.coins}
                         </AppText>
@@ -274,6 +267,7 @@ export default function RewardsHistoryScreen() {
                   </AppText>
                 </View>
               )}
+              </View>
             </View>
           </View>
         </View>

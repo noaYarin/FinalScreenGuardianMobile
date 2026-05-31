@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
+import CoinIcon from "../../../components/CoinIcon/CoinIcon";
 import { styles } from "./styles";
 import { getMyChildrenThunk } from "../../../redux/thunks/childrenThunks";
 import {
@@ -85,10 +86,6 @@ export default function RecurringTasksScreen() {
       >
         <View style={styles.container}>
           <View style={styles.header}>
-            <AppText weight="extraBold" style={styles.title}>
-              Recurring Tasks
-            </AppText>
-
             <AppText weight="medium" style={styles.subtitle}>
               View daily and weekly tasks assigned to your children.
             </AppText>
@@ -147,11 +144,7 @@ export default function RecurringTasksScreen() {
                   </View>
 
                   <View style={styles.infoRow}>
-                    <MaterialCommunityIcons
-                      name="star-circle"
-                      size={17}
-                      color="#F59E0B"
-                    />
+                    <CoinIcon size={17} />
                     <AppText weight="medium" style={styles.infoText}>
                       Reward: {Number(task?.coinsReward ?? 0)} coins
                     </AppText>

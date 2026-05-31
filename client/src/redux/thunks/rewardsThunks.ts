@@ -9,6 +9,7 @@ export const createRewardThunk = createAsyncThunk<
     icon?: string;
     coins: number;
     assignedChildIds: string[];
+    assignedToAll?: boolean;
   },
   { rejectValue: string }
 >("rewards/createReward", async (payload, thunkAPI) => {

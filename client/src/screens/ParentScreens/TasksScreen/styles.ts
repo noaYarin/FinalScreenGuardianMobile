@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { COLORS } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
   scrollContent: {
@@ -10,120 +11,182 @@ export const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
     paddingHorizontal: 16,
-    paddingTop: 16,
-    gap: 14,
+    paddingTop: 8,
+    gap: 12,
+  },
+
+  topCard: {
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E7EEF7",
+    padding: 14,
+    gap: 10,
+  },
+
+  primaryActionButtonFull: {
+    minHeight: 48,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: COLORS.light.tint,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+
+  secondaryActionButtonFull: {
+    minHeight: 44,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: "#F5F8FF",
+    borderWidth: 1,
+    borderColor: "#D9E4FF",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+
+  mainPanel: {
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E7EEF7",
+    overflow: "hidden",
+  },
+
+  panelSection: {
+    padding: 16,
+    gap: 10,
+  },
+
+  panelListSection: {
+    backgroundColor: "#FAFBFE",
+  },
+
+  panelDivider: {
+    height: 1,
+    backgroundColor: "#E8EEF7",
+  },
+
+  panelLabel: {
+    fontSize: 13,
+    color: "#64748B",
+  },
+
+  listHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+
+  listHeaderTitle: {
+    fontSize: 15,
+    color: "#0F172A",
+  },
+
+  countPill: {
+    minWidth: 28,
+    height: 28,
+    borderRadius: 999,
+    backgroundColor: "#EEF3FF",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8,
+  },
+
+  countPillText: {
+    fontSize: 13,
+    color: "#4C6FFF",
+  },
+
+  title: {
+    fontSize: 22,
+    lineHeight: 28,
+    color: "#0F172A",
+    textAlign: "center",
+  },
+
+  sectionLabel: {
+    fontSize: 13,
+    color: "#64748B",
   },
 
   actionsRow: {
     flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
     gap: 10,
-    marginTop: 8,
   },
 
-  headerRow: {
-    gap: 12,
-  },
-
-  headerRowWide: {
-    flexDirection: "column",
-    alignItems: "stretch",
-    justifyContent: "flex-start",
-  },
-
-  titleBlock: {
+  primaryActionButton: {
     flex: 1,
-    gap: 4,
-  },
-
-  title: {
-    fontSize: 28,
-    lineHeight: 34,
-    color: "#1E293B",
-  },
-
-  subtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: "#64748B",
-  },
-
-  addTaskButtonGreen: {
-    minHeight: 46,
-    paddingHorizontal: 18,
-    borderRadius: 16,
-    backgroundColor: "#ECFDF5",
-    borderWidth: 1,
-    borderColor: "#BBF7D0",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-
-  addTaskButtonGreenText: {
-    fontSize: 14,
-    color: "#16A34A",
-  },
-
-  historyButton: {
-    minHeight: 46,
-    paddingHorizontal: 18,
-    borderRadius: 16,
-    backgroundColor: "#F5F8FF",
-    borderWidth: 1,
-    borderColor: "#D9E4FF",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-
-  historyButtonText: {
-    fontSize: 14,
-    color: "#4C6FFF",
-  },
-
-  headerButtonsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-
-  primaryHeaderButton: {
-    minHeight: 44,
-    borderRadius: 14,
-    backgroundColor: "#22C55E",
+    minHeight: 48,
     paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: COLORS.light.tint,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    borderColor: "#BBF7D0",
+    gap: 6,
   },
 
-  primaryHeaderButtonText: {
-    fontSize: 14,
-    color: "#FFFFFF",
+  primaryActionButtonText: {
+    fontSize: 15,
+    color: "#1D4ED8",
   },
 
-  secondaryHeaderButton: {
+  secondaryActionButton: {
+    flex: 1,
     minHeight: 44,
+    paddingHorizontal: 16,
     borderRadius: 14,
     backgroundColor: "#F5F8FF",
     borderWidth: 1,
     borderColor: "#D9E4FF",
-    paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 6,
   },
 
-  secondaryHeaderButtonText: {
-    fontSize: 14,
+  secondaryActionButtonText: {
+    fontSize: 15,
     color: "#4C6FFF",
+  },
+
+  outlineActionButton: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 14,
+    backgroundColor: "#F5F3FF",
+    borderWidth: 1,
+    borderColor: "#DDD6FE",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+  },
+
+  outlineActionButtonText: {
+    fontSize: 14,
+    color: "#7C3AED",
+  },
+
+  btnSecondary: {
+    width: "100%",
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.light.tint,
+    borderWidth: 0,
+  },
+
+  btnSecondaryText: {
+    fontSize: 16,
+    color: "#1D4ED8",
   },
 
   filterCard: {
@@ -131,7 +194,7 @@ export const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#E7EEF7",
-    padding: 14,
+    padding: 16,
     gap: 12,
   },
 
@@ -146,7 +209,7 @@ export const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     borderColor: "#D7E3F4",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F8FAFC",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 12,
@@ -159,7 +222,7 @@ export const styles = StyleSheet.create({
 
   filterModeButtonText: {
     fontSize: 14,
-    color: "#243447",
+    color: "#334155",
   },
 
   filterModeButtonTextActive: {
@@ -177,16 +240,16 @@ export const styles = StyleSheet.create({
 
   tabButton: {
     flex: 1,
-    minHeight: 46,
-    borderRadius: 16,
+    minHeight: 44,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "#D9E4FF",
     backgroundColor: "#FFFFFF",
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 6,
   },
 
   tabButtonActive: {
@@ -195,7 +258,7 @@ export const styles = StyleSheet.create({
   },
 
   tabButtonText: {
-    fontSize: 13,
+    fontSize: 14,
     color: "#4C6FFF",
   },
 
@@ -204,8 +267,8 @@ export const styles = StyleSheet.create({
   },
 
   tabCountBadge: {
-    minWidth: 24,
-    height: 24,
+    minWidth: 22,
+    height: 22,
     borderRadius: 999,
     backgroundColor: "#EEF3FF",
     alignItems: "center",
@@ -227,44 +290,7 @@ export const styles = StyleSheet.create({
   },
 
   listSection: {
-    borderRadius: 22,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E7EEF7",
-    padding: 16,
-    gap: 14,
-  },
-
-  listHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
     gap: 12,
-  },
-
-  listTitle: {
-    fontSize: 22,
-    lineHeight: 28,
-    color: "#1E293B",
-  },
-
-  listSubtitle: {
-    marginTop: 4,
-    fontSize: 13,
-    lineHeight: 18,
-    color: "#64748B",
-  },
-
-  listCountPill: {
-    borderRadius: 999,
-    backgroundColor: "#EEF3FF",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-
-  listCountPillText: {
-    fontSize: 12,
-    color: "#4C6FFF",
   },
 
   listContent: {
@@ -272,10 +298,10 @@ export const styles = StyleSheet.create({
   },
 
   taskCard: {
-    borderRadius: 18,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E7EEF7",
-    backgroundColor: "#FBFDFF",
+    borderColor: "#E3EBF7",
+    backgroundColor: "#FFFFFF",
     padding: 14,
     gap: 10,
   },
@@ -289,40 +315,50 @@ export const styles = StyleSheet.create({
 
   taskMainInfo: {
     flex: 1,
-    gap: 4,
+    gap: 8,
   },
 
   taskTitle: {
-    fontSize: 16,
-    lineHeight: 22,
-    color: "#1E293B",
+    fontSize: 17,
+    lineHeight: 24,
+    color: "#0F172A",
   },
 
-  taskMeta: {
-    fontSize: 12,
-    lineHeight: 18,
+  cardMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  cardMetaLabel: {
+    fontSize: 13,
     color: "#64748B",
+    minWidth: 64,
+  },
+
+  cardMetaValue: {
+    fontSize: 14,
+    color: "#0F172A",
   },
 
   coinsBadge: {
-    borderRadius: 999,
+    borderRadius: 14,
     backgroundColor: "#FFF8E7",
     paddingHorizontal: 10,
-    paddingVertical: 6,
-    flexDirection: "row",
+    paddingVertical: 8,
     alignItems: "center",
-    gap: 4,
+    gap: 2,
+    minWidth: 58,
   },
 
   coinsBadgeText: {
-    fontSize: 13,
+    fontSize: 16,
     color: "#7C5A06",
   },
 
-  taskNote: {
-    fontSize: 14,
-    lineHeight: 21,
-    color: "#4B5563",
+  coinsBadgeLabel: {
+    fontSize: 11,
+    color: "#92400E",
   },
 
   taskBottomRow: {
@@ -331,16 +367,10 @@ export const styles = StyleSheet.create({
     gap: 8,
   },
 
-  metaPill: {
-    borderRadius: 999,
-    backgroundColor: "#EEF3FF",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-
-  metaPillText: {
-    fontSize: 12,
-    color: "#4C6FFF",
+  taskActionsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
   },
 
   proofPill: {
@@ -348,25 +378,81 @@ export const styles = StyleSheet.create({
     backgroundColor: "#F7FAFF",
     borderWidth: 1,
     borderColor: "#D9E4FF",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
 
   proofPillText: {
-    fontSize: 12,
+    fontSize: 13,
     color: "#4C6FFF",
   },
 
-  emptyState: {
-    borderRadius: 20,
+  approveButton: {
+    flex: 1,
+    minHeight: 46,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: "#ECFDF5",
     borderWidth: 1,
-    borderColor: "#E7EEF7",
-    backgroundColor: "#FBFDFF",
-    paddingVertical: 28,
+    borderColor: "#BBF7D0",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+
+  approveButtonText: {
+    fontSize: 14,
+    color: "#16A34A",
+  },
+
+  rejectButton: {
+    flex: 1,
+    minHeight: 46,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+
+  rejectButtonText: {
+    fontSize: 14,
+    color: "#DC2626",
+  },
+
+  deleteButton: {
+    minHeight: 46,
     paddingHorizontal: 18,
+    borderRadius: 14,
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+
+  deleteButtonText: {
+    fontSize: 14,
+    color: "#DC2626",
+  },
+
+  emptyState: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E3EBF7",
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 24,
+    paddingHorizontal: 16,
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
@@ -379,7 +465,7 @@ export const styles = StyleSheet.create({
 
   emptyStateText: {
     textAlign: "center",
-    fontSize: 13,
+    fontSize: 14,
     lineHeight: 20,
     color: "#64748B",
   },
@@ -389,82 +475,29 @@ export const styles = StyleSheet.create({
   },
 
   modalOverlay: {
-  flex: 1,
-  backgroundColor: "rgba(0,0,0,0.78)",
-  justifyContent: "center",
-  alignItems: "center",
-  padding: 18,
-},
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.78)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 18,
+  },
 
-modalImage: {
-  width: "100%",
-  height: "78%",
-  borderRadius: 18,
-},
+  modalImage: {
+    width: "100%",
+    height: "78%",
+    borderRadius: 18,
+  },
 
-modalCloseButton: {
-  position: "absolute",
-  top: 46,
-  right: 18,
-  width: 42,
-  height: 42,
-  borderRadius: 999,
-  backgroundColor: "rgba(15,23,42,0.75)",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 2,
-},
-rejectButton: {
-  minHeight: 46,
-  paddingHorizontal: 18,
-  borderRadius: 16,
-  backgroundColor: "#FEF2F2",
-  borderWidth: 1,
-  borderColor: "#FECACA",
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 8,
-},
-
-rejectButtonText: {
-  fontSize: 14,
-  color: "#DC2626",
-},
-
-deleteButton: {
-  minHeight: 46,
-  paddingHorizontal: 18,
-  borderRadius: 16,
-  backgroundColor: "#FEF2F2",
-  borderWidth: 1,
-  borderColor: "#FECACA",
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 8,
-},
-
-deleteButtonText: {
-  fontSize: 14,
-  color: "#DC2626",
-},
-
-recurringButton: {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 6,
-  backgroundColor: "#F3E8FF",
-  borderWidth: 1,
-  borderColor: "#DDD6FE",
-  borderRadius: 16,
-  paddingHorizontal: 14,
-  paddingVertical: 10,
-},
-
-recurringButtonText: {
-  fontSize: 14,
-  color: "#7C3AED",
-},
+  modalCloseButton: {
+    position: "absolute",
+    top: 46,
+    right: 18,
+    width: 42,
+    height: 42,
+    borderRadius: 999,
+    backgroundColor: "rgba(15,23,42,0.75)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2,
+  },
 });

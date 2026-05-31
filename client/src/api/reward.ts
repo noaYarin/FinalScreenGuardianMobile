@@ -12,6 +12,7 @@ export type Reward = {
   parentId: string;
   childId: string;
   redeemedAt: string | null;
+  assignedToAll?: boolean;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -22,6 +23,7 @@ export async function createReward(payload: {
   icon?: string;
   coins: number;
   assignedChildIds: string[];
+  assignedToAll?: boolean;
 }): Promise<{ rewards: Reward[] }> {
   return api.post<{ rewards: Reward[] }>(URL, payload, {
     requireAuth: true,

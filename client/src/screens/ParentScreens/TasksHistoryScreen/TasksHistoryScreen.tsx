@@ -12,10 +12,12 @@ import { useDispatch, useSelector } from "react-redux";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
+import CoinIcon from "../../../components/CoinIcon/CoinIcon";
 import ChildDeviceSelector from "../../../components/ChildDeviceSelector/ChildDeviceSelector";
 import { styles } from "./styles";
 import { getMyChildrenThunk } from "../../../redux/thunks/childrenThunks";
 import { getParentTasksThunk } from "../../../redux/thunks/tasksThunks";
+import { resolveAssignedChildLabel } from "@/src/utils/assignedChildLabel";
 
 type UiChild = {
   id: string;
@@ -119,6 +121,11 @@ export default function TasksHistoryScreen() {
         const childName =
           children.find((child) => String(child.id) === childId)?.name ??
           "Child";
+        const childDisplayName = resolveAssignedChildLabel(
+          task,
+          childName,
+          viewMode
+        );
 
         const proofImg =
           typeof task?.proofImg === "string" ? task.proofImg.trim() : "";
@@ -130,7 +137,7 @@ export default function TasksHistoryScreen() {
           id: String(task?._id ?? task?.id ?? Math.random()),
           title: task?.title ?? "Untitled task",
           childId,
-          childName,
+          childName: childDisplayName,
           coins: Number(task?.coinsReward ?? 0),
           completedAtLabel: formatCompletedLabel(task?.completedAt),
           recurrenceLabel: getRecurrenceLabel(task),
@@ -139,7 +146,7 @@ export default function TasksHistoryScreen() {
           proofImageUrl: hasProofImage ? proofImg : "",
         };
       });
-  }, [parentTasks, children]);
+  }, [parentTasks, children, viewMode]);
 
   const visibleTasks = useMemo((): HistoryTaskItem[] => {
     if (viewMode === "all") {
@@ -161,94 +168,90 @@ export default function TasksHistoryScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.container}>
-          <View style={[styles.headerRow, isWide && styles.headerRowWide]}>
-            <View style={styles.titleBlock}>
-              <AppText weight="extraBold" style={styles.title}>
-                Task History
-              </AppText>
-              <AppText weight="medium" style={styles.subtitle}>
-                Review approved tasks from previous days.
-              </AppText>
-            </View>
-          </View>
 
-          <View style={styles.filterCard}>
-            <View style={styles.filterModeRow}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Show task history for all children"
-                onPress={() => setViewMode("all")}
-                style={({ pressed }) => [
-                  styles.filterModeButton,
-                  viewMode === "all" && styles.filterModeButtonActive,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <AppText
-                  weight={viewMode === "all" ? "extraBold" : "medium"}
-                  style={[
-                    styles.filterModeButtonText,
-                    viewMode === "all" && styles.filterModeButtonTextActive,
+          <View style={styles.mainPanel}>
+            <View style={styles.panelSection}>
+              <AppText weight="bold" style={styles.panelLabel}>
+                Filter by child
+              </AppText>
+
+              <View style={styles.filterModeRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Show task history for all children"
+                  onPress={() => setViewMode("all")}
+                  style={({ pressed }) => [
+                    styles.filterModeButton,
+                    viewMode === "all" && styles.filterModeButtonActive,
+                    pressed && styles.pressed,
                   ]}
                 >
-                  All Children
-                </AppText>
-              </Pressable>
+                  <AppText
+                    weight={viewMode === "all" ? "extraBold" : "medium"}
+                    style={[
+                      styles.filterModeButtonText,
+                      viewMode === "all" && styles.filterModeButtonTextActive,
+                    ]}
+                  >
+                    All Children
+                  </AppText>
+                </Pressable>
 
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Show task history for one child"
-                onPress={() => setViewMode("single")}
-                style={({ pressed }) => [
-                  styles.filterModeButton,
-                  viewMode === "single" && styles.filterModeButtonActive,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <AppText
-                  weight={viewMode === "single" ? "extraBold" : "medium"}
-                  style={[
-                    styles.filterModeButtonText,
-                    viewMode === "single" && styles.filterModeButtonTextActive,
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Show task history for one child"
+                  onPress={() => setViewMode("single")}
+                  style={({ pressed }) => [
+                    styles.filterModeButton,
+                    viewMode === "single" && styles.filterModeButtonActive,
+                    pressed && styles.pressed,
                   ]}
                 >
-                  One Child
-                </AppText>
-              </Pressable>
+                  <AppText
+                    weight={viewMode === "single" ? "extraBold" : "medium"}
+                    style={[
+                      styles.filterModeButtonText,
+                      viewMode === "single" && styles.filterModeButtonTextActive,
+                    ]}
+                  >
+                    One Child
+                  </AppText>
+                </Pressable>
+              </View>
+
+              {viewMode === "single" ? (
+                <View style={styles.selectorWrap}>
+                  <ChildDeviceSelector
+                    selectedChildId={selectedChildId}
+                    onSelectChild={setSelectedChildId}
+                    showDevices={false}
+                  />
+                </View>
+              ) : null}
             </View>
 
-            {viewMode === "single" ? (
-              <View style={styles.selectorWrap}>
-                <ChildDeviceSelector
-                  selectedChildId={selectedChildId}
-                  onSelectChild={setSelectedChildId}
-                  showDevices={false}
-                />
-              </View>
-            ) : null}
-          </View>
+            <View style={styles.panelDivider} />
 
-          <View style={styles.listSection}>
-            <View style={styles.listHeader}>
-              <View>
-                <AppText weight="extraBold" style={styles.listTitle}>
-                  Approved Tasks
-                </AppText>
-                <AppText weight="medium" style={styles.listSubtitle}>
-                  {viewMode === "all"
-                    ? "Showing all children"
-                    : `Showing ${selectedChildName}`}
-                </AppText>
+            <View style={[styles.panelSection, styles.panelListSection]}>
+              <View style={styles.listHeaderRow}>
+                <View style={{ flex: 1 }}>
+                  <AppText weight="bold" style={styles.listHeaderTitle}>
+                    Approved tasks
+                  </AppText>
+                  <AppText weight="medium" style={styles.listHeaderSubtitle}>
+                    {viewMode === "all"
+                      ? "All children"
+                      : selectedChildName}
+                  </AppText>
+                </View>
+                <View style={styles.countPill}>
+                  <AppText weight="bold" style={styles.countPillText}>
+                    {visibleTasks.length}
+                  </AppText>
+                </View>
               </View>
 
-              <View style={styles.listCountPill}>
-                <AppText weight="bold" style={styles.listCountPillText}>
-                  {visibleTasks.length} items
-                </AppText>
-              </View>
-            </View>
-
-            <View style={styles.listContent}>
+              <View style={styles.listContent}>
               {visibleTasks.length > 0 ? (
                 visibleTasks.map((task) => (
                   <View key={task.id} style={styles.taskCard}>
@@ -264,11 +267,7 @@ export default function TasksHistoryScreen() {
                       </View>
 
                       <View style={styles.coinsBadge}>
-                        <MaterialCommunityIcons
-                          name="star-circle"
-                          size={16}
-                          color="#F59E0B"
-                        />
+                        <CoinIcon size={16} />
                         <AppText weight="bold" style={styles.coinsBadgeText}>
                           {task.coins}
                         </AppText>
@@ -337,6 +336,7 @@ export default function TasksHistoryScreen() {
                   </AppText>
                 </View>
               )}
+              </View>
             </View>
           </View>
         </View>
