@@ -11,6 +11,8 @@ import AppText from "@/src/components/AppText/AppText";
 import {
   getParentAnalyticsReport,
   type ParentAnalyticsReport,
+  getParentAiInsights,
+  type ParentAiInsights,
 } from "@/src/api/parent";
 import { showErrorToast } from "@/src/utils/appToast";
 
@@ -26,13 +28,14 @@ export default function AnalyticsReportScreen() {
   }>();
 
   const [report, setReport] = useState<ParentAnalyticsReport | null>(null);
+  const [aiInsights, setAiInsights] = useState<ParentAiInsights | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAiLoading, setIsAiLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
   const childId = typeof params.childId === "string" ? params.childId : "";
   const fromKey = typeof params.from === "string" ? params.from : "";
   const toKey = typeof params.to === "string" ? params.to : "";
-
   const loadReport = useCallback(async () => {
     if (!childId || !fromKey || !toKey) {
       setIsLoading(false);
@@ -40,17 +43,31 @@ export default function AnalyticsReportScreen() {
     }
 
     setIsLoading(true);
+    setAiInsights(null);
 
     try {
-      const data = await getParentAnalyticsReport(childId, fromKey, toKey);
-      setReport(data);
+      const reportData = await getParentAnalyticsReport(childId, fromKey, toKey);
+      setReport(reportData);
     } catch (error) {
       showErrorToast(
         error instanceof Error ? error.message : "Could not generate report"
       );
       setReport(null);
-    } finally {
       setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(false);
+
+    setIsAiLoading(true);
+
+    try {
+      const aiData = await getParentAiInsights(childId);
+      setAiInsights(aiData);
+    } catch {
+      setAiInsights(null);
+    } finally {
+      setIsAiLoading(false);
     }
   }, [childId, fromKey, toKey]);
 
@@ -117,8 +134,11 @@ export default function AnalyticsReportScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.paper}>
-          <AnalyticsReportContent report={report} />
-        </View>
+          <AnalyticsReportContent
+            report={report}
+            aiInsights={aiInsights}
+            isAiLoading={isAiLoading}
+          />        </View>
       </ScrollView>
 
       <View style={styles.footer}>

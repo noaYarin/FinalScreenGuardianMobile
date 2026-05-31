@@ -147,6 +147,44 @@ export type ParentAnalyticsReportIndicators = {
   extensionRequestsCount: number;
 };
 
+export type ParentAnalyticsTopApplication = {
+  name: string;
+  packageName: string;
+  usedTodayMinutes: number;
+  usedWeekMinutes: number;
+  dailyLimitMinutes: number;
+  weeklyLimitMinutes: number;
+  isBlocked: boolean;
+  isLimitEnabled: boolean;
+  limitMode: LimitMode;
+  lastUsedAt: string | null;
+};
+
+export type ParentAiInsight = {
+  title: string;
+  message: string;
+  type: "positive" | "warning" | "recommendation" | "info";
+};
+
+export type ParentAiRecommendedAction = {
+  label: string;
+  actionType:
+  | "CHANGE_LIMIT"
+  | "SUGGEST_ACTIVITY"
+  | "SEND_ENCOURAGEMENT"
+  | "CHECK_PERMISSIONS"
+  | "NONE";
+};
+
+export type ParentAiInsights = {
+  source: string;
+  analysisType: "LAST_7_DAYS_VS_PREVIOUS_7_DAYS";
+  summary: string;
+  riskLevel: "LOW" | "MEDIUM" | "HIGH";
+  insights: ParentAiInsight[];
+  recommendedActions: ParentAiRecommendedAction[];
+};
+
 export type ParentAnalyticsReport = {
   childId: string;
   childName: string;
@@ -159,6 +197,7 @@ export type ParentAnalyticsReport = {
   generatedAtLabel: string;
   executiveSummary: string;
   indicators: ParentAnalyticsReportIndicators;
+  topApplications?: ParentAnalyticsTopApplication[];
   trendPercent: number | null;
 };
 
@@ -181,6 +220,18 @@ export async function getParentAnalyticsReport(
     indicators: data.indicators ?? kpis!,
   };
 }
+
+export async function getParentAiInsights(
+  childId: string
+): Promise<ParentAiInsights> {
+  return api.get<ParentAiInsights>(
+    `${URL}/children/${encodeURIComponent(
+      childId
+    )}/analytics-report/ai-insights`,
+    { requireAuth: true, role: "PARENT" }
+  );
+}
+
 export async function deleteChild(
   childId: string
 ): Promise<{ deletedChildId: string }> {

@@ -66,10 +66,11 @@ export default function GenerateReportScreen() {
         <View style={[styles.paper, styles.paperFill]}>
           <View style={styles.infoBulbRow}>
             <InfoHint
-              title="About this report"
+              title="About this smart report"
               lines={[
-                "Choose a date range for the report.",
-                "The report uses real screen time synced from the child's device.",
+                "The detailed report shows usage data for the dates you choose.",
+                "AI insights compare the last 7 days with the previous 7 days.",
+                "The report uses real screen-time data synced from the child's device.",
               ]}
             />
           </View>
@@ -103,9 +104,13 @@ export default function GenerateReportScreen() {
             </Pressable>
           </View>
 
+          <AppText style={styles.generateNote}>
+            Your selected dates will be used for the report. AI insights focus on recent weekly trends.
+          </AppText>
+
           <Pressable style={styles.generateBtn} onPress={onGenerate}>
             <AppText weight="bold" style={styles.btnText}>
-              Generate
+              Generate my smart report
             </AppText>
           </Pressable>
         </View>

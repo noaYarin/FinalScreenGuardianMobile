@@ -177,4 +177,185 @@ export const analyticsStyles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
   },
+  aiSummaryCard: {
+    backgroundColor: "#EEF2FF",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#C7D2FE",
+    padding: 12,
+    gap: 6,
+  },
+  aiRiskLabel: {
+    fontSize: 13,
+    color: REPORTS_COLORS.primary,
+  },
+
+  smartSection: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E0E7FF",
+    padding: 16,
+    marginTop: 18,
+    gap: 14,
+  },
+
+  smartHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  smartIconBadge: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#EEF2FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  smartIcon: {
+    fontSize: 18,
+  },
+
+  smartHeaderText: {
+    flex: 1,
+  },
+
+  smartTitle: {
+    fontSize: 17,
+    color: "#111827",
+  },
+
+  smartSubtitle: {
+    fontSize: 12,
+    color: "#6B7280",
+    marginTop: 2,
+  },
+
+  attentionBadge: {
+    backgroundColor: "#EEF2FF",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+
+  attentionText: {
+    fontSize: 11,
+    color: REPORTS_COLORS.primary,
+  },
+
+  smartSummary: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: "#374151",
+  },
+
+  insightsList: {
+    gap: 10,
+  },
+
+  insightCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 12,
+    gap: 6,
+  },
+
+  insightPositive: {
+    borderColor: "#BBF7D0",
+    backgroundColor: "#F0FDF4",
+  },
+
+  insightWarning: {
+    borderColor: "#FED7AA",
+    backgroundColor: "#FFF7ED",
+  },
+
+  insightRecommendation: {
+    borderColor: "#BFDBFE",
+    backgroundColor: "#EFF6FF",
+  },
+
+  insightInfo: {
+    borderColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
+  },
+
+  insightHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  insightIcon: {
+    fontSize: 15,
+  },
+
+  insightTitle: {
+    flex: 1,
+    fontSize: 14,
+    color: "#111827",
+  },
+
+  insightMessage: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: "#4B5563",
+  },
+
+  sectionHeaderCard: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    padding: 12,
+    marginTop: 16,
+  },
+
+  sectionHeaderTitle: {
+    fontSize: 16,
+    color: "#111827",
+  },
+
+  sectionHeaderSubtitle: {
+    fontSize: 12,
+    color: "#6B7280",
+    marginTop: 3,
+  },
+  appNameCell: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  appRankBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#EEF2FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  appRankText: {
+    fontSize: 12,
+    color: REPORTS_COLORS.primary,
+  },
+
+  appNameText: {
+    flex: 1,
+    fontSize: 12,
+    color: "#374151",
+  },
+  generateNote: {
+  fontSize: 12,
+  lineHeight: 18,
+  color: "#6B7280",
+  textAlign: "center",
+  marginTop: 4,
+  marginBottom: 10,
+},
 });
