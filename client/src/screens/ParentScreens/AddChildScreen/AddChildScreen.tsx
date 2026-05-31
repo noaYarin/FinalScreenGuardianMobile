@@ -3,6 +3,7 @@ import {
   View,
   Pressable,
   TextInput,
+  ScrollView,
   useWindowDimensions,
   ActivityIndicator,
 } from "react-native";
@@ -21,7 +22,6 @@ import { clearChildrenError } from "@/src/redux/slices/children-slice";
 import { showErrorToast } from "@/src/utils/appToast";
 import { APP_COLORS } from "@/constants/theme";
 
-
 type GenderOption = "boy" | "girl" | "other";
 
 const GENDER_OPTIONS: {
@@ -30,10 +30,10 @@ const GENDER_OPTIONS: {
   label: string;
   accessibilityLabel: string;
 }[] = [
-    { key: "boy", icon: "human-male", label: "Boy", accessibilityLabel: "Select boy" },
-    { key: "girl", icon: "human-female", label: "Girl", accessibilityLabel: "Select girl" },
-    { key: "other", icon: "human-greeting-variant", label: "Other", accessibilityLabel: "Select other" },
-  ];
+  { key: "boy", icon: "human-male", label: "Boy", accessibilityLabel: "Select boy" },
+  { key: "girl", icon: "human-female", label: "Girl", accessibilityLabel: "Select girl" },
+  { key: "other", icon: "human-greeting-variant", label: "Other", accessibilityLabel: "Select other" },
+];
 
 function formatDateForDisplay(date: Date) {
   return new Intl.DateTimeFormat("en-GB", {
@@ -121,31 +121,27 @@ export default function AddChildScreen() {
 
   return (
     <ScreenLayout scrollable={false} backgroundColor={APP_COLORS.screenBg}>
-      <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <View style={[styles.content, { maxWidth: maxContentWidth }]}>
-          <View style={styles.heroCard}>
-            <AppText weight="extraBold" style={styles.heading}>
-              Add a new child
-            </AppText>
-
-            <AppText style={styles.subheading}>
-              Fill in the child's basic details
-            </AppText>
-          </View>
-
           <View style={styles.formCard}>
+
             <View style={styles.fieldBlock}>
               <AppText weight="bold" style={styles.label}>
-                Name
+                Child's name
               </AppText>
 
               <TextInput
                 value={childName}
                 onChangeText={setChildName}
-                placeholder="Enter a name"
+                placeholder="e.g. Leo"
                 placeholderTextColor="#94A3B8"
                 style={styles.input}
                 maxLength={30}
+                autoCapitalize="words"
                 accessibilityLabel="Child name field"
               />
             </View>
@@ -167,18 +163,16 @@ export default function AddChildScreen() {
                 <View style={styles.dateFieldContent}>
                   <View style={styles.dateFieldLeft}>
                     <View style={styles.dateIconWrap}>
-                      <AppText style={styles.dateIconEmoji}>📅</AppText>
+                      <MaterialCommunityIcons
+                        name="calendar-outline"
+                        size={22}
+                        color="#2563EB"
+                      />
                     </View>
 
-                    <View style={styles.dateTextWrap}>
-                      <AppText weight="medium" style={styles.dateFieldLabel}>
-                        Birth date
-                      </AppText>
-
-                      <AppText weight="extraBold" style={styles.dateFieldValue}>
-                        {formattedBirthDate}
-                      </AppText>
-                    </View>
+                    <AppText weight="bold" style={styles.dateFieldValue}>
+                      {formattedBirthDate}
+                    </AppText>
                   </View>
 
                   <AppText weight="bold" style={styles.dateFieldChangeText}>
@@ -186,6 +180,10 @@ export default function AddChildScreen() {
                   </AppText>
                 </View>
               </Pressable>
+
+              <AppText style={styles.fieldHint}>
+                The child must be between 6 and 17 years old.
+              </AppText>
 
               <InlineDatePicker
                 visible={showDatePicker}
@@ -220,8 +218,8 @@ export default function AddChildScreen() {
                     >
                       <MaterialCommunityIcons
                         name={option.icon}
-                        size={20}
-                        color={isSelected ? "#2563EB" : "#475569"}
+                        size={16}
+                        color={isSelected ? "#1D4ED8" : "#64748B"}
                       />
 
                       <AppText
@@ -238,27 +236,25 @@ export default function AddChildScreen() {
                 })}
               </View>
             </View>
+
+            <Pressable
+              style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
+              onPress={onSave}
+              disabled={isLoading}
+              accessibilityRole="button"
+              accessibilityLabel="Add child"
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#1D4ED8" />
+              ) : (
+                <AppText weight="extraBold" style={styles.saveButtonText}>
+                  Add Child
+                </AppText>
+              )}
+            </Pressable>
           </View>
-
-          <Pressable
-            style={[styles.saveButton, isLoading && { opacity: 0.7 }]}
-            onPress={onSave}
-            disabled={isLoading}
-            accessibilityRole="button"
-            accessibilityLabel="Save child"
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#1D4ED8" />
-            ) : (
-              <AppText weight="extraBold" style={styles.saveButtonText}>
-                Save
-              </AppText>
-            )}
-          </Pressable>
-
-          <View style={styles.bottomSpacer} />
         </View>
-      </View>
+      </ScrollView>
     </ScreenLayout>
   );
 }
