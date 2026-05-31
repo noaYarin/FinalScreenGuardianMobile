@@ -8,7 +8,6 @@ import {
 } from "react-native";
 import {
   showErrorToast,
-  showSuccessToast,
   showInfoToast,
 } from "@/src/utils/appToast";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -35,9 +34,9 @@ type ScreenLimitCard = {
   icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
   currentHours: number;
   maxHours: number;
-  summary: string;
 };
 
+const LIMIT_ID = "daily";
 const STEP_HOURS = 5 / 60;
 const MIN_HOURS = 5 / 60;
 
@@ -49,11 +48,6 @@ function formatHoursToClock(totalHours: number) {
   const normalizedMinutes = minutes === 60 ? 0 : minutes;
 
   return `${normalizedHours}:${String(normalizedMinutes).padStart(2, "0")}`;
-}
-
-function getAccentFromIndex(index: number) {
-  const accents = ["#EC6FB7", "#5B8DEF", "#16C7A1", "#F59E0B", "#8B5CF6"];
-  return accents[index % accents.length];
 }
 
 export default function DailyTimeLimitsScreen() {
@@ -76,6 +70,12 @@ export default function DailyTimeLimitsScreen() {
   const [tempLimitEnabled, setTempLimitEnabled] = useState<
     Record<string, boolean>
   >({});
+
+  const resetEditor = () => {
+    setEditingCardId(null);
+    setTempLimits({});
+    setTempLimitEnabled({});
+  };
 
   useEffect(() => {
     dispatch(getMyChildrenThunk());
@@ -101,12 +101,6 @@ export default function DailyTimeLimitsScreen() {
     );
   }, [children, selectedChildId]);
 
-  const selectedChildIndex = useMemo(() => {
-    return children.findIndex(
-      (child) => String(child._id) === String(selectedChildId)
-    );
-  }, [children, selectedChildId]);
-
   const currentChildDevices = useMemo(() => {
     return selectedChild ? byChildId[selectedChild._id] ?? [] : [];
   }, [byChildId, selectedChild]);
@@ -129,9 +123,7 @@ export default function DailyTimeLimitsScreen() {
 
     if (!exists) {
       setSelectedDeviceId(firstDeviceId ? String(firstDeviceId) : "");
-      setEditingCardId(null);
-      setTempLimits({});
-      setTempLimitEnabled({});
+      resetEditor();
     }
   }, [selectedChild, currentChildDevices, selectedDeviceId]);
 
@@ -177,19 +169,16 @@ export default function DailyTimeLimitsScreen() {
 
     return [
       {
-        id: "daily",
+        id: LIMIT_ID,
         title: "Daily screen time",
         icon: "clock-outline",
         currentHours: usedTodayMinutes / 60,
         maxHours: dailyLimitMinutes / 60,
-        summary: `Current limit is ${formatHoursToClock(
-          dailyLimitMinutes / 60
-        )} per day`,
       },
     ];
   }, [selectedDevice]);
 
-  const handleEditPress = (limitId: string) => {
+  const handleEditPress = () => {
     if (!selectedDevice) return;
 
     if (isOtherAutomaticLimitActive) {
@@ -200,52 +189,36 @@ export default function DailyTimeLimitsScreen() {
     }
 
     const currentMinutes =
-      limitId === "daily"
-        ? selectedDevice.screenTime?.dailyLimitMinutes ?? MIN_HOURS * 60
-        : MIN_HOURS * 60;
+      selectedDevice.screenTime?.dailyLimitMinutes ?? MIN_HOURS * 60;
 
     const currentEnabled =
-      limitId === "daily"
-        ? selectedDevice.screenTime?.isLimitEnabled === true &&
-        selectedDevice.screenTime?.limitMode === "DAILY"
-        : false;
+      selectedDevice.screenTime?.isLimitEnabled === true &&
+      selectedDevice.screenTime?.limitMode === "DAILY";
 
-    setTempLimits((prev) => ({
-      ...prev,
-      [limitId]: Math.max(MIN_HOURS * 60, currentMinutes),
-    }));
-
-    setTempLimitEnabled((prev) => ({
-      ...prev,
-      [limitId]: currentEnabled,
-    }));
-
-    setEditingCardId(limitId);
+    setTempLimits({ [LIMIT_ID]: Math.max(MIN_HOURS * 60, currentMinutes) });
+    setTempLimitEnabled({ [LIMIT_ID]: currentEnabled });
+    setEditingCardId(LIMIT_ID);
   };
 
-  const updateLimitByStep = (limitId: string, deltaHours: number) => {
+  const updateLimitByStep = (deltaHours: number) => {
     if (!selectedDevice || !selectedChildId || isOtherAutomaticLimitActive) {
       return;
     }
 
-    const isEnabled = tempLimitEnabled[limitId] ?? false;
+    const isEnabled = tempLimitEnabled[LIMIT_ID] ?? false;
     if (!isEnabled) return;
 
     const baseMinutes =
-      tempLimits[limitId] ??
-      (limitId === "daily"
-        ? selectedDevice.screenTime?.dailyLimitMinutes ?? MIN_HOURS * 60
-        : MIN_HOURS * 60);
+      tempLimits[LIMIT_ID] ??
+      selectedDevice.screenTime?.dailyLimitMinutes ??
+      MIN_HOURS * 60;
 
     const nextMinutes = Math.max(MIN_HOURS * 60, baseMinutes + deltaHours * 60);
 
-    setTempLimits((prev) => ({
-      ...prev,
-      [limitId]: Math.round(nextMinutes),
-    }));
+    setTempLimits({ [LIMIT_ID]: Math.round(nextMinutes) });
   };
 
-  const handleSavePress = async (limitId: string) => {
+  const handleSavePress = async () => {
     if (!selectedDevice || !selectedChildId) return;
 
     if (isOtherAutomaticLimitActive) {
@@ -256,8 +229,8 @@ export default function DailyTimeLimitsScreen() {
       return;
     }
 
-    const nextMinutes = tempLimits[limitId];
-    const nextEnabled = tempLimitEnabled[limitId];
+    const nextMinutes = tempLimits[LIMIT_ID];
+    const nextEnabled = tempLimitEnabled[LIMIT_ID];
 
     try {
       await dispatch(
@@ -274,28 +247,14 @@ export default function DailyTimeLimitsScreen() {
       ).unwrap();
 
       showInfoToast("The new limit was saved and sent to the child device.");
-      setEditingCardId(null);
-
-      setTempLimits((prev) => {
-        const updated = { ...prev };
-        delete updated[limitId];
-        return updated;
-      });
-
-      setTempLimitEnabled((prev) => {
-        const updated = { ...prev };
-        delete updated[limitId];
-        return updated;
-      });
+      resetEditor();
     } catch {
       showErrorToast("Could not update the daily limit. Please try again.", "Error");
     }
   };
 
-  const heroInitial = String(selectedChild?.name ?? "").trim()[0] ?? "?";
-  const heroAccent = getAccentFromIndex(
-    selectedChildIndex >= 0 ? selectedChildIndex : 0
-  );
+  const showDevicesLoading =
+    !devicesError && selectedChildId && (isLoading || devicesStatus === "loading");
 
   if (isLoading && children.length === 0) {
     return (
@@ -360,17 +319,6 @@ export default function DailyTimeLimitsScreen() {
             />
           </View>
 
-          <View style={styles.heroCard}>
-            <AppText weight="extraBold" style={styles.heroTitle}>
-              Manage screen time by child and device
-            </AppText>
-
-            <AppText weight="medium" style={styles.heroSubtitle}>
-              Choose a child and device, then set or update the daily screen-time
-              limit.
-            </AppText>
-          </View>
-
           <ChildDeviceSelector
             selectedChildId={selectedChildId}
             selectedDeviceId={selectedDeviceId}
@@ -378,15 +326,11 @@ export default function DailyTimeLimitsScreen() {
             onSelectChild={(childId) => {
               setSelectedChildId(String(childId));
               setSelectedDeviceId("");
-              setEditingCardId(null);
-              setTempLimits({});
-              setTempLimitEnabled({});
+              resetEditor();
             }}
             onSelectDevice={(deviceId) => {
               setSelectedDeviceId(String(deviceId));
-              setEditingCardId(null);
-              setTempLimits({});
-              setTempLimitEnabled({});
+              resetEditor();
             }}
           />
 
@@ -398,54 +342,30 @@ export default function DailyTimeLimitsScreen() {
             />
           ) : null}
 
-          {isLoading && (
+          {showDevicesLoading ? (
             <View style={styles.emptyState}>
               <AppText weight="medium" style={styles.emptySubtitle}>
                 Loading...
               </AppText>
             </View>
-          )}
+          ) : null}
 
-          {!!devicesError && (
+          {!!devicesError ? (
             <View style={styles.emptyState}>
               <AppText weight="medium" style={styles.emptySubtitle}>
                 {devicesError}
               </AppText>
             </View>
-          )}
+          ) : null}
 
-          {!isLoading &&
+          {!showDevicesLoading &&
             !devicesError &&
             selectedChildId &&
-            devicesStatus === "loading" && (
-              <View style={styles.emptyState}>
-                <AppText weight="medium" style={styles.emptySubtitle}>
-                  Loading...
-                </AppText>
-              </View>
-            )}
-
-          {!isLoading &&
-            !devicesError &&
-            selectedChildId &&
-            devicesStatus !== "loading" &&
             currentChildDevices.length === 0 && (
               <EmptyStateCard
                 icon="cellphone-link-off"
                 title="No devices yet"
                 subtitle="There are no connected devices for this child yet."
-              />
-            )}
-
-          {!isLoading &&
-            !devicesError &&
-            selectedDeviceId &&
-            currentChildDevices.length > 0 &&
-            selectedLimits.length === 0 && (
-              <EmptyStateCard
-                icon="clock-outline"
-                title="No daily limit yet"
-                subtitle="No daily screen-time limit was set for this device yet."
               />
             )}
 
@@ -569,19 +489,19 @@ export default function DailyTimeLimitsScreen() {
                           ]}
                         >
                           {!isEnabled
-                            ? "Off"
+                            ? "OFF"
                             : progress >= 1
                               ? "Limit reached"
                               : progress >= 0.8
                                 ? "Almost reached"
-                                : "OK"}
+                                : "ON"}
                         </AppText>
                       </View>
 
                       {!isEditing ? (
                         <View style={styles.editButtonWrap}>
                           <Pressable
-                            onPress={() => handleEditPress(limitCard.id)}
+                            onPress={handleEditPress}
                             disabled={isOtherAutomaticLimitActive}
                             accessibilityRole="button"
                             accessibilityLabel="Edit daily limit"
@@ -643,9 +563,7 @@ export default function DailyTimeLimitsScreen() {
                             ]}
                           >
                             <Pressable
-                              onPress={() =>
-                                updateLimitByStep(limitCard.id, -STEP_HOURS)
-                              }
+                              onPress={() => updateLimitByStep(-STEP_HOURS)}
                               disabled={!canDecrease}
                               accessibilityRole="button"
                               accessibilityLabel="Decrease by five minutes"
@@ -691,9 +609,7 @@ export default function DailyTimeLimitsScreen() {
                             </View>
 
                             <Pressable
-                              onPress={() =>
-                                updateLimitByStep(limitCard.id, STEP_HOURS)
-                              }
+                              onPress={() => updateLimitByStep(STEP_HOURS)}
                               disabled={!isEnabled || isOtherAutomaticLimitActive}
                               accessibilityRole="button"
                               accessibilityLabel="Increase by five minutes"
@@ -728,7 +644,7 @@ export default function DailyTimeLimitsScreen() {
                           </View>
 
                           <Pressable
-                            onPress={() => handleSavePress(limitCard.id)}
+                            onPress={handleSavePress}
                             disabled={isOtherAutomaticLimitActive}
                             accessibilityRole="button"
                             accessibilityLabel="Save edited limit"

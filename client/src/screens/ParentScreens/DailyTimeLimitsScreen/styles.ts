@@ -16,60 +16,9 @@ export const styles = StyleSheet.create({
     gap: 22,
   },
 
-  heroCard: {
-    position: "relative",
-    overflow: "hidden",
-    borderRadius: 28,
-    paddingHorizontal: 20,
-    paddingVertical: 22,
-    backgroundColor: "#315BFF",
-    gap: 10,
-  },
-
   infoBulbRow: {
     width: "100%",
     alignSelf: "flex-start",
-  },
-
-  heroHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-  },
-
-  heroAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000000",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 3,
-  },
-
-  heroAvatarText: {
-    fontSize: 26,
-    color: "#FFFFFF",
-    textAlign: "center",
-  },
-
-  heroTextBlock: {
-    flex: 1,
-    gap: 4,
-  },
-
- heroTitle: {
-    fontSize: 22,
-    color: "#ffffff",
-  },
-
-  heroSubtitle: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: "rgba(255,255,255,0.88)",
   },
 
   cardsList: {
@@ -187,13 +136,6 @@ export const styles = StyleSheet.create({
     left: 0,
     borderRadius: 999,
     backgroundColor: "#3D6BF2",
-  },
-
-  summaryText: {
-    fontSize: 15,
-    color: "#53627C",
-    marginBottom: 18,
-    lineHeight: 22,
   },
 
   actionsRow: {
@@ -364,25 +306,6 @@ export const styles = StyleSheet.create({
     fontSize: 18,
     color: "#1F2A44",
     textAlign: "center",
-  },
-
-  manualInput: {
-    width: "100%",
-    minHeight: 46,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#D9E2F2",
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: "#1F2A44",
-    textAlign: "center",
-  },
-
-  manualInputDisabled: {
-    backgroundColor: "#F3F4F6",
-    color: "#9CA3AF",
   },
 
   emptyState: {
