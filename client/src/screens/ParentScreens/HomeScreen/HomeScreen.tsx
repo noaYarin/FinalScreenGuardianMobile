@@ -249,7 +249,7 @@ export default function HomeParentScreen() {
               <AppText style={styles.sectionSub}>{error}</AppText>
             ) : childCards.length === 0 ? (
               <EmptyStateCard
-                icon="account-child-outline"
+                icon="account-outline"
                 title="No children yet"
                 subtitle="Add your first child to start tracking screen time, limits, and device status."
                 buttonLabel="Add Child"

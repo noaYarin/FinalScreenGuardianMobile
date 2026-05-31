@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
+import { router, type Href } from "expo-router";
 
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
@@ -300,13 +301,22 @@ export default function WeeklyTimeLimitsScreen() {
   if (!selectedChild) {
     return (
       <ScreenLayout>
-        <View style={styles.container}>
-          <EmptyStateCard
-            icon="account-child-outline"
-            title="No children yet"
-            subtitle="Add a child to get started."
-          />
-        </View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.container}>
+            <EmptyStateCard
+              icon="account-outline"
+              title="No children yet"
+              subtitle="Add your first child to start tracking screen time, limits, and device status."
+              buttonLabel="Add Child"
+              onPressButton={() => router.push("/Parent/addChild" as Href)}
+              buttonStyle={styles.btnSecondary}
+              buttonTextStyle={styles.btnSecondaryText}
+            />
+          </View>
+        </ScrollView>
       </ScreenLayout>
     );
   }

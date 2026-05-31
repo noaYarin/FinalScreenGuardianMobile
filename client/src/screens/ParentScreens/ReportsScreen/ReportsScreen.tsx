@@ -69,6 +69,9 @@ export default function ParentReportsScreen() {
   const childrenList = useSelector(
     (state: RootState) => state.children.childrenList ?? []
   );
+  const childrenLoading = useSelector(
+    (state: RootState) => state.children.isLoading
+  );
   const selectedChildId = useSelector(
     (state: RootState) => state.reports.selectedChildId
   );
@@ -219,8 +222,36 @@ export default function ParentReportsScreen() {
     (usageReport?.days?.some((day) => day.hasData) ?? false) ||
     (usageReport?.weeks?.some((week) => week.hasData) ?? false);
 
-  if (!effectiveChildId) {
-    return <View style={styles.screen} />;
+  const onPressAddChild = () => router.push("/Parent/addChild" as Href);
+
+  if (childrenLoading && childrenList.length === 0) {
+    return (
+      <View style={styles.screen}>
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color="#4F46E5" />
+        </View>
+      </View>
+    );
+  }
+
+  if (childrenList.length === 0 || !effectiveChildId) {
+    return (
+      <View style={styles.screen}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.content}>
+            <EmptyStateCard
+              icon="account-outline"
+              title="No children yet"
+              subtitle="Add your first child to start tracking screen time and view reports."
+              buttonLabel="Add Child"
+              onPressButton={onPressAddChild}
+              buttonStyle={styles.btnSecondary}
+              buttonTextStyle={styles.btnSecondaryText}
+            />
+          </View>
+        </ScrollView>
+      </View>
+    );
   }
 
   if (isReportLoading && !usageReport) {

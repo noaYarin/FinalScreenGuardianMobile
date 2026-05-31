@@ -8,7 +8,7 @@ import {
   Pressable,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, type Href } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
 
 import ChildDeviceSelector from "../../../components/ChildDeviceSelector/ChildDeviceSelector";
@@ -317,13 +317,19 @@ export default function ChildDetailsScreen() {
   if (showEmptyState) {
     return (
       <ScreenLayout backgroundColor={APP_COLORS.screenBg}>
-        <View style={[styles.container, { paddingTop: 24 }]}>
-          <EmptyStateCard
-            icon="account-child-outline"
-            title="No children yet"
-            subtitle="Add a child to get started."
-          />
-        </View>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.content}>
+            <EmptyStateCard
+              icon="account-outline"
+              title="No children yet"
+              subtitle="Add your first child to start tracking screen time, limits, and device status."
+              buttonLabel="Add Child"
+              onPressButton={() => router.push("/Parent/addChild" as Href)}
+              buttonStyle={styles.btnSecondary}
+              buttonTextStyle={styles.btnSecondaryText}
+            />
+          </View>
+        </ScrollView>
       </ScreenLayout>
     );
   }

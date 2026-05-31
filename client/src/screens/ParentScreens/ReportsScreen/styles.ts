@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { COLORS } from "@/constants/theme";
 
 export const REPORTS_COLORS = {
   primary: "#4F46E5",
@@ -81,6 +82,21 @@ export const styles = StyleSheet.create({
   generateReportBtnText: {
     color: "#FFFFFF",
     fontSize: 15,
+  },
+
+  btnSecondary: {
+    width: "100%",
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.light.tint,
+    borderWidth: 0,
+  },
+
+  btnSecondaryText: {
+    fontSize: 16,
+    color: "#1D4ED8",
   },
 });
 

@@ -1,9 +1,10 @@
 import { StyleSheet } from "react-native";
+import { APP_COLORS, COLORS } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: APP_COLORS.screenBg,
   },
 
   scrollContent: {
@@ -597,9 +598,8 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 18,
-    backgroundColor: "#FFFFFF",
-    borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
+    backgroundColor: APP_COLORS.screenBg,
+    borderTopWidth: 0,
   },
 
   footerUnsavedRow: {
@@ -633,5 +633,28 @@ export const styles = StyleSheet.create({
   primaryActionText: {
     fontSize: 15,
     color: "#FFFFFF",
+  },
+
+  emptyChildrenWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    backgroundColor: APP_COLORS.screenBg,
+  },
+
+  btnSecondary: {
+    width: "100%",
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.light.tint,
+    borderWidth: 0,
+  },
+
+  btnSecondaryText: {
+    fontSize: 16,
+    color: "#1D4ED8",
   },
 });

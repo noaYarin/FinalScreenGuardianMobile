@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import {
   Alert,
+  ActivityIndicator,
   BackHandler,
   Pressable,
   ScrollView,
@@ -16,6 +17,7 @@ import {
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { router, type Href } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
 
 import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
@@ -31,6 +33,7 @@ import {
   updateDeviceScreenTimeThunk,
 } from "@/src/redux/thunks/deviceThunks";
 import { showErrorToast, showSuccessToast } from "@/src/utils/appToast";
+import { APP_COLORS } from "@/constants/theme";
 
 import { styles } from "./styles";
 
@@ -270,7 +273,9 @@ export default function WeeklyScheduleScreen() {
   const dispatch = useDispatch<AppDispatch>();
   const navigation = useNavigation<any>();
 
-  const { childrenList } = useSelector((state: RootState) => state.children);
+  const { childrenList, isLoading: childrenLoading } = useSelector(
+    (state: RootState) => state.children
+  );
   const { byChildId } = useSelector((state: RootState) => state.devices);
 
   const children = Array.isArray(childrenList) ? childrenList : [];
@@ -638,8 +643,33 @@ export default function WeeklyScheduleScreen() {
   };
 
   return (
-    <ScreenLayout>
+    <ScreenLayout scrollable={false} backgroundColor={APP_COLORS.screenBg}>
       <View style={styles.screen}>
+        {childrenLoading && children.length === 0 ? (
+          <View style={styles.emptyChildrenWrap}>
+            <ActivityIndicator color="#2563EB" />
+          </View>
+        ) : children.length === 0 ? (
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.container}>
+              <View style={styles.contentMaxWidth}>
+                <EmptyStateCard
+                  icon="account-outline"
+                  title="No children yet"
+                  subtitle="Add your first child to start tracking screen time, limits, and device status."
+                  buttonLabel="Add Child"
+                  onPressButton={() => router.push("/Parent/addChild" as Href)}
+                  buttonStyle={styles.btnSecondary}
+                  buttonTextStyle={styles.btnSecondaryText}
+                />
+              </View>
+            </View>
+          </ScrollView>
+        ) : (
+        <>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -1411,6 +1441,8 @@ export default function WeeklyScheduleScreen() {
             </AppText>
           </Pressable>
         </View>
+        </>
+        )}
       </View>
     </ScreenLayout>
   );

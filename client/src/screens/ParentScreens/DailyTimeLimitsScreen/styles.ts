@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { COLORS } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
   scrollContent: {
@@ -465,4 +466,19 @@ export const styles = StyleSheet.create({
   marginTop: 14,
   marginBottom: 10,
 },
+
+  btnSecondary: {
+    width: "100%",
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.light.tint,
+    borderWidth: 0,
+  },
+
+  btnSecondaryText: {
+    fontSize: 16,
+    color: "#1D4ED8",
+  },
 });

@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native";
-import { APP_COLORS } from "@/constants/theme";
+import { APP_COLORS, COLORS } from "@/constants/theme";
 
 export const childDetailsIconColors = {
   deleteTrash: "#ffffff",
@@ -430,5 +430,20 @@ export const childDetailsStyles = StyleSheet.create({
     textAlign: "center",
     fontSize: 15,
     color: "#6B7280",
+  },
+
+  btnSecondary: {
+    width: "100%",
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.light.tint,
+    borderWidth: 0,
+  },
+
+  btnSecondaryText: {
+    fontSize: 16,
+    color: "#1D4ED8",
   },
 });
