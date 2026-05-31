@@ -98,13 +98,13 @@ export async function createTask(parentId, payload) {
     recurrenceType,
     requireProof,
   });
-for (const task of tasks) {
-  await sendAuditLog({
-    parentId,
-    childId: task.childId,
-    actionType: AuditActionType.TASK_CREATED,
-  });
-}
+  for (const task of tasks) {
+    await sendAuditLog({
+      parentId,
+      childId: task.childId,
+      actionType: AuditActionType.TASK_CREATED,
+    });
+  }
   for (const task of tasks) {
     try {
       await notifyChild({
@@ -284,11 +284,11 @@ export async function approveTask(parentId, taskId) {
     task.childId,
     rewardAmount
   );
-await sendAuditLog({
-  parentId: task.parentId,
-  childId: task.childId,
-  actionType: AuditActionType.TASK_APPROVED,
-});
+  await sendAuditLog({
+    parentId: task.parentId,
+    childId: task.childId,
+    actionType: AuditActionType.TASK_APPROVED,
+  });
   if (!updatedChild) {
     throw new AppError({
       code: "CHILD_NOT_FOUND",
@@ -380,13 +380,35 @@ export async function rejectTask(parentId, taskId) {
 
   const rejectedTask = await rejectTaskDal(taskId);
 
-await sendAuditLog({
-  parentId,
-  childId: task.childId,
-  actionType: AuditActionType.TASK_REJECTED,
-});
+  await sendAuditLog({
+    parentId,
+    childId: task.childId,
+    actionType: AuditActionType.TASK_REJECTED,
+    metadata: {
+      taskId: String(task._id),
+      taskTitle: task.title,
+    },
+  });
+  try {
+    await notifyChild({
+      parentId,
+      childId: task.childId,
+      type: NotificationType.TASK_REJECTED,
+      severity: NotificationSeverity.WARNING,
+      title: "Task rejected",
+      description: `Your task "${task.title}" was rejected. You can try again.`,
+      data: {
+        taskId: String(task._id),
+        taskTitle: task.title,
+        reason: "TASK_REJECTED",
+        link: "/Child/tasks",
+      },
+    });
+  } catch (err) {
+    console.error("notifyChild failed in rejectTask:", err.message);
+  }
 
-return rejectedTask;
+  return rejectedTask;
 }
 
 export async function deleteTask(parentId, taskId) {
@@ -410,11 +432,30 @@ export async function deleteTask(parentId, taskId) {
 
   const deletedTask = await softDeleteTaskDal(taskId);
 
-await sendAuditLog({
-  parentId,
-  childId: task.childId,
-  actionType: AuditActionType.TASK_DELETED,
-});
+  await sendAuditLog({
+    parentId,
+    childId: task.childId,
+    actionType: AuditActionType.TASK_DELETED,
+  });
 
-return deletedTask;
+  try {
+    await notifyChild({
+      parentId,
+      childId: task.childId,
+      type: NotificationType.TASK_DELETED,
+      severity: NotificationSeverity.INFO,
+      title: "Task removed",
+      description: `The task "${task.title}" was removed.`,
+      data: {
+        taskId: String(task._id),
+        taskTitle: task.title,
+        reason: "TASK_DELETED",
+        link: "/Child/tasks",
+      },
+    });
+  } catch (err) {
+    console.error("notifyChild failed in deleteTask:", err.message);
+  }
+
+  return deletedTask;
 }

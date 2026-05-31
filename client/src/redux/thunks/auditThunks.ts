@@ -29,8 +29,10 @@ function normalizeAuditLog(raw: unknown): AuditLog {
     "TASK_APPROVED",
     "TASK_REJECTED",
     "TASK_DELETED",
+    "REWARD_CREATED",
+    "REWARD_DELETED",
     "BLOCK_APPLICATION",
-"UNBLOCK_APPLICATION",
+    "UNBLOCK_APPLICATION",
   ];
 
   if (!allowedActionTypes.includes(actionType)) {
@@ -42,6 +44,10 @@ function normalizeAuditLog(raw: unknown): AuditLog {
     parentId: String(item.parentId ?? ""),
     childId: item.childId != null ? String(item.childId) : null,
     actionType,
+    metadata:
+      item.metadata != null && typeof item.metadata === "object"
+        ? (item.metadata as Record<string, unknown>)
+        : {},
     createdAt:
       typeof item.createdAt === "string"
         ? item.createdAt

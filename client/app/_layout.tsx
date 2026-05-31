@@ -174,18 +174,20 @@ function AppStack() {
               })
             );
           }
+        }
 
+        if (
+          type === "TASK_CREATED" ||
+          type === "TASK_APPROVED" ||
+          type === "TASK_REJECTED" ||
+          type === "TASK_DELETED"
+        ) {
           dispatch(getChildTasksThunk());
         }
 
-        if (type === "TASK_CREATED" || type === "TASK_REJECTED") {
-          dispatch(getChildTasksThunk());
-        }
-
-        if (type === "REWARD_CREATED") {
+        if (type === "REWARD_CREATED" || type === "REWARD_DELETED") {
           dispatch(getChildRewardsThunk());
         }
-
         showToastFromSocketNotification(data);
       }
     );
@@ -224,47 +226,47 @@ function AppStack() {
         }
       );
 
-const unsubscribeNotifications = onEvent(
-  NOTIFICATION_CREATED,
-  (data: any) => {
-    const type = String(data?.type ?? "").toUpperCase();
+      const unsubscribeNotifications = onEvent(
+        NOTIFICATION_CREATED,
+        (data: any) => {
+          const type = String(data?.type ?? "").toUpperCase();
 
-    dispatch(addNotificationFromSocket(data));
+          dispatch(addNotificationFromSocket(data));
 
-    if (type === "EXTENSION_REQUEST_CREATED") {
-      dispatch(bumpPendingRequestsRefreshKey());
-    }
+          if (type === "EXTENSION_REQUEST_CREATED") {
+            dispatch(bumpPendingRequestsRefreshKey());
+          }
 
-    if (type === "TASK_PENDING_APPROVAL") {
-      dispatch(getParentTasksThunk());
-    }
+          if (type === "TASK_PENDING_APPROVAL") {
+            dispatch(getParentTasksThunk());
+          }
 
-    if (type === "REWARD_REDEEMED") {
-      dispatch(getParentRewardsThunk());
-    }
+          if (type === "REWARD_REDEEMED") {
+            dispatch(getParentRewardsThunk());
+          }
 
-    if (type === "SOS_TRIGGERED") {
-      Alert.alert(
-        data?.title || "Urgent SOS Alert",
-        data?.description || "Your child sent an SOS alert.",
-        [
-          {
-            text: "Open alerts",
-            onPress: () => router.push("/Parent/systemAlerts" as Href),
-          },
-          {
-            text: "Close",
-            style: "cancel",
-          },
-        ]
+          if (type === "SOS_TRIGGERED") {
+            Alert.alert(
+              data?.title || "Urgent SOS Alert",
+              data?.description || "Your child sent an SOS alert.",
+              [
+                {
+                  text: "Open alerts",
+                  onPress: () => router.push("/Parent/systemAlerts" as Href),
+                },
+                {
+                  text: "Close",
+                  style: "cancel",
+                },
+              ]
+            );
+
+            return;
+          }
+
+          showToastFromSocketNotification(data);
+        }
       );
-
-      return;
-    }
-
-    showToastFromSocketNotification(data);
-  }
-);
       return () => {
         if (unsubscribeLocation) unsubscribeLocation();
         if (unsubscribeDeviceStatus) unsubscribeDeviceStatus();

@@ -14,6 +14,7 @@ import { getIO } from "../socketHandler.js";
 import { NOTIFICATION_CREATED } from "../constants/socketEvents.js";
 import { sendNotification } from "./pushNotification.service.js";
 import ParentModel from "../models/parent.model.js";
+import { NotificationType } from "../constants/notificationType.js";
 
 function includesAny(value, keywords) {
   return keywords.some((keyword) => value.includes(keyword));
@@ -121,6 +122,46 @@ function normalizePushDataForFcm(data) {
   );
 }
 
+function shouldSendParentPush(type, data = {}) {
+  const pushTypes = new Set([
+    NotificationType.SOS_TRIGGERED,
+    NotificationType.SCREEN_TIME_ENDED,
+    NotificationType.EXTENSION_REQUEST_CREATED,
+    NotificationType.TASK_PENDING_APPROVAL,
+  ]);
+
+  if (pushTypes.has(type)) {
+    return true;
+  }
+
+  // If screen time ending is implemented as DEVICE_LOCKED in your code
+  if (type === NotificationType.DEVICE_LOCKED) {
+    const reason = String(data?.reason ?? "").toUpperCase();
+
+    return (
+      reason.includes("DAILY_LIMIT") ||
+      reason.includes("WEEKLY_LIMIT") ||
+      reason.includes("SCHEDULE") ||
+      reason.includes("SCREEN_TIME")
+    );
+  }
+
+  // Push only for important bypass attempts:
+  // accessibility disabled / usage access disabled
+  if (type === NotificationType.BYPASS_ATTEMPT) {
+    const reason = String(data?.reason ?? "").toUpperCase();
+
+    return (
+      reason.includes("ACCESSIBILITY") ||
+      reason.includes("USAGE_ACCESS") ||
+      reason.includes("USAGE_STATS") ||
+      reason.includes("USAGE_PERMISSION")
+    );
+  }
+
+  return false;
+}
+
 export async function notifyParent({
   parentId,
   childId,
@@ -178,21 +219,21 @@ export async function notifyParent({
     console.error("socket emit failed in notifyParent", err.message);
   }
 
-  try {
-    const pushResult = await sendNotification(
-      parentId,
-      title,
-      description,
-      normalizePushDataForFcm(normalizedData)
-    );
+  if (shouldSendParentPush(type, normalizedData)) {
+    try {
+      const pushResult = await sendNotification(
+        parentId,
+        title,
+        description,
+        normalizePushDataForFcm(normalizedData)
+      );
 
-    console.log("[Push] notifyParent result:", pushResult);
-  } catch (err) {
-    console.error("[Push] send failed in notifyParent:", {
-      message: err.message,
-      code: err.code,
-      stack: err.stack,
-    });
+      console.log("[Push] notifyParent result:", pushResult);
+    } catch (err) {
+      console.error("push send failed in notifyParent", err.message);
+    }
+  } else {
+    console.log("[Push] skipped for parent notification type:", type);
   }
   return notification;
 }

@@ -116,6 +116,48 @@ function getActivityMeta(actionType: AuditActionType) {
         iconColor: "#16A34A",
       };
 
+    case "TASK_CREATED":
+      return {
+        icon: "clipboard-plus-outline" as const,
+        iconBg: "#E0F2FE",
+        iconColor: "#0284C7",
+      };
+
+    case "TASK_APPROVED":
+      return {
+        icon: "clipboard-check-outline" as const,
+        iconBg: "#DCFCE7",
+        iconColor: "#16A34A",
+      };
+
+    case "TASK_REJECTED":
+      return {
+        icon: "clipboard-remove-outline" as const,
+        iconBg: "#FEE2E2",
+        iconColor: "#DC2626",
+      };
+
+    case "TASK_DELETED":
+      return {
+        icon: "clipboard-text-off-outline" as const,
+        iconBg: "#F3F4F6",
+        iconColor: "#4B5563",
+      };
+
+    case "REWARD_CREATED":
+      return {
+        icon: "gift-outline" as const,
+        iconBg: "#EDE9FE",
+        iconColor: "#7C3AED",
+      };
+
+    case "REWARD_DELETED":
+      return {
+        icon: "gift-off-outline" as const,
+        iconBg: "#FEE2E2",
+        iconColor: "#DC2626",
+      };
+    
     default:
       return {
         icon: "history" as const,
@@ -152,6 +194,18 @@ function getActivityTitle(actionType: AuditActionType) {
       return "Device deleted";
     case "DEVICE_ADDED":
       return "Device added";
+    case "TASK_CREATED":
+      return "Task created";
+    case "TASK_APPROVED":
+      return "Task approved";
+    case "TASK_REJECTED":
+      return "Task rejected";
+    case "TASK_DELETED":
+      return "Task deleted";
+    case "REWARD_CREATED":
+      return "Reward created";
+    case "REWARD_DELETED":
+      return "Reward deleted";
     default:
       return "Activity";
   }
@@ -166,9 +220,14 @@ function getActivityDescription(
     typeof metadata?.appName === "string" && metadata.appName.trim() !== ""
       ? metadata.appName
       : typeof metadata?.packageName === "string" &&
-          metadata.packageName.trim() !== ""
+        metadata.packageName.trim() !== ""
         ? metadata.packageName
         : "an application";
+
+  const rewardTitle =
+    typeof metadata?.rewardTitle === "string" && metadata.rewardTitle.trim() !== ""
+      ? metadata.rewardTitle
+      : "a reward";
 
   switch (actionType) {
     case "LOCK_DEVICE":
@@ -209,6 +268,24 @@ function getActivityDescription(
 
     case "DEVICE_ADDED":
       return `A device was linked to ${childName}`;
+
+    case "TASK_CREATED":
+      return `A new task was created for ${childName}`;
+
+    case "TASK_APPROVED":
+      return `${childName}'s task was approved`;
+
+    case "TASK_REJECTED":
+      return `${childName}'s task was rejected`;
+
+    case "TASK_DELETED":
+      return `A task was deleted for ${childName}`;
+
+    case "REWARD_CREATED":
+      return `${rewardTitle} was created for ${childName}`;
+
+    case "REWARD_DELETED":
+      return `${rewardTitle} was deleted for ${childName}`;
 
     default:
       return `A new activity was recorded for ${childName}`;
@@ -306,7 +383,7 @@ export default function ActivityHistoryScreen() {
   }, [dispatch]);
 
   useEffect(() => {
-      console.log("ACTIVITY SCREEN DISPATCH AUDIT:", selectedChildId);
+    console.log("ACTIVITY SCREEN DISPATCH AUDIT:", selectedChildId);
     dispatch(fetchAuditLogsThunk(selectedChildId));
   }, [dispatch, selectedChildId]);
 
@@ -314,14 +391,14 @@ export default function ActivityHistoryScreen() {
     return auditLogs.filter((item) => {
       if (selectedFilter === "all") return true;
 
-if (selectedFilter === "locks") {
-  return [
-    "LOCK_DEVICE",
-    "UNLOCK_DEVICE",
-    "BLOCK_APPLICATION",
-    "UNBLOCK_APPLICATION",
-  ].includes(item.actionType);
-}
+      if (selectedFilter === "locks") {
+        return [
+          "LOCK_DEVICE",
+          "UNLOCK_DEVICE",
+          "BLOCK_APPLICATION",
+          "UNBLOCK_APPLICATION",
+        ].includes(item.actionType);
+      }
 
       if (selectedFilter === "extensions") {
         return ["APPROVE_REQUEST", "REJECT_REQUEST"].includes(item.actionType);
@@ -341,14 +418,14 @@ if (selectedFilter === "locks") {
 
   const todayCount = todayActivities.length;
 
-const lockCount = todayActivities.filter((item) =>
-  [
-    "LOCK_DEVICE",
-    "UNLOCK_DEVICE",
-    "BLOCK_APPLICATION",
-    "UNBLOCK_APPLICATION",
-  ].includes(item.actionType)
-).length;
+  const lockCount = todayActivities.filter((item) =>
+    [
+      "LOCK_DEVICE",
+      "UNLOCK_DEVICE",
+      "BLOCK_APPLICATION",
+      "UNBLOCK_APPLICATION",
+    ].includes(item.actionType)
+  ).length;
   const extensionCount = todayActivities.filter((item) =>
     ["APPROVE_REQUEST", "REJECT_REQUEST"].includes(item.actionType)
   ).length;
@@ -573,11 +650,11 @@ const lockCount = todayActivities.filter((item) =>
                 const childName = child?.name ?? "Child";
                 const meta = getActivityMeta(item.actionType);
                 const title = getActivityTitle(item.actionType);
-const description = getActivityDescription(
-  item.actionType,
-  childName,
-  item.metadata
-);
+                const description = getActivityDescription(
+                  item.actionType,
+                  childName,
+                  item.metadata
+                );
                 const time = formatTime(item.createdAt);
                 const date = formatDate(item.createdAt);
                 return (
