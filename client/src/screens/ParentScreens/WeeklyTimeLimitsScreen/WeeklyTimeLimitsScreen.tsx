@@ -339,18 +339,6 @@ export default function WeeklyTimeLimitsScreen() {
               ]}
             />
           </View>
-
-          <View style={styles.heroCard}>
-            <AppText weight="extraBold" style={styles.heroTitle}>
-              Manage weekly screen time
-            </AppText>
-
-            <AppText weight="medium" style={styles.heroSubtitle}>
-              Choose a child and device, then set or update the total weekly
-              screen-time limit.
-            </AppText>
-          </View>
-
           <ChildDeviceSelector
             selectedChildId={selectedChildId}
             selectedDeviceId={selectedDeviceId}

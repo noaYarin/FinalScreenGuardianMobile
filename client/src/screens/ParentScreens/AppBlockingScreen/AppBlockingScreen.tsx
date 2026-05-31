@@ -206,10 +206,6 @@ export default function AppBlockingScreen() {
             </View>
 
             <View style={styles.introTextWrap}>
-              <AppText weight="extraBold" style={styles.title}>
-                Block apps on your child’s device
-              </AppText>
-
               <AppText weight="medium" style={styles.subtitle}>
                 Choose a child and device, then view usage and block or allow
                 installed apps.
