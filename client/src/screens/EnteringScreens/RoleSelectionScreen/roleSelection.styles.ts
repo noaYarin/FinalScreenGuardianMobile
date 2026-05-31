@@ -7,7 +7,7 @@ export const styles = StyleSheet.create({
     justifyContent: "flex-start",
     alignItems: "center",
     padding: SIZES.padding,
-    paddingTop: SIZES.padding * 2,
+    paddingTop: SIZES.padding ,
     backgroundColor: APP_COLORS.screenBg,
   },
 
@@ -23,13 +23,14 @@ export const styles = StyleSheet.create({
     fontSize: 15,
     color: "#6B7280",
     textAlign: "center",
-    marginTop: 6,
+    marginTop: 3,
   },
 
   cardsContainer: {
     width: "100%",
     justifyContent: "center",
     alignItems: "stretch",
-    marginTop: 25,
+    marginTop: 16,
+    marginBottom: 30,
   },
 });

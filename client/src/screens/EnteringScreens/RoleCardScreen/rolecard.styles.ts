@@ -1,15 +1,15 @@
 import { StyleSheet } from "react-native";
 import { COLORS, Fonts, SIZES } from "../../../../constants/theme";
 
-const AVATAR_SIZE = 220;
+const AVATAR_SIZE = 180;
 
 export const roleCardStyles = StyleSheet.create({
   card: {
     alignItems: "center",
     borderRadius: 10,
     width: "100%",
-    padding: SIZES.padding,
-    marginBottom: SIZES.padding,
+    padding: 14,
+    marginBottom: 16,
   },
 
   imageContainer: {
@@ -33,14 +33,14 @@ export const roleCardStyles = StyleSheet.create({
     color: COLORS.light.text,
     fontFamily: Fonts.rounded,
     textAlign: "center",
-    marginTop: SIZES.padding / 2,
   },
 
   description: {
-    fontSize: SIZES.description,
+    fontSize: 13,
     color: COLORS.light.text,
     fontFamily: Fonts.rounded,
     textAlign: "center",
-    marginTop: 6,
+    lineHeight: 17,
+    paddingHorizontal: 12,
   },
 });
