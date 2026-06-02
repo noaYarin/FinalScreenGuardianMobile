@@ -97,3 +97,37 @@ export async function apiRegisterFcmToken(fcmToken: string): Promise<{ success: 
   );
 }
 
+export async function apiRegisterChildFcmToken(
+  fcmToken: string
+): Promise<{ success: boolean }> {
+  return api.post<{ success: boolean }>(
+    `${URL}/child/register-token`,
+    { fcmToken },
+    { requireAuth: true, role: "CHILD" }
+  );
+}
+
+export type ChildNotificationSettings = {
+  lowTimePushEnabled: boolean;
+  lowTimeThresholdMinutes: number;
+};
+
+export async function apiGetChildNotificationSettings(): Promise<ChildNotificationSettings> {
+  return api.get<ChildNotificationSettings>(`${URL}/child/settings`, {
+    requireAuth: true,
+    role: "CHILD",
+  });
+}
+
+export async function apiUpdateChildNotificationSettings(params: {
+  lowTimePushEnabled: boolean;
+}): Promise<{ lowTimePushEnabled: boolean }> {
+  return api.patch<{ lowTimePushEnabled: boolean }>(
+    `${URL}/child/settings`,
+    params,
+    {
+      requireAuth: true,
+      role: "CHILD",
+    }
+  );
+}

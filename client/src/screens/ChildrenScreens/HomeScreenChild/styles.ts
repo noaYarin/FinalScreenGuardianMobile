@@ -19,6 +19,10 @@ export const TILE_COLORS = {
 } as const;
 
 export const styles = StyleSheet.create({
+  childHomeRoot: {
+    flex: 1,
+  },
+
   page: {
     width: "100%",
     alignItems: "stretch",
@@ -30,6 +34,14 @@ export const styles = StyleSheet.create({
 
   pageSmall: {
     paddingHorizontal: 10,
+  },
+
+  pageTablet: {
+    maxWidth: 820,
+    alignSelf: "center",
+    paddingHorizontal: 22,
+    paddingTop: 10,
+    paddingBottom: 28,
   },
 
   headerCard: {
@@ -45,6 +57,13 @@ export const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
     elevation: 2,
+  },
+
+  headerCardTablet: {
+    borderRadius: 28,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    marginBottom: 12,
   },
 
   headerRow: {
@@ -68,6 +87,57 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-start",
     flexShrink: 0,
+  },
+
+  avatarBlockPhone: {
+    width: 126,
+  },
+
+  avatarBlockTablet: {
+    width: 158,
+  },
+
+  avatarBlockLarge: {
+    width: 168,
+  },
+
+  avatarWrap: {
+    borderRadius: 999,
+    overflow: "hidden",
+    flexShrink: 0,
+  },
+
+  avatarWrapPhone: {
+    width: 92,
+    height: 92,
+  },
+
+  avatarWrapTablet: {
+    width: 122,
+    height: 122,
+  },
+
+  avatarWrapLarge: {
+    width: 132,
+    height: 132,
+  },
+
+  avatarGradient: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  avatarPhoto: {
+    width: "100%",
+    height: "100%",
+  },
+
+  avatarLetter: {
+    color: "#FFFFFF",
+    ...CHILD_DISPLAY.amount,
+    includeFontPadding: false,
+    textAlign: "center",
   },
 
   levelBadge: {
@@ -141,7 +211,7 @@ export const styles = StyleSheet.create({
     minWidth: 0,
     justifyContent: "center",
     alignItems: "flex-start",
-    paddingLeft: 12,
+    paddingLeft: 14,
     paddingRight: 0,
     direction: "ltr",
   },
@@ -153,30 +223,6 @@ export const styles = StyleSheet.create({
     justifyContent: "flex-start",
   },
 
-  avatarWrap: {
-    borderRadius: 999,
-    overflow: "hidden",
-    flexShrink: 0,
-  },
-
-  avatarGradient: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  avatarPhoto: {
-    width: "100%",
-    height: "100%",
-  },
-
-  avatarLetter: {
-    color: "#FFFFFF",
-    ...CHILD_DISPLAY.amount,
-    includeFontPadding: false,
-    textAlign: "center",
-  },
-
   hello: {
     width: "100%",
     color: "#0F172A",
@@ -184,6 +230,20 @@ export const styles = StyleSheet.create({
     textAlign: "left",
     writingDirection: "ltr",
     alignSelf: "flex-start",
+  },
+
+  helloPhone: {
+    ...CHILD_HEADING.h1,
+  },
+
+  helloTablet: {
+    fontSize: 30,
+    lineHeight: 36,
+  },
+
+  helloLarge: {
+    fontSize: 32,
+    lineHeight: 38,
   },
 
   headerCoinsBadge: {
@@ -210,6 +270,43 @@ export const styles = StyleSheet.create({
     writingDirection: "ltr",
   },
 
+  coinsSummaryBadge: {
+    marginTop: 10,
+    alignSelf: "flex-start",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    backgroundColor: "#FFF7ED",
+    borderWidth: 1,
+    borderColor: "#FED7AA",
+  },
+
+  coinsSummaryTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    direction: "ltr",
+  },
+
+  coinsSummaryText: {
+    color: "#9A3412",
+    fontSize: 13,
+    lineHeight: 16,
+    includeFontPadding: false,
+    textAlign: "left",
+    writingDirection: "ltr",
+  },
+
+  coinsSummaryHint: {
+    marginTop: 3,
+    color: "#e9b389",
+    fontSize: 10,
+    lineHeight: 12,
+    includeFontPadding: false,
+    textAlign: "left",
+    writingDirection: "ltr",
+  },
+
   card: {
     width: "100%",
     backgroundColor: "#FFFFFF",
@@ -224,6 +321,13 @@ export const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 2,
     direction: "ltr",
+  },
+
+  cardTablet: {
+    borderRadius: 28,
+    paddingHorizontal: 22,
+    paddingVertical: 18,
+    marginBottom: 12,
   },
 
   cardTitleRow: {
@@ -262,12 +366,24 @@ export const styles = StyleSheet.create({
     marginRight: 8,
   },
 
+  iconBadgeTablet: {
+    width: 42,
+    height: 42,
+    borderRadius: 15,
+    marginRight: 10,
+  },
+
   cardTitle: {
     color: "#0F172A",
     ...CHILD_HEADING.h3,
     includeFontPadding: false,
     textAlign: "left",
     writingDirection: "ltr",
+  },
+
+  cardTitleTablet: {
+    fontSize: 22,
+    lineHeight: 27,
   },
 
   timerValue: {
@@ -282,6 +398,20 @@ export const styles = StyleSheet.create({
   timerValueCentered: {
     textAlign: "center",
     alignSelf: "center",
+  },
+
+  timerValueFontPhone: {
+    ...CHILD_DISPLAY.timer,
+  },
+
+  timerValueFontTablet: {
+    fontSize: 48,
+    lineHeight: 54,
+  },
+
+  timerValueFontLarge: {
+    fontSize: 52,
+    lineHeight: 58,
   },
 
   progressTrack: {
@@ -313,13 +443,23 @@ export const styles = StyleSheet.create({
     alignSelf: "center",
   },
 
+  timerSubTablet: {
+    fontSize: 16,
+    lineHeight: 21,
+  },
+
   grid: {
     width: "100%",
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-evenly",
+    justifyContent: "space-around",
     rowGap: 12,
-    marginBottom: 10,
+    marginBottom: 8,
+  },
+
+  gridTablet: {
+    rowGap: 12,
+    marginBottom: 4,
   },
 
   tile: {
@@ -336,9 +476,22 @@ export const styles = StyleSheet.create({
     elevation: 1,
   },
 
+  tileTablet: {
+    width: "31%",
+    maxWidth: 225,
+    height: 128,
+    aspectRatio: undefined as any,
+    borderRadius: 24,
+  },
+
   tileInner: {
     flex: 1,
     paddingHorizontal: 10,
+    paddingVertical: 12,
+  },
+
+  tileInnerTablet: {
+    paddingHorizontal: 12,
     paddingVertical: 12,
   },
 
@@ -355,6 +508,10 @@ export const styles = StyleSheet.create({
     paddingTop: 6,
   },
 
+  tileLabelZoneTablet: {
+    paddingTop: 5,
+  },
+
   tileIconWrap: {
     width: 56,
     height: 56,
@@ -365,12 +522,23 @@ export const styles = StyleSheet.create({
     borderColor: "transparent",
   },
 
+  tileIconWrapTablet: {
+    width: 58,
+    height: 58,
+    borderRadius: 19,
+  },
+
   tileText: {
     color: "#0F172A",
     textAlign: "center",
     fontSize: 11,
     lineHeight: 13,
     includeFontPadding: false,
+  },
+
+  tileTextTablet: {
+    fontSize: 14.5,
+    lineHeight: 18,
   },
 
   tilePressed: {
@@ -401,6 +569,13 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
+  panicBtnTablet: {
+    marginTop: 8,
+    borderRadius: 28,
+    paddingVertical: 24,
+    minHeight: 76,
+  },
+
   panicPressed: {
     opacity: 0.85,
     transform: [{ scale: 0.995 }],
@@ -424,6 +599,11 @@ export const styles = StyleSheet.create({
     ...CHILD_HEADING.h2,
     includeFontPadding: false,
     textAlign: "center",
+  },
+
+  panicTextTablet: {
+    fontSize: 30,
+    lineHeight: 36,
   },
 
   panicDisabled: {
@@ -471,42 +651,7 @@ export const styles = StyleSheet.create({
     textAlign: "left",
     writingDirection: "ltr",
   },
-  coinsSummaryBadge: {
-    marginTop: 10,
-    alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
-    backgroundColor: "#FFF7ED",
-    borderWidth: 1,
-    borderColor: "#FED7AA",
-  },
 
-  coinsSummaryTopRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    direction: "ltr",
-  },
-
-  coinsSummaryText: {
-    color: "#9A3412",
-    fontSize: 13,
-    lineHeight: 16,
-    includeFontPadding: false,
-    textAlign: "left",
-    writingDirection: "ltr",
-  },
-
-  coinsSummaryHint: {
-    marginTop: 3,
-    color: "#e9b389",
-    fontSize: 10,
-    lineHeight: 12,
-    includeFontPadding: false,
-    textAlign: "left",
-    writingDirection: "ltr",
-  },
   avatarModalOverlay: {
     flex: 1,
     backgroundColor: "rgba(15, 23, 42, 0.38)",
@@ -595,7 +740,6 @@ export const styles = StyleSheet.create({
     gap: 8,
   },
 
-
   avatarInfoDescription: {
     fontSize: 14,
     lineHeight: 20,
@@ -619,6 +763,7 @@ export const styles = StyleSheet.create({
     fontSize: 15,
     includeFontPadding: false,
   },
+
   avatarInfoRow: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -643,6 +788,7 @@ export const styles = StyleSheet.create({
     textAlign: "center",
     includeFontPadding: false,
   },
+
   avatarStageTitleRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -657,6 +803,7 @@ export const styles = StyleSheet.create({
     color: "#64748B",
     textAlign: "center",
   },
+
   avatarInfoLine: {
     flex: 1,
     fontSize: 13.5,
@@ -666,6 +813,7 @@ export const styles = StyleSheet.create({
     writingDirection: "ltr",
     includeFontPadding: false,
   },
+
   avatarInfoXpBlock: {
     width: "100%",
     marginTop: 12,
@@ -720,26 +868,6 @@ export const styles = StyleSheet.create({
     elevation: 3,
   },
 
-  childHomeRoot: {
-    flex: 1,
-  },
-
-  helloPhone: { ...CHILD_HEADING.h1 },
-  helloTablet: { ...CHILD_HEADING.h1 },
-  helloLarge: { ...CHILD_HEADING.h1 },
-
-  timerValueFontPhone: { ...CHILD_DISPLAY.timer },
-  timerValueFontTablet: { fontSize: 40, lineHeight: 44 },
-  timerValueFontLarge: { fontSize: 44, lineHeight: 48 },
-
-  avatarWrapPhone: { width: 92, height: 92 },
-  avatarWrapTablet: { width: 108, height: 108 },
-  avatarWrapLarge: { width: 118, height: 118 },
-
-  avatarBlockPhone: { width: 126 },
-  avatarBlockTablet: { width: 142 },
-  avatarBlockLarge: { width: 152 },
-
   permissionModalBtnText: {
     color: "#FFFFFF",
     fontSize: 17,
@@ -754,6 +882,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 22,
     paddingVertical: 28,
   },
+
   permissionModalCard: {
     width: "100%",
     maxWidth: 400,
@@ -765,16 +894,19 @@ export const styles = StyleSheet.create({
     borderWidth: 2,
     gap: 12,
   },
+
   permissionModalTitle: {
     ...CHILD_HEADING.h1,
     color: "#0F172A",
     textAlign: "center",
   },
+
   permissionModalBody: {
     ...CHILD_HEADING.h3,
     color: "#475569",
     textAlign: "center",
   },
+
   permissionModalBtn: {
     marginTop: 6,
     minHeight: 54,
@@ -783,7 +915,10 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 20,
   },
-  permissionModalBtnPressed: { opacity: 0.92 },
+
+  permissionModalBtnPressed: {
+    opacity: 0.92,
+  },
 
   avatarInfoSlideCard: {
     width: "100%",

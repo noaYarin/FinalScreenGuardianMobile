@@ -6,6 +6,10 @@ import {
   registerParentFcmToken,
   getChildNotifications,
   readAllChildNotifications,
+  registerChildFcmToken,
+getChildNotificationSettings,
+updateChildNotificationSettings,
+createChildScreenTimeEndingNotification,
 } from "../services/notification.service.js";
 
 // Return notifications for the logged-in parent
@@ -129,6 +133,72 @@ export async function registerFcmTokenController(req, res, next) {
     }
 
     const data = await registerParentFcmToken(parentId, fcmToken);
+    res.status(200).json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function registerChildFcmTokenController(req, res, next) {
+  try {
+    const parentId = req.user.parentId;
+    const childId = req.user.childId;
+    const fcmToken = req.body?.fcmToken;
+
+    if (!fcmToken || typeof fcmToken !== "string") {
+      return res.status(400).json({
+        ok: false,
+        error: { code: "BAD_REQUEST", message: "fcmToken is required" },
+      });
+    }
+
+    const data = await registerChildFcmToken(parentId, childId, fcmToken);
+
+    res.status(200).json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getChildNotificationSettingsController(req, res, next) {
+  try {
+    const data = await getChildNotificationSettings(
+      req.user.parentId,
+      req.user.childId
+    );
+
+    res.status(200).json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateChildNotificationSettingsController(req, res, next) {
+  try {
+    const data = await updateChildNotificationSettings(
+      req.user.parentId,
+      req.user.childId,
+      req.body
+    );
+
+    res.status(200).json({ ok: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function createChildScreenTimeEndingNotificationController(
+  req,
+  res,
+  next
+) {
+  try {
+    const data = await createChildScreenTimeEndingNotification({
+      parentId: req.user.parentId,
+      childId: req.user.childId,
+      remainingMinutes: req.body?.remainingMinutes,
+    });
+
     res.status(200).json({ ok: true, data });
   } catch (err) {
     next(err);

@@ -10,6 +10,10 @@ import {
   registerFcmTokenController,
   getChildNotificationsController,
   readAllChildNotificationsController,
+  registerChildFcmTokenController,
+getChildNotificationSettingsController,
+updateChildNotificationSettingsController,
+createChildScreenTimeEndingNotificationController,
 } from "../controllers/notification.controller.js";
 
 const router = Router();
@@ -21,7 +25,37 @@ router.get(
   requireChild,
   getChildNotificationsController
 );
+// POST /api/v1/notifications/child/register-token
+router.post(
+  "/child/register-token",
+  authJwt,
+  requireChild,
+  registerChildFcmTokenController
+);
 
+// GET /api/v1/notifications/child/settings
+router.get(
+  "/child/settings",
+  authJwt,
+  requireChild,
+  getChildNotificationSettingsController
+);
+
+// PATCH /api/v1/notifications/child/settings
+router.patch(
+  "/child/settings",
+  authJwt,
+  requireChild,
+  updateChildNotificationSettingsController
+);
+
+// POST /api/v1/notifications/child/screen-time-ending
+router.post(
+  "/child/screen-time-ending",
+  authJwt,
+  requireChild,
+  createChildScreenTimeEndingNotificationController
+);
 // PATCH /api/v1/notifications/child/read-all
 router.patch(
   "/child/read-all",
