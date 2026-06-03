@@ -84,7 +84,25 @@ function normalizeNumber(value, fallback = 0) {
   return Number.isFinite(numberValue) ? numberValue : fallback;
 }
 
-function buildTopApplications(device) {
+function getAppUsedMinutesForDateKey(appScreenTime, dateKey, todayKey) {
+  const history = Array.isArray(appScreenTime?.dailyUsageHistory)
+    ? appScreenTime.dailyUsageHistory
+    : [];
+
+  const entry = history.find((item) => item?.dateKey === dateKey);
+
+  if (entry) {
+    return normalizeNumber(entry.usedMinutes);
+  }
+
+  if (dateKey === todayKey) {
+    return normalizeNumber(appScreenTime?.usedTodayMinutes);
+  }
+
+  return 0;
+}
+
+function buildTopApplications(device, dateKeys, todayKey) {
   const applications = Array.isArray(device?.applications)
     ? device.applications
     : [];
@@ -92,14 +110,17 @@ function buildTopApplications(device) {
   return applications
     .map((app) => {
       const screenTime = app?.screenTime || {};
-      const usedTodayMinutes = normalizeNumber(screenTime.usedTodayMinutes);
-      const usedWeekMinutes = normalizeNumber(screenTime.usedWeekMinutes);
+
+      const usedRangeMinutes = dateKeys.reduce(
+        (total, dateKey) =>
+          total + getAppUsedMinutesForDateKey(screenTime, dateKey, todayKey),
+        0
+      );
 
       return {
         name: String(app?.name || "Unknown app"),
         packageName: String(app?.packageName || ""),
-        usedTodayMinutes,
-        usedWeekMinutes,
+        usedRangeMinutes,
         dailyLimitMinutes: normalizeNumber(screenTime.dailyLimitMinutes),
         weeklyLimitMinutes: normalizeNumber(screenTime.weeklyLimitMinutes),
         isBlocked: app?.isBlocked === true,
@@ -108,13 +129,8 @@ function buildTopApplications(device) {
         lastUsedAt: app?.lastUsedAt || null
       };
     })
-    .filter((app) => app.usedTodayMinutes > 0 || app.usedWeekMinutes > 0)
-    .sort((a, b) => {
-      const aUsage = a.usedWeekMinutes || a.usedTodayMinutes;
-      const bUsage = b.usedWeekMinutes || b.usedTodayMinutes;
-
-      return bUsage - aUsage;
-    })
+    .filter((app) => app.usedRangeMinutes > 0)
+    .sort((a, b) => b.usedRangeMinutes - a.usedRangeMinutes)
     .slice(0, MAX_TOP_APPLICATIONS);
 }
 
@@ -205,6 +221,10 @@ function buildExecutiveSummary({
 }) {
   const totalHours = (totalMinutes / 60).toFixed(1);
   const avgHours = (dailyAverageMinutes / 60).toFixed(1);
+  if (daysWithData === 0) {
+    return `No screen-time usage data was recorded for ${childName} between ${fromLabel} and ${toLabel}. Insights for this period may be limited until more usage data is collected.`;
+  }
+
   const parts = [
     `In the period from ${fromLabel} to ${toLabel}, ${childName} logged ${totalHours} hours of screen time across ${daysWithData} days with recorded usage (daily average: ${avgHours} hours).`
   ];
@@ -289,7 +309,7 @@ function buildReportPayload({
       tasksApprovedCount,
       extensionRequestsCount
     },
-    topApplications: buildTopApplications(device),
+    topApplications: buildTopApplications(device, usageSummary.dateKeys, usageSummary.todayKey),
     trendPercent
   };
 }
@@ -374,6 +394,9 @@ export async function buildParentAnalyticsReport(
     usedTodayMinutes,
     dailyLimitMinutes
   });
+
+  usageSummary.dateKeys = dateKeys;
+  usageSummary.todayKey = todayKey;
 
   const periodLength = dateKeys.length;
   const previousTo = moment
