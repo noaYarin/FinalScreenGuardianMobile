@@ -237,7 +237,10 @@ class ScreenGuardianAccessibilityService : AccessibilityService() {
 val usedWeek = PolicyStore.getUsedWeek(applicationContext)
 
 val remaining = PolicyStore.getRemainingMinutes(applicationContext)
-
+DeviceServerSyncHelper.reportLowTimeIfNeeded(
+    applicationContext,
+    remaining
+)
 val dailyLimit = PolicyStore.getDailyLimit(applicationContext)
 val extraMinutes = PolicyStore.getExtraMinutes(applicationContext)
 val weeklyLimit = PolicyStore.getWeeklyLimit(applicationContext)

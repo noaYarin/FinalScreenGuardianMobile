@@ -7,14 +7,19 @@ import {
   findChildNotificationsWithPagination,
   markAllChildNotificationsAsRead,
 } from "../dal/notification.dal.js";
+
 import { TargetRole } from "../constants/role.js";
 import { AppError } from "../utils/appError.js";
 import { Common as CommonErrors } from "../constants/errors.js";
 import { getIO } from "../socketHandler.js";
 import { NOTIFICATION_CREATED } from "../constants/socketEvents.js";
-import { sendNotification } from "./pushNotification.service.js";
+import {
+  sendNotification,
+  sendChildNotification,
+} from "./pushNotification.service.js";
 import ParentModel from "../models/parent.model.js";
 import { NotificationType } from "../constants/notificationType.js";
+import { NotificationSeverity } from "../constants/severity.js";
 
 function includesAny(value, keywords) {
   return keywords.some((keyword) => value.includes(keyword));
@@ -52,7 +57,17 @@ function getDefaultNotificationLink(type, targetRole) {
       return "/Child/achievements";
     }
 
-    return null;
+    if (
+      normalizedType === NotificationType.EXTENSION_REQUEST_APPROVED ||
+      normalizedType === NotificationType.EXTENSION_REQUEST_REJECTED ||
+      normalizedType === NotificationType.SCREEN_TIME_ENDING ||
+      normalizedType === NotificationType.SCREEN_TIME_ENDED ||
+      normalizedType === NotificationType.SCREEN_TIME_UPDATED
+    ) {
+      return "/Child";
+    }
+
+    return "/Child";
   }
 
   if (targetRole === TargetRole.PARENT) {
@@ -68,7 +83,7 @@ function getDefaultNotificationLink(type, targetRole) {
       return "/Parent/rewards";
     }
 
-    return null;
+    return "/Parent/systemAlerts";
   }
 
   return null;
@@ -101,9 +116,11 @@ function normalizeNotificationData({
   return {
     reason: provided.reason ?? type,
     ...provided,
+
     notificationId: notificationId ? String(notificationId) : undefined,
     type,
     severity,
+    targetRole,
     childId: childId != null ? String(childId) : undefined,
     link,
   };
@@ -145,8 +162,6 @@ function shouldSendParentPush(type, data = {}) {
     );
   }
 
-  // Push only for important bypass attempts:
-  // accessibility disabled / usage access disabled
   if (type === NotificationType.BYPASS_ATTEMPT) {
     const reason = String(data?.reason ?? "").toUpperCase();
 
@@ -156,6 +171,32 @@ function shouldSendParentPush(type, data = {}) {
       reason.includes("USAGE_STATS") ||
       reason.includes("USAGE_PERMISSION")
     );
+  }
+
+  return false;
+}
+
+/**
+ * Child push whitelist.
+ *
+ * Very important:
+ * Not every child notification becomes a push notification.
+ * Only the three requested cases are allowed:
+ * 1. Extension request approved
+ * 2. Task approved
+ * 3. Screen time ending, only when allowChildPush === true
+ */
+function shouldSendChildPush(type, data = {}) {
+  if (type === NotificationType.EXTENSION_REQUEST_APPROVED) {
+    return true;
+  }
+
+  if (type === NotificationType.TASK_APPROVED) {
+    return true;
+  }
+
+  if (type === NotificationType.SCREEN_TIME_ENDING) {
+    return data?.allowChildPush === true;
   }
 
   return false;
@@ -224,7 +265,11 @@ export async function notifyParent({
         parentId,
         title,
         description,
-        normalizePushDataForFcm(normalizedData)
+        normalizePushDataForFcm({
+          ...normalizedData,
+          targetRole: TargetRole.PARENT,
+          type,
+        })
       );
 
       console.log("[Push] notifyParent result:", pushResult);
@@ -234,6 +279,7 @@ export async function notifyParent({
   } else {
     console.log("[Push] skipped for parent notification type:", type);
   }
+
   return notification;
 }
 
@@ -274,17 +320,17 @@ export async function notifyChild({
     targetRole: TargetRole.CHILD,
   });
 
+  const socketNotification = {
+    ...(typeof notification.toObject === "function"
+      ? notification.toObject()
+      : notification),
+    data: normalizedData,
+  };
+
   try {
     const io = getIO();
 
     if (io && childId) {
-      const socketNotification = {
-        ...(typeof notification.toObject === "function"
-          ? notification.toObject()
-          : notification),
-        data: normalizedData,
-      };
-
       io.to(`child_${childId}`).emit(
         NOTIFICATION_CREATED,
         socketNotification
@@ -292,6 +338,28 @@ export async function notifyChild({
     }
   } catch (err) {
     console.error("socket emit failed in notifyChild", err.message);
+  }
+
+  if (shouldSendChildPush(type, normalizedData)) {
+    try {
+      const pushResult = await sendChildNotification(
+        parentId,
+        childId,
+        title,
+        description,
+        normalizePushDataForFcm({
+          ...normalizedData,
+          targetRole: TargetRole.CHILD,
+          type,
+        })
+      );
+
+      console.log("[Push] notifyChild result:", pushResult);
+    } catch (err) {
+      console.error("push send failed in notifyChild", err.message);
+    }
+  } else {
+    console.log("[Push] skipped for child notification type:", type);
   }
 
   return notification;
@@ -371,4 +439,176 @@ export async function registerParentFcmToken(parentId, fcmToken) {
   }
 
   return { success: true };
+}
+
+export async function registerChildFcmToken(parentId, childId, fcmToken) {
+  const updated = await ParentModel.findOneAndUpdate(
+    {
+      _id: parentId,
+      "children._id": childId,
+    },
+    {
+      $set: {
+        "children.$.fcmToken": fcmToken,
+      },
+    },
+    { new: false }
+  );
+
+  if (!updated) {
+    throw new AppError(CommonErrors.NOT_FOUND);
+  }
+
+  return { success: true };
+}
+
+export async function getChildNotificationSettings(parentId, childId) {
+  const parent = await ParentModel.findOne(
+    {
+      _id: parentId,
+      "children._id": childId,
+    },
+    {
+      "children.$": 1,
+    }
+  ).lean();
+
+  const child = parent?.children?.[0];
+
+  if (!child) {
+    throw new AppError(CommonErrors.NOT_FOUND);
+  }
+
+  return {
+    lowTimePushEnabled:
+      child.notificationSettings?.lowTimePushEnabled !== false,
+    lowTimeThresholdMinutes:
+      Number(child.notificationSettings?.lowTimeThresholdMinutes) || 5,
+  };
+}
+
+export async function updateChildNotificationSettings(
+  parentId,
+  childId,
+  payload
+) {
+  const lowTimePushEnabled = payload?.lowTimePushEnabled === true;
+
+  const updated = await ParentModel.findOneAndUpdate(
+    {
+      _id: parentId,
+      "children._id": childId,
+    },
+    {
+      $set: {
+        "children.$.notificationSettings.lowTimePushEnabled":
+          lowTimePushEnabled,
+      },
+    },
+    { new: true }
+  );
+
+  if (!updated) {
+    throw new AppError(CommonErrors.NOT_FOUND);
+  }
+
+  return {
+    lowTimePushEnabled,
+  };
+}
+
+export async function createChildScreenTimeEndingNotification({
+  parentId,
+  childId,
+  remainingMinutes,
+}) {
+  const safeRemaining = Math.max(0, Number(remainingMinutes) || 0);
+
+  const parent = await ParentModel.findOne(
+    {
+      _id: parentId,
+      "children._id": childId,
+    },
+    {
+      "children.$": 1,
+    }
+  );
+
+  const child = parent?.children?.[0];
+
+  if (!child) {
+    throw new AppError(CommonErrors.NOT_FOUND);
+  }
+
+  const settings = child.notificationSettings || {};
+  const lowTimePushEnabled = settings.lowTimePushEnabled !== false;
+  const threshold = Number(settings.lowTimeThresholdMinutes) || 5;
+
+  if (!lowTimePushEnabled) {
+    return {
+      success: true,
+      skipped: true,
+      reason: "disabled_by_child",
+    };
+  }
+
+  if (safeRemaining > threshold) {
+    return {
+      success: true,
+      skipped: true,
+      reason: "above_threshold",
+    };
+  }
+
+  const lastSentAt = settings.lowTimeLastSentAt
+    ? new Date(settings.lowTimeLastSentAt)
+    : null;
+
+  const now = new Date();
+
+  if (
+    lastSentAt &&
+    Number.isFinite(lastSentAt.getTime()) &&
+    now.getTime() - lastSentAt.getTime() < 60 * 60 * 1000
+  ) {
+    return {
+      success: true,
+      skipped: true,
+      reason: "debounced",
+    };
+  }
+
+  await ParentModel.findOneAndUpdate(
+    {
+      _id: parentId,
+      "children._id": childId,
+    },
+    {
+      $set: {
+        "children.$.notificationSettings.lowTimeLastSentAt": now,
+      },
+    }
+  );
+
+  const notification = await notifyChild({
+    parentId,
+    childId,
+    type: NotificationType.SCREEN_TIME_ENDING,
+    severity: NotificationSeverity.WARNING,
+    title: "Time is almost up",
+    description: `You have ${safeRemaining} minutes left.`,
+    data: {
+      remainingMinutes: safeRemaining,
+      thresholdMinutes: threshold,
+      reason: "SCREEN_TIME_ENDING",
+      link: "/Child",
+      allowChildPush: true,
+    },
+  });
+
+  return {
+    success: true,
+    skipped: false,
+    notification,
+  };
 }

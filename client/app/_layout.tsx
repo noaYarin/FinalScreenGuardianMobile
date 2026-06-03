@@ -54,6 +54,8 @@ import {
 import store from "../src/redux/store";
 import { fetchChildAchievementsThunk } from "@/src/redux/thunks/achievementsThunks";
 import { fetchCurrentChildProfileThunk } from "@/src/redux/thunks/childrenThunks";
+import { useChildFcmTokenSync } from "@/src/hooks/useChildFcmTokenSync";
+
 const { DeviceControl } = NativeModules;
 
 function AppStack() {
@@ -101,6 +103,7 @@ function AppStack() {
   }, [childToken, dispatch]);
 
   useParentFcmTokenSync(token, parentId);
+  useChildFcmTokenSync(childToken, activeChildId);
   const myCurrentDeviceId = useSelector((state: RootState) => state.auth.deviceId);
   const childPalette = useSelector(selectChildPalette);
   const onChildSegment = segments[0] === "Child";

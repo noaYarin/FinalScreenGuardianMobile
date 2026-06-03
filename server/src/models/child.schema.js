@@ -14,6 +14,13 @@ export const ChildSchema = new mongoose.Schema(
     coins: { type: Number, default: 0, min: 0 },
     isActive: { type: Boolean, default: true },
     role: { type: String, enum: Object.values(Role), default: Role.CHILD },
+    fcmToken: { type: String, default: null },
+
+notificationSettings: {
+  lowTimePushEnabled: { type: Boolean, default: true },
+  lowTimeThresholdMinutes: { type: Number, default: 5, min: 1, max: 60 },
+  lowTimeLastSentAt: { type: Date, default: null },
+},
     achievements: {
       type: [
         {

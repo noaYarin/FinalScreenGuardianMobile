@@ -6,12 +6,16 @@ import {
   Pressable,
   ScrollView,
   View,
+  Switch,
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, type Href } from "expo-router";
 import { useSelector } from "react-redux";
-
+import {
+  apiGetChildNotificationSettings,
+  apiUpdateChildNotificationSettings,
+} from "@/src/api/notification";
 import { selectChildPalette, selectChildThemeHue } from "@/src/redux/slices/child-theme-slice";
 import {
   fetchChildPermissionSnapshot,
@@ -64,18 +68,29 @@ export default function ChildSettingsScreen() {
   const hue = useSelector(selectChildThemeHue);
   const [snap, setSnap] = useState<ChildPermissionSnapshot | null>(null);
   const [busyKey, setBusyKey] = useState<ChildPermissionKey | null>(null);
-
+const [lowTimePushEnabled, setLowTimePushEnabled] = useState(true);
+const [notificationSettingsLoading, setNotificationSettingsLoading] =
+  useState(false);
   const refresh = useCallback(async () => {
     const next = await fetchChildPermissionSnapshot();
     setSnap(next);
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      refresh();
-    }, [refresh])
-  );
+  const loadNotificationSettings = useCallback(async () => {
+  try {
+    const data = await apiGetChildNotificationSettings();
+    setLowTimePushEnabled(data.lowTimePushEnabled !== false);
+  } catch (e) {
+    console.warn("Failed to load child notification settings", e);
+  }
+}, []);
 
+useFocusEffect(
+  useCallback(() => {
+    refresh();
+    loadNotificationSettings();
+  }, [refresh, loadNotificationSettings])
+);
   useLayoutEffect(() => {
     const sub = AppState.addEventListener("change", (s) => {
       if (s === "active") refresh();
@@ -121,7 +136,23 @@ export default function ChildSettingsScreen() {
       setBusyKey(null);
     }
   };
+const onToggleLowTimePush = async (value: boolean) => {
+  const previous = lowTimePushEnabled;
 
+  setLowTimePushEnabled(value);
+  setNotificationSettingsLoading(true);
+
+  try {
+    await apiUpdateChildNotificationSettings({
+      lowTimePushEnabled: value,
+    });
+  } catch (e) {
+    setLowTimePushEnabled(previous);
+    console.warn("Failed to update child notification settings", e);
+  } finally {
+    setNotificationSettingsLoading(false);
+  }
+};
   return (
     <ScrollView
       style={[styles.scroll, { backgroundColor: palette.screenBg }]}
@@ -210,7 +241,44 @@ export default function ChildSettingsScreen() {
           );
         })}
       </View>
+<View
+  style={[
+    styles.card,
+    { backgroundColor: palette.cardBg, borderColor: palette.cardBorder },
+  ]}
+>
+  <View style={styles.settingRow}>
+    <View style={[styles.rowIcon, { backgroundColor: palette.accentSoft }]}>
+      <MaterialCommunityIcons
+        name="timer-alert-outline"
+        size={28}
+        color={palette.accent}
+      />
+    </View>
 
+    <View style={styles.cardTextWrap}>
+      <AppText
+        weight="extraBold"
+        style={[styles.cardTitle, { color: palette.text }]}
+      >
+        Time reminder
+      </AppText>
+
+      <AppText
+        weight="medium"
+        style={[styles.cardSubtitle, { color: palette.textMuted }]}
+      >
+        Get a push notification when only a few minutes are left.
+      </AppText>
+    </View>
+
+    <Switch
+      value={lowTimePushEnabled}
+      disabled={notificationSettingsLoading}
+      onValueChange={onToggleLowTimePush}
+    />
+  </View>
+</View>
       <View style={[styles.card, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
         <View style={styles.paletteHeaderRow}>
           <MaterialCommunityIcons name="palette" size={26} color={palette.accent} />

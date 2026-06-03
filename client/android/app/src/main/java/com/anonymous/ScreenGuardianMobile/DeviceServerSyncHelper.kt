@@ -44,7 +44,10 @@ object DeviceServerSyncHelper {
 
     private const val TAG = "DeviceServerSync"
     private const val MAX_MINUTES_PER_DAY = 24 * 60
+private const val LOW_TIME_LOCAL_DEBOUNCE_MS = 60 * 60 * 1000L
 
+@Volatile
+private var lastLowTimeAlertSentAt: Long = 0L
     @Volatile
     private var lastSentUsageMinutes: Int? = null
 
@@ -281,4 +284,88 @@ fun sendUsageIfChanged(context: Context, minDeltaMinutes: Int = 1) {
             "Failed to read response"
         }
     }
+   fun reportLowTimeIfNeeded(context: Context, remainingMinutes: Int) {
+    try {
+        if (!PolicyStore.isLimitEnabled(context)) return
+
+        val mode = PolicyStore.getLimitMode(context)
+
+        if (
+            mode != PolicyStore.LIMIT_MODE_DAILY &&
+            mode != PolicyStore.LIMIT_MODE_WEEKLY
+        ) {
+            return
+        }
+
+        if (remainingMinutes < 0 || remainingMinutes == Int.MAX_VALUE) {
+            return
+        }
+
+        // Local threshold.
+        // Server has the final threshold from child.notificationSettings.
+        if (remainingMinutes > 5) {
+            return
+        }
+
+        val now = System.currentTimeMillis()
+
+        if (now - lastLowTimeAlertSentAt < LOW_TIME_LOCAL_DEBOUNCE_MS) {
+            return
+        }
+
+        val baseUrl = PolicyStore.getHeartbeatBaseUrl(context) ?: return
+        val token = PolicyStore.getHeartbeatToken(context) ?: return
+
+        lastLowTimeAlertSentAt = now
+
+        Thread {
+            var connection: HttpURLConnection? = null
+
+            try {
+                val url = URL(
+                    "${baseUrl.trimEnd('/')}/api/v1/notifications/child/screen-time-ending"
+                )
+
+                connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "POST"
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.setRequestProperty("Authorization", "Bearer $token")
+                connection.doOutput = true
+                connection.connectTimeout = 10000
+                connection.readTimeout = 10000
+
+                val body = """
+                {
+                  "remainingMinutes": $remainingMinutes
+                }
+                """.trimIndent()
+
+                connection.outputStream.use {
+                    it.write(body.toByteArray(Charsets.UTF_8))
+                }
+
+                val responseCode = connection.responseCode
+                val responseBody = readResponse(connection)
+
+                Log.d(
+                    TAG,
+                    "Low time alert responseCode=$responseCode remaining=$remainingMinutes body=$responseBody"
+                )
+
+                if (responseCode !in 200..299) {
+                    lastLowTimeAlertSentAt = 0L
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to report low time alert", e)
+
+                // Allow retry later if the request failed.
+                lastLowTimeAlertSentAt = 0L
+            } finally {
+                connection?.disconnect()
+            }
+        }.start()
+    } catch (e: Exception) {
+        Log.e(TAG, "reportLowTimeIfNeeded error", e)
+    }
+}
 }

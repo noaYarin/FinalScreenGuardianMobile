@@ -105,4 +105,9 @@ export const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 6,
   },
+  settingRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 12,
+},
 });

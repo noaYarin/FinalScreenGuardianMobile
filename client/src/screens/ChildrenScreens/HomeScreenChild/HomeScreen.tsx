@@ -122,46 +122,46 @@ const AVATAR_INFO_SLIDES: {
   iconBgColor: string;
   iconColor: string;
 }[] = [
-    {
-      icon: "trophy-outline",
-      title: "Achievements",
-      description:
-        "Check your achievements to earn XP and celebrate your progress.",
-      bgColor: "#FFF7ED",
-      borderColor: "#FED7AA",
-      iconBgColor: "#FFE8C2",
-      iconColor: "#B45309",
-    },
-    {
-      icon: "star-circle",
-      title: "XP",
-      description:
-        "XP helps your avatar level up as you complete goals and unlock achievements.",
-      bgColor: "#EEF4FF",
-      borderColor: "#CFE3FF",
-      iconBgColor: "#DBEAFE",
-      iconColor: "#2563EB",
-    },
-    {
-      icon: "trending-up",
-      title: "Levels",
-      description:
-        "The more XP you collect, the higher your avatar level becomes.",
-      bgColor: "#F3EDFF",
-      borderColor: "#E0D2FF",
-      iconBgColor: "#E9D5FF",
-      iconColor: "#6D28D9",
-    },
-    {
-      icon: "palette-outline",
-      title: "Avatar stages",
-      description: "At special levels, your avatar grows and gets a new look.",
-      bgColor: "#EEFFF4",
-      borderColor: "#CFF7DD",
-      iconBgColor: "#DCFCE7",
-      iconColor: "#16A34A",
-    },
-  ];
+  {
+    icon: "trophy-outline",
+    title: "Achievements",
+    description:
+      "Check your achievements to earn XP and celebrate your progress.",
+    bgColor: "#FFF7ED",
+    borderColor: "#FED7AA",
+    iconBgColor: "#FFE8C2",
+    iconColor: "#B45309",
+  },
+  {
+    icon: "star-circle",
+    title: "XP",
+    description:
+      "XP helps your avatar level up as you complete goals and unlock achievements.",
+    bgColor: "#EEF4FF",
+    borderColor: "#CFE3FF",
+    iconBgColor: "#DBEAFE",
+    iconColor: "#2563EB",
+  },
+  {
+    icon: "trending-up",
+    title: "Levels",
+    description:
+      "The more XP you collect, the higher your avatar level becomes.",
+    bgColor: "#F3EDFF",
+    borderColor: "#E0D2FF",
+    iconBgColor: "#E9D5FF",
+    iconColor: "#6D28D9",
+  },
+  {
+    icon: "palette-outline",
+    title: "Avatar stages",
+    description: "At special levels, your avatar grows and gets a new look.",
+    bgColor: "#EEFFF4",
+    borderColor: "#CFF7DD",
+    iconBgColor: "#DCFCE7",
+    iconColor: "#16A34A",
+  },
+];
 
 export default function HomeScreen() {
   const params = useLocalSearchParams<{ initialName?: string }>();
@@ -169,32 +169,32 @@ export default function HomeScreen() {
   const dispatch = useDispatch<AppDispatch>();
 
   const isPhoneSmall = width < 390;
-  const isPhone = width < 430;
-  const isTablet = width >= 430 && width < 900;
+  const isTablet = width >= 768;
+  const isLargeTablet = width >= 900;
 
-  const helloFontStyle = isPhone
-    ? styles.helloPhone
-    : isTablet
-      ? styles.helloTablet
-      : styles.helloLarge;
+  const helloFontStyle = isTablet
+    ? isLargeTablet
+      ? styles.helloLarge
+      : styles.helloTablet
+    : styles.helloPhone;
 
-  const timerFontStyle = isPhone
-    ? styles.timerValueFontPhone
-    : isTablet
-      ? styles.timerValueFontTablet
-      : styles.timerValueFontLarge;
+  const timerFontStyle = isTablet
+    ? isLargeTablet
+      ? styles.timerValueFontLarge
+      : styles.timerValueFontTablet
+    : styles.timerValueFontPhone;
 
-  const avatarWrapStyle = isPhone
-    ? styles.avatarWrapPhone
-    : isTablet
-      ? styles.avatarWrapTablet
-      : styles.avatarWrapLarge;
+  const avatarWrapStyle = isTablet
+    ? isLargeTablet
+      ? styles.avatarWrapLarge
+      : styles.avatarWrapTablet
+    : styles.avatarWrapPhone;
 
-  const avatarBlockWidthStyle = isPhone
-    ? styles.avatarBlockPhone
-    : isTablet
-      ? styles.avatarBlockTablet
-      : styles.avatarBlockLarge;
+  const avatarBlockWidthStyle = isTablet
+    ? isLargeTablet
+      ? styles.avatarBlockLarge
+      : styles.avatarBlockTablet
+    : styles.avatarBlockPhone;
 
   const [avatarInfoVisible, setAvatarInfoVisible] = useState(false);
   const [avatarInfoIndex, setAvatarInfoIndex] = useState(0);
@@ -426,7 +426,6 @@ export default function HomeScreen() {
               usageStats,
             })
           ).unwrap();
-
         } else {
           console.log("DeviceControl.getAppUsageStats is not available");
         }
@@ -447,12 +446,6 @@ export default function HomeScreen() {
           DeviceControl.getAppUsageStats()
             .then((usageStats: any[]) => {
               console.log("APP USAGE STATS ON APP ACTIVE:", usageStats);
-
-              const youtubeUsage = usageStats.find(
-                (app: any) =>
-                  app.packageName === "com.google.android.youtube" ||
-                  String(app.packageName).toLowerCase().includes("youtube")
-              );
 
               return dispatch(
                 syncAppUsageThunk({
@@ -546,11 +539,8 @@ export default function HomeScreen() {
       ? Math.min((screenTime.usedTodayMinutes / total) * 100, 100)
       : 0;
 
-  const isNoLimit = !screenTime.limitEnabled;
-
   const isScheduleMode = screenTime.limitMode === "SCHEDULE";
   const isWeeklyMode = screenTime.limitMode === "WEEKLY";
-
   const isDailyMode = screenTime.limitMode === "DAILY";
 
   const isDailyLimitReached =
@@ -573,6 +563,7 @@ export default function HomeScreen() {
     : isWeeklyMode
       ? "Weekly time left"
       : "Time left";
+
   const timerMainText = !screenTime.limitEnabled
     ? "No limit"
     : isScheduleMode
@@ -605,8 +596,7 @@ export default function HomeScreen() {
               ? "Your time is almost over"
               : "Use your screen time wisely";
 
-  const shouldShowProgress =
-    screenTime.limitEnabled && !isScheduleMode;
+  const shouldShowProgress = screenTime.limitEnabled && !isScheduleMode;
 
   return (
     <View
@@ -616,8 +606,14 @@ export default function HomeScreen() {
       ]}
     >
       <ScreenLayout>
-        <View style={[styles.page, isPhoneSmall && styles.pageSmall]}>
-          <View style={styles.headerCard}>
+        <View
+          style={[
+            styles.page,
+            isPhoneSmall && styles.pageSmall,
+            isTablet && styles.pageTablet,
+          ]}
+        >
+          <View style={[styles.headerCard, isTablet && styles.headerCardTablet]}>
             <View style={styles.headerRow}>
               <View style={styles.avatarWrapRow}>
                 <View style={[styles.avatarBlock, avatarBlockWidthStyle]}>
@@ -678,7 +674,7 @@ export default function HomeScreen() {
 
                   <View style={styles.coinsSummaryBadge}>
                     <View style={styles.coinsSummaryTopRow}>
-                      <CoinIcon size={18} />
+                      <CoinIcon size={isTablet ? 22 : 18} />
 
                       <AppText weight="extraBold" style={styles.coinsSummaryText}>
                         {coinsValue} coins
@@ -690,18 +686,21 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          <View style={styles.card}>
+          <View style={[styles.card, isTablet && styles.cardTablet]}>
             <View style={styles.cardTitleRowCentered}>
               <View style={[styles.cardTitleLeft, styles.cardTitleLeftCentered]}>
-                <View style={styles.iconBadge}>
+                <View style={[styles.iconBadge, isTablet && styles.iconBadgeTablet]}>
                   <MaterialCommunityIcons
                     name={ICON.time}
-                    size={18}
+                    size={isTablet ? 22 : 18}
                     color="#0F172A"
                   />
                 </View>
 
-                <AppText weight="extraBold" style={styles.cardTitle}>
+                <AppText
+                  weight="extraBold"
+                  style={[styles.cardTitle, isTablet && styles.cardTitleTablet]}
+                >
                   {timerTitle}
                 </AppText>
               </View>
@@ -726,13 +725,17 @@ export default function HomeScreen() {
 
             <AppText
               weight="bold"
-              style={[styles.timerSub, styles.timerSubCentered]}
+              style={[
+                styles.timerSub,
+                styles.timerSubCentered,
+                isTablet && styles.timerSubTablet,
+              ]}
             >
               {timerSubText}
             </AppText>
           </View>
 
-          <View style={styles.grid}>
+          <View style={[styles.grid, isTablet && styles.gridTablet]}>
             <Tile
               iconName={ICON.apps}
               label="Apps"
@@ -803,6 +806,7 @@ export default function HomeScreen() {
             onPress={() => router.push("/Child/sos" as Href)}
             style={({ pressed }) => [
               styles.panicBtn,
+              isTablet && styles.panicBtnTablet,
               pressed && styles.panicPressed,
             ]}
             accessibilityRole="button"
@@ -813,12 +817,15 @@ export default function HomeScreen() {
               <View style={styles.panicIconBadge}>
                 <MaterialCommunityIcons
                   name={ICON.panic}
-                  size={24}
+                  size={isTablet ? 30 : 24}
                   color="#fff"
                 />
               </View>
 
-              <AppText weight="extraBold" style={styles.panicText}>
+              <AppText
+                weight="extraBold"
+                style={[styles.panicText, isTablet && styles.panicTextTablet]}
+              >
                 SOS
               </AppText>
             </View>
@@ -834,7 +841,7 @@ export default function HomeScreen() {
               style={styles.avatarModalOverlay}
               onPress={() => setAvatarInfoVisible(false)}
             >
-              <Pressable style={styles.avatarInfoCard} onPress={() => { }}>
+              <Pressable style={styles.avatarInfoCard} onPress={() => {}}>
                 <View style={styles.avatarInfoImageWrap}>
                   <Image
                     source={homeAvatarImage}
@@ -1065,6 +1072,9 @@ function Tile({
   colorKey: keyof typeof TILE_COLORS;
   disabled?: boolean;
 }) {
+  const { width } = useWindowDimensions();
+  const isTabletLayout = width >= 768;
+
   const c = TILE_COLORS[colorKey];
 
   return (
@@ -1072,6 +1082,7 @@ function Tile({
       disabled={disabled}
       style={({ pressed }) => [
         styles.tile,
+        isTabletLayout && styles.tileTablet,
         { backgroundColor: c.bg, borderColor: c.border },
         pressed && !disabled && styles.tilePressed,
         disabled && styles.tileDisabled,
@@ -1081,21 +1092,36 @@ function Tile({
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
     >
-      <View style={styles.tileInner}>
+      <View style={[styles.tileInner, isTabletLayout && styles.tileInnerTablet]}>
         <View style={styles.tileIconZone}>
-          <View style={[styles.tileIconWrap, disabled && styles.tileIconDisabled]}>
+          <View
+            style={[
+              styles.tileIconWrap,
+              isTabletLayout && styles.tileIconWrapTablet,
+              disabled && styles.tileIconDisabled,
+            ]}
+          >
             <MaterialCommunityIcons
               name={iconName}
-              size={26}
+              size={isTabletLayout ? 36 : 26}
               color={disabled ? "#9CA3AF" : c.icon}
             />
           </View>
         </View>
 
-        <View style={styles.tileLabelZone}>
+        <View
+          style={[
+            styles.tileLabelZone,
+            isTabletLayout && styles.tileLabelZoneTablet,
+          ]}
+        >
           <AppText
             weight="bold"
-            style={[styles.tileText, disabled && styles.tileTextDisabled]}
+            style={[
+              styles.tileText,
+              isTabletLayout && styles.tileTextTablet,
+              disabled && styles.tileTextDisabled,
+            ]}
             numberOfLines={2}
           >
             {label}
