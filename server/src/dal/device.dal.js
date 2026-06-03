@@ -215,6 +215,23 @@ export async function resetDailyScreenTime(deviceId, now, history = null) {
     fieldsToSet["screenTime.dailyUsageHistory"] = history;
   }
 
+  //reset apps usage
+  const nextApplications = (device.applications ?? []).map((app) => {
+    const currentScreenTime = app.screenTime ?? {};
+
+    return {
+      ...app,
+      screenTime: {
+        ...currentScreenTime,
+        usedTodayMinutes: 0,
+        extraMinutesToday: 0,
+        lastDailyResetAt: now
+      }
+    };
+  });
+
+  fieldsToSet.applications = nextApplications;
+
   return DeviceModel.findByIdAndUpdate(
     deviceId,
     {
@@ -247,6 +264,22 @@ export async function resetWeeklyScreenTime(deviceId, now, weeklyHistory = null)
   if (Array.isArray(weeklyHistory)) {
     fieldsToSet["screenTime.weeklyUsageHistory"] = weeklyHistory;
   }
+
+  //reset apps
+  const nextApplications = (device.applications ?? []).map((app) => {
+    const currentScreenTime = app.screenTime ?? {};
+
+    return {
+      ...app,
+      screenTime: {
+        ...currentScreenTime,
+        usedWeekMinutes: 0,
+        lastWeeklyResetAt: now
+      }
+    };
+  });
+
+  fieldsToSet.applications = nextApplications;
 
   return DeviceModel.findByIdAndUpdate(
     deviceId,
