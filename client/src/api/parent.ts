@@ -121,6 +121,8 @@ export type ScreenTimeUsageReport = {
   dailyAverageMinutes: number;
   monthlyAverageMinutes?: number;
   topApp: string | null;
+  dailyTopApp?: string | null;
+  weeklyTopApp?: string | null;
   hasLinkedDevice: boolean;
 };
 
@@ -152,6 +154,7 @@ export type ParentAnalyticsTopApplication = {
   packageName: string;
   usedTodayMinutes: number;
   usedWeekMinutes: number;
+  usedRangeMinutes?: number;
   dailyLimitMinutes: number;
   weeklyLimitMinutes: number;
   isBlocked: boolean;

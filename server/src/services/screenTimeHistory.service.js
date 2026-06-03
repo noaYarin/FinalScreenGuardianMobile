@@ -4,6 +4,7 @@ import {
   getJerusalemWeekDateKeys,
   isSameJerusalemDay,
   isSameJerusalemWeek,
+  iterateJerusalemDateKeys,
   JERUSALEM_TZ,
   WEEKDAY_CHART_LABELS
 } from "../utils/time.js";
@@ -251,9 +252,9 @@ export async function archiveScreenTimeDayBeforeReset(device, now = new Date()) 
   const archiveDateKey = screenTime.lastDailyResetAt
     ? getJerusalemDateKey(new Date(screenTime.lastDailyResetAt))
     : moment
-        .tz(todayKey, "YYYY-MM-DD", JERUSALEM_TZ)
-        .subtract(1, "day")
-        .format("YYYY-MM-DD");
+      .tz(todayKey, "YYYY-MM-DD", JERUSALEM_TZ)
+      .subtract(1, "day")
+      .format("YYYY-MM-DD");
 
   return upsertHistoryEntry(history, archiveDateKey, usedTodayMinutes);
 }
@@ -316,25 +317,48 @@ export function isDeviceWeekResetDue(device, now = new Date()) {
   return !lastWeeklyReset || !isSameJerusalemWeek(lastWeeklyReset, now);
 }
 
-// Finds the top application by used today minutes
-function findTopApp(applications) {
+function getAppUsedMinutesForDateKey(appScreenTime, dateKey, todayKey) {
+  const history = Array.isArray(appScreenTime?.dailyUsageHistory)
+    ? appScreenTime.dailyUsageHistory
+    : [];
+
+  const entry = history.find((item) => item?.dateKey === dateKey);
+
+  if (entry) {
+    return Math.max(0, Number(entry.usedMinutes ?? 0));
+  }
+
+  if (dateKey === todayKey) {
+    return Math.max(0, Number(appScreenTime?.usedTodayMinutes ?? 0));
+  }
+
+  return 0;
+}
+
+function findTopAppForDateKeys(applications, dateKeys, todayKey) {
   if (!Array.isArray(applications) || applications.length === 0) {
     return null;
   }
 
-  const sorted = [...applications].sort(
-    (left, right) =>
-      Number(right?.screenTime?.usedTodayMinutes ?? 0) -
-      Number(left?.screenTime?.usedTodayMinutes ?? 0)
-  );
-  const top = sorted[0];
-  const usedMinutes = Number(top?.screenTime?.usedTodayMinutes ?? 0);
+  const sorted = applications
+    .map((app) => {
+      const screenTime = app?.screenTime ?? {};
 
-  if (!top || usedMinutes <= 0) {
-    return null;
-  }
+      const usedMinutes = dateKeys.reduce(
+        (total, dateKey) =>
+          total + getAppUsedMinutesForDateKey(screenTime, dateKey, todayKey),
+        0
+      );
 
-  return top.appName ?? top.name ?? top.packageName ?? null;
+      return {
+        name: app?.appName ?? app?.name ?? app?.packageName ?? null,
+        usedMinutes
+      };
+    })
+    .filter((app) => app.name && app.usedMinutes > 0)
+    .sort((left, right) => right.usedMinutes - left.usedMinutes);
+
+  return sorted[0]?.name ?? null;
 }
 
 // Builds a usage report for the screen time
@@ -398,6 +422,24 @@ export function buildScreenTimeUsageReport(device, now = new Date()) {
     days.some((day) => day.usedMinutes > 0) ||
     weeks.some((week) => week.usedMinutes > 0);
 
+  const dailyChartDateKeys = days.map((day) => day.dateKey);
+
+  const weeklyChartDateKeys = weeks.flatMap((week) =>
+    iterateJerusalemDateKeys(week.weekStartKey, week.weekEndKey)
+  );
+
+  const dailyTopApp = findTopAppForDateKeys(
+    device?.applications,
+    dailyChartDateKeys,
+    todayKey
+  );
+
+  const weeklyTopApp = findTopAppForDateKeys(
+    device?.applications,
+    weeklyChartDateKeys,
+    todayKey
+  );
+
   return {
     days,
     weeks,
@@ -407,7 +449,9 @@ export function buildScreenTimeUsageReport(device, now = new Date()) {
       daysWithData > 0 ? Math.round(weeklyTotalMinutes / daysWithData) : 0,
     monthlyAverageMinutes:
       weeksWithData > 0 ? Math.round(monthlyTotalMinutes / weeksWithData) : 0,
-    topApp: hasChartUsage ? findTopApp(device?.applications) ?? null : null,
+    topApp: hasChartUsage ? dailyTopApp : null,
+    dailyTopApp: hasChartUsage ? dailyTopApp : null,
+    weeklyTopApp: hasChartUsage ? weeklyTopApp : null,
     hasLinkedDevice: true
   };
 }

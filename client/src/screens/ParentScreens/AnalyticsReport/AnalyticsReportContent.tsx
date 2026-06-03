@@ -39,6 +39,10 @@ export default function AnalyticsReportContent({
   return (
     <>
       <AppText style={styles.brand}>Screen Guardian</AppText>
+
+      <AppText weight="extraBold" style={styles.title}>
+        Smart screen-time report
+      </AppText>
       <AppText style={styles.meta}>
         For: {report.childName}
         {"\n"}Period: {report.fromLabel} – {report.toLabel}
@@ -87,7 +91,7 @@ export default function AnalyticsReportContent({
                 Top applications
               </AppText>
               <AppText style={styles.sectionHeaderSubtitle}>
-                Based on the latest synced daily and weekly app counters
+                Apps with the highest recorded usage in the selected period
               </AppText>
             </View>
           </View>

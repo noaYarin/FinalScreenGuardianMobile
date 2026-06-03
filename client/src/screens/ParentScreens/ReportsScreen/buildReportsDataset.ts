@@ -113,7 +113,7 @@ export function buildEmptyUsageReport(): ScreenTimeUsageReport {
     monthlyAverageMinutes: 0,
     topApp: null,
     hasLinkedDevice: true,
-  } 
+  }
 }
 
 export function buildReportsDatasetFromReport(
@@ -121,8 +121,19 @@ export function buildReportsDatasetFromReport(
   report: ScreenTimeUsageReport
 ): ReportsDataset {
   const hasChartUsage = reportHasChartUsage(report);
-  const topAppLabel =
-    hasChartUsage && report.topApp?.trim() ? report.topApp : NO_DATA;
+  const dailyTopAppLabel =
+    hasChartUsage && report.dailyTopApp?.trim()
+      ? report.dailyTopApp
+      : hasChartUsage && report.topApp?.trim()
+        ? report.topApp
+        : NO_DATA;
+
+  const weeklyTopAppLabel =
+    hasChartUsage && report.weeklyTopApp?.trim()
+      ? report.weeklyTopApp
+      : hasChartUsage && report.topApp?.trim()
+        ? report.topApp
+        : NO_DATA;
 
   if (timeRange === "weekly") {
     const bars = (report.weeks ?? buildEmptyWeeks()).map((week) => ({
@@ -139,7 +150,7 @@ export function buildReportsDatasetFromReport(
       metrics: {
         dailyAverageMinutes: report.monthlyAverageMinutes ?? 0,
         weeklyTotalMinutes: report.monthlyTotalMinutes ?? 0,
-        topApp: topAppLabel,
+        topApp: weeklyTopAppLabel,
       },
     };
   }
@@ -157,7 +168,7 @@ export function buildReportsDatasetFromReport(
     metrics: {
       dailyAverageMinutes: report.dailyAverageMinutes ?? 0,
       weeklyTotalMinutes: report.weeklyTotalMinutes ?? 0,
-      topApp: topAppLabel,
+      topApp: dailyTopAppLabel,
     },
   };
 }
@@ -175,7 +186,7 @@ export function screenTimeSnapshotFromDevice(
   const isLimitEnabled = screenTime.isLimitEnabled === true;
   const dailyLimitMinutes = isLimitEnabled
     ? Number(screenTime.dailyLimitMinutes ?? 0) +
-      Number(screenTime.extraMinutesToday ?? 0)
+    Number(screenTime.extraMinutesToday ?? 0)
     : null;
 
   return {
