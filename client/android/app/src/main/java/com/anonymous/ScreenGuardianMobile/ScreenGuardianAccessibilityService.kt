@@ -100,16 +100,6 @@ class ScreenGuardianAccessibilityService : AccessibilityService() {
     // Keep the last foreground package so we can re-evaluate lock after sync/socket updates
     private var lastForegroundPackage: String? = null
 
-    // List of packages that should not be blocked
-    private val allowedPackages = setOf(
-        "com.screenguardianmobile",
-        "com.google.android.dialer",
-        "com.samsung.android.dialer",
-        "com.android.dialer",
-        "com.android.server.telecom",
-        "com.android.incallui"
-    )
-
     /**
      * Main periodic loop responsible for:
      * 1. Ensuring socket is connected (realtime path)
@@ -195,8 +185,15 @@ class ScreenGuardianAccessibilityService : AccessibilityService() {
         val currentPackage = event.packageName?.toString()
         lastForegroundPackage = currentPackage
 
-        Log.d(TAG, "Window changed: $currentPackage")
+        // Save the foreground package globally so BlockScreenActivity can close itself
+       // when the child moves to an allowed package such as home or our app.
+       PolicyStore.setLastForegroundPackage(applicationContext, currentPackage)
 
+       val currentClassName = event.className?.toString()
+     Log.d(
+       TAG,
+       "ACCESSIBILITY EVENT: package=$currentPackage class=$currentClassName"
+     )
         try {
             // Do not update usage here.
             // Usage should be updated only from the periodic loop to avoid duplicated calculations.
@@ -232,47 +229,46 @@ class ScreenGuardianAccessibilityService : AccessibilityService() {
     private fun evaluateLock(currentPackage: String?) {
         val now = SystemClock.elapsedRealtime()
 
+        // Keep the latest package in PolicyStore for checks that run outside
+       // the AccessibilityService, especially inside BlockScreenActivity.
+       PolicyStore.setLastForegroundPackage(applicationContext, currentPackage)
+
         // Read current state from PolicyStore
       val usedToday = PolicyStore.getUsedToday(applicationContext)
-val usedWeek = PolicyStore.getUsedWeek(applicationContext)
+      val usedWeek = PolicyStore.getUsedWeek(applicationContext)
 
-val remaining = PolicyStore.getRemainingMinutes(applicationContext)
-DeviceServerSyncHelper.reportLowTimeIfNeeded(
-    applicationContext,
-    remaining
-)
-val dailyLimit = PolicyStore.getDailyLimit(applicationContext)
-val extraMinutes = PolicyStore.getExtraMinutes(applicationContext)
-val weeklyLimit = PolicyStore.getWeeklyLimit(applicationContext)
+     val remaining = PolicyStore.getRemainingMinutes(applicationContext)
+     DeviceServerSyncHelper.reportLowTimeIfNeeded(
+         applicationContext,
+         remaining
+     )
+     val dailyLimit = PolicyStore.getDailyLimit(applicationContext)
+     val extraMinutes = PolicyStore.getExtraMinutes(applicationContext)
+     val weeklyLimit = PolicyStore.getWeeklyLimit(applicationContext)
 
 val limitMode = PolicyStore.getLimitMode(applicationContext)
 
-if (currentPackage != null && isPackageAllowed(currentPackage)) {
-    Log.d(TAG, "Allowed package: $currentPackage")
-    return
-}
+// First decide whether there is any active lock reason.
+// This keeps the flow close to the old working version.
+val deviceLocked = PolicyStore.shouldLockDevice(applicationContext)
 
 val isBlockedApp =
     currentPackage != null &&
         PolicyStore.isAppBlocked(applicationContext, currentPackage)
 
-val policyBlockReason = PolicyStore.resolveBlockReason(applicationContext)
-
-val blockReason = when {
-    isBlockedApp -> "APP_BLOCKED"
-    policyBlockReason.isNotBlank() -> policyBlockReason
-    else -> ""
-}
+val shouldLock =
+    PolicyStore.shouldShowBlockScreen(applicationContext, currentPackage)
+    
+// Resolve the UI reason with correct priority:
+// device-level locks first, app-specific block only as fallback.
+val blockReason =
+    PolicyStore.resolveBlockReasonForPackage(applicationContext, currentPackage)
 
 if (blockReason.isNotBlank()) {
     PolicyStore.setBlockReason(applicationContext, blockReason)
 } else {
     PolicyStore.clearBlockReason(applicationContext)
 }
-
-val shouldLock =
-    PolicyStore.shouldLockDevice(applicationContext) ||
-        isBlockedApp
 Log.d(
     TAG,
     "mode=$limitMode usedToday=$usedToday usedWeek=$usedWeek remaining=$remaining daily=$dailyLimit weekly=$weeklyLimit extra=$extraMinutes shouldLock=$shouldLock reason=$blockReason pkg=$currentPackage"
@@ -330,30 +326,13 @@ Log.d(
             putExtra("blockedPackageName", currentPackage)
         }
 
-        Log.d(TAG, "Opening BlockScreenActivity")
+        Log.d(
+    TAG,
+    "OPEN block pkg=$currentPackage last=$lastForegroundPackage reason=$blockReason isOpen=${BlockScreenActivity.isOpen}"
+)
+
         startActivity(intent)
     }
 
-    /**
-     * Check whether a package is safe to allow even when device is blocked.
-     */
- private fun isPackageAllowed(packageName: String): Boolean {
-    val selfPackage = applicationContext.packageName
-
-    return packageName == selfPackage ||
-        allowedPackages.contains(packageName) ||
-        isLauncherPackage(packageName)
-}
-
-private fun isLauncherPackage(packageName: String): Boolean {
-    return packageName.startsWith("com.android.launcher") ||
-        packageName.startsWith("com.google.android.apps.nexuslauncher") ||
-        packageName.startsWith("com.sec.android.app.launcher") ||
-        packageName.startsWith("com.samsung.android.launcher") ||
-        packageName.startsWith("com.miui.home") ||
-        packageName.startsWith("com.huawei.android.launcher") ||
-        packageName.startsWith("com.oppo.launcher") ||
-        packageName.startsWith("com.vivo.launcher") ||
-        packageName.startsWith("com.oneplus.launcher")
-}
+  
 }

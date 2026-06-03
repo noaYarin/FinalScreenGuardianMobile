@@ -93,7 +93,7 @@ export async function createRequest({ parentId, childId, deviceId, requestedMinu
             severity: NotificationSeverity.INFO,
             title: "New Extension Request",
             description: `${childName} is requesting an extension of ${minutes} minutes.`,
-            data: { link: "/Parent/pending-requests", requestId: String(request._id) }
+            data: { requestId: String(request._id) }
         });
     } catch (err) {
         console.error("notifyParent failed in createRequest", err.message);

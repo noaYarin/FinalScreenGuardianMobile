@@ -60,6 +60,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 import android.content.Context
 import java.util.Calendar
+import android.content.Intent
+import android.content.pm.PackageManager
 
 object PolicyStore {
 
@@ -89,6 +91,10 @@ object PolicyStore {
 
     private const val KEY_CHILD_ID = "childId"
     private const val KEY_PARENT_ID = "parentId"
+
+    // Stores the last foreground package reported by the AccessibilityService.
+    // BlockScreenActivity uses this value to know if it should stay open or close.
+    private const val KEY_LAST_FOREGROUND_PACKAGE = "lastForegroundPackage"
     
     private const val KEY_BLOCKED_APPS = "blockedApps"
 
@@ -104,6 +110,22 @@ object PolicyStore {
     
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+        // ---------- Foreground Package ----------
+
+    // Saves the latest foreground package so the block screen can decide
+    // whether it is still allowed to stay visible.
+  fun setLastForegroundPackage(context: Context, packageName: String?) {
+      prefs(context)
+          .edit()
+          .putString(KEY_LAST_FOREGROUND_PACKAGE, packageName ?: "")
+          .apply()
+  }
+
+  // Returns the latest foreground package detected by the AccessibilityService.
+  fun getLastForegroundPackage(context: Context): String {
+      return prefs(context).getString(KEY_LAST_FOREGROUND_PACKAGE, "") ?: ""
+  }
 
     // ---------- Lock State ----------
 
@@ -456,6 +478,102 @@ fun resolveBlockReason(context: Context): String {
             LIMIT_MODE_DAILY -> BLOCK_REASON_DAILY_LIMIT_REACHED
             else -> ""
         }
+    }
+
+    return ""
+}
+
+// ---------- Block Screen Visibility ----------
+
+// Returns true for packages that must never be covered by the block screen,
+// such as our own app, the home launcher, phone calls, settings and system UI.
+fun isPackageAllowed(context: Context, packageName: String?): Boolean {
+    if (packageName.isNullOrBlank()) return true
+
+    if (packageName == context.packageName) return true
+
+    val allowedPackages = setOf(
+        "com.google.android.dialer",
+        "com.samsung.android.dialer",
+        "com.android.dialer",
+        "com.android.server.telecom",
+        "com.android.incallui",
+        "com.android.settings",
+        "com.android.systemui",
+        "com.google.android.permissioncontroller",
+        "com.android.permissioncontroller",
+        "com.google.android.googlequicksearchbox"
+    )
+
+    if (allowedPackages.contains(packageName)) return true
+
+    if (isLauncherPackage(context, packageName)) return true
+
+    return false
+}
+
+// Detects the current Android launcher/home package.
+// This is better than relying only on hardcoded launcher package names.
+private fun isLauncherPackage(context: Context, packageName: String): Boolean {
+    return try {
+        val intent = Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_HOME)
+        }
+
+        val resolveInfo = context.packageManager.resolveActivity(
+            intent,
+            PackageManager.MATCH_DEFAULT_ONLY
+        )
+
+        val launcherPackage = resolveInfo?.activityInfo?.packageName
+
+        packageName == launcherPackage ||
+            packageName.startsWith("com.android.launcher") ||
+            packageName.startsWith("com.google.android.apps.nexuslauncher") ||
+            packageName.startsWith("com.sec.android.app.launcher") ||
+            packageName.startsWith("com.samsung.android.launcher") ||
+            packageName.startsWith("com.miui.home") ||
+            packageName.startsWith("com.huawei.android.launcher") ||
+            packageName.startsWith("com.oppo.launcher") ||
+            packageName.startsWith("com.vivo.launcher") ||
+            packageName.startsWith("com.oneplus.launcher")
+    } catch (_: Exception) {
+        packageName.startsWith("com.android.launcher") ||
+            packageName.startsWith("com.google.android.apps.nexuslauncher") ||
+            packageName.startsWith("com.sec.android.app.launcher") ||
+            packageName.startsWith("com.samsung.android.launcher") ||
+            packageName.startsWith("com.miui.home") ||
+            packageName.startsWith("com.huawei.android.launcher") ||
+            packageName.startsWith("com.oppo.launcher") ||
+            packageName.startsWith("com.vivo.launcher") ||
+            packageName.startsWith("com.oneplus.launcher")
+    }
+}
+
+// Central decision for whether BlockScreenActivity should be visible now.
+// A lock policy alone is not enough: the current foreground package must also be blockable.
+fun shouldShowBlockScreen(context: Context, currentPackage: String?): Boolean {
+    if (currentPackage.isNullOrBlank()) return false
+
+    if (isPackageAllowed(context, currentPackage)) return false
+
+    val deviceLocked = shouldLockDevice(context)
+    val appBlocked = isAppBlocked(context, currentPackage)
+
+    return deviceLocked || appBlocked
+}
+
+// Resolves the reason that should be shown to the child.
+// Device-level locks have priority over app-specific blocks.
+fun resolveBlockReasonForPackage(context: Context, currentPackage: String?): String {
+    val deviceReason = resolveBlockReason(context)
+
+    if (deviceReason.isNotBlank()) {
+        return deviceReason
+    }
+
+    if (!currentPackage.isNullOrBlank() && isAppBlocked(context, currentPackage)) {
+        return "APP_BLOCKED"
     }
 
     return ""
