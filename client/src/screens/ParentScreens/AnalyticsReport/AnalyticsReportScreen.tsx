@@ -77,10 +77,13 @@ export default function AnalyticsReportScreen() {
   }, [loadReport]);
 
   const reportHtml = useMemo(
-    () => (report?.indicators ? buildAnalyticsReportHtml(report) : ""),
-    [report]
+    () =>
+      report?.indicators
+        ? buildAnalyticsReportHtml(report, aiInsights)
+        : "",
+    [report, aiInsights]
   );
-
+  
   const onSharePdf = async () => {
     if (!report || !reportHtml) {
       return;
