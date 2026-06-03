@@ -322,7 +322,7 @@ export default function ParentReportsScreen() {
               }
             >
               <AppText weight="bold" style={styles.generateReportBtnText}>
-                Generate Smart report
+                Generate Smart Report
               </AppText>
             </Pressable>
           }

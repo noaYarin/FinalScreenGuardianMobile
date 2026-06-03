@@ -115,6 +115,18 @@ function extractComparableReport(report) {
         extensionRequestsCount: normalizeNumber(
             indicators.extensionRequestsCount
         ),
+        topApplications: Array.isArray(report?.topApplications)
+            ? report.topApplications.map((app) => ({
+                name: String(app?.name || "Unknown app"),
+                packageName: String(app?.packageName || ""),
+                usedRangeMinutes: normalizeNumber(app?.usedRangeMinutes),
+                usedTodayMinutes: normalizeNumber(app?.usedTodayMinutes),
+                usedWeekMinutes: normalizeNumber(app?.usedWeekMinutes),
+                isBlocked: app?.isBlocked === true,
+                isLimitEnabled: app?.isLimitEnabled === true,
+                limitMode: app?.limitMode || "NONE",
+            }))
+            : [],
     };
 }
 
@@ -122,7 +134,12 @@ function buildComparison(currentReport, previousReport) {
     const current = extractComparableReport(currentReport);
     const previous = extractComparableReport(previousReport);
 
+    const hasCurrentUsageData = current.totalMinutes > 0;
+    const hasPreviousUsageData = previous.totalMinutes > 0;
+
     return {
+        hasCurrentUsageData,
+        hasPreviousUsageData,
         totalMinutesChangePercent: percentChange(
             current.totalMinutes,
             previous.totalMinutes
@@ -154,7 +171,7 @@ function buildFallbackInsights(aiContext, reason = "fallback") {
     const current = aiContext.currentPeriod;
     const comparison = aiContext.comparison;
     const insights = [];
-
+    const hasPreviousUsageData = comparison.hasPreviousUsageData === true;
     if (!aiContext.device) {
         insights.push({
             title: "No linked device",
@@ -176,7 +193,22 @@ function buildFallbackInsights(aiContext, reason = "fallback") {
             type: "info",
         });
     } else {
-        if (comparison.totalMinutesChangePercent != null) {
+        if (!hasPreviousUsageData) {
+            insights.push({
+                title: "Limited comparison data",
+                message:
+                    "There is not enough previous-week usage data for a reliable trend comparison yet.",
+                type: "info",
+            });
+
+            if (current.extensionRequestsCount > 0) {
+                insights.push({
+                    title: "Extension requests this week",
+                    message: `${current.extensionRequestsCount} extension requests were submitted in the last 7 days.`,
+                    type: "info",
+                });
+            }
+        } else {
             const change = comparison.totalMinutesChangePercent;
 
             if (change < 0) {
@@ -194,31 +226,31 @@ function buildFallbackInsights(aiContext, reason = "fallback") {
                     type: "warning",
                 });
             }
-        }
 
-        if (comparison.limitExceededDaysChange < 0) {
-            insights.push({
-                title: "Fewer limit exceedances",
-                message:
-                    "The child exceeded the screen-time limit on fewer days than in the previous week.",
-                type: "positive",
-            });
-        } else if (comparison.limitExceededDaysChange > 0) {
-            insights.push({
-                title: "More limit exceedances",
-                message:
-                    "The child exceeded the screen-time limit on more days than in the previous week.",
-                type: "recommendation",
-            });
-        }
+            if (comparison.limitExceededDaysChange < 0) {
+                insights.push({
+                    title: "Fewer limit exceedances",
+                    message:
+                        "The child exceeded the screen-time limit on fewer days than in the previous week.",
+                    type: "positive",
+                });
+            } else if (comparison.limitExceededDaysChange > 0) {
+                insights.push({
+                    title: "More limit exceedances",
+                    message:
+                        "The child exceeded the screen-time limit on more days than in the previous week.",
+                    type: "recommendation",
+                });
+            }
 
-        if (comparison.extensionRequestsChange > 0) {
-            insights.push({
-                title: "More extension requests",
-                message:
-                    "Extension requests increased this week. It may be worth checking which days felt harder to follow.",
-                type: "recommendation",
-            });
+            if (comparison.extensionRequestsChange > 0) {
+                insights.push({
+                    title: "More extension requests",
+                    message:
+                        "Extension requests increased this week. It may be worth checking which days felt harder to follow.",
+                    type: "recommendation",
+                });
+            }
         }
 
         if (insights.length === 0) {
@@ -230,7 +262,7 @@ function buildFallbackInsights(aiContext, reason = "fallback") {
             });
         }
     }
-
+    
     const riskLevel =
         current.limitExceededDays >= 3 ||
             (comparison.totalMinutesChangePercent != null &&
@@ -260,21 +292,46 @@ function buildFallbackInsights(aiContext, reason = "fallback") {
 function buildPrompt(aiContext) {
     return `
 You are generating short, safe, parent-facing screen-time insights for a parental-control app.
-
 Important rules:
 - Write in English.
 - Analyze the last 7 days compared with the previous 7 days.
-- If the previous period has 0 total minutes, do not describe a percentage increase or decrease. Explain that there is not enough previous-week data for a reliable trend comparison.
-- If no screen-time limit is enabled, mention that limit exceedance analysis is not available.
+- Return JSON only. No markdown.
+- Be practical, calm, and non-judgmental.
 - Do not diagnose mental health or make emotional assumptions.
 - Do not mention private personal details.
-- Be practical, calm, and non-judgmental.
 - Do not tell the parent to punish the child.
 - Do not change limits automatically. Only suggest actions.
-- Use screen-time totals, daily averages, limit exceedances, extension requests, tasks, permissions and lock state.
-- If permissions are disabled or unknown, mention that usage data may be incomplete.
-- Return JSON only. No markdown.
 
+Data accuracy rules:
+- If the current period has 0 total minutes, do not generate behavioral conclusions. Say that there is not enough current usage data.
+- If the previous period has 0 total minutes, do not describe a percentage increase or decrease. Explain that there is not enough previous-week data for a reliable trend comparison.
+- If no screen-time limit is enabled, mention that limit exceedance analysis is not available.
+- If permissions are disabled or unknown, mention that usage data may be incomplete.
+- Do not infer evening, bedtime, school-time, or time-of-day behavior unless the provided data explicitly includes time-of-day usage.
+
+Insight rules:
+- Return 1 to 3 insights.
+- Choose the insights that would be most useful for a parent to understand the child’s screen-time behavior.
+- At least one insight should describe the most important supported conclusion from the data.
+- Do not repeat the same message in the summary and the insights.
+- Do not repeat the same idea in multiple insights.
+- The summary should be a broad overall conclusion.
+- Each insight should add a specific detail, explanation, or recommendation that is not already stated in the summary.
+- If the data is limited, include one "info" insight explaining what is missing or why conclusions are limited.
+- Use insight types carefully:
+  - "positive" for clear improvement, healthy/stable behavior, or good progress.
+  - "warning" for a clear increase, missing permissions, or a potentially concerning supported pattern.
+  - "recommendation" for a practical suggestion the parent may act on.
+  - "info" for neutral context, missing data, limited comparison data, or general explanation.
+
+App usage rules:
+- Use currentPeriod.topApplications and previousPeriod.topApplications when app usage is relevant.
+- Mention app-specific insights only when supported by topApplications in the provided data.
+- If app usage is relevant, compare current top applications with previous-period top applications and mention meaningful app patterns when supported.
+- If topApplications is empty, do not mention specific app usage patterns or app trends.
+- Do not invent app names or usage patterns.
+
+Use screen-time totals, daily averages, limit exceedances, extension requests, tasks, top applications, permissions and lock state.
 Data:
 ${JSON.stringify(aiContext, null, 2)}
 
@@ -297,8 +354,8 @@ Return exactly this JSON shape:
   ]
 }
 
-Maximum 3 insights and maximum 2 recommendedActions.
-`;
+Return 1 to 3 insights and 0 to 2 recommendedActions.
+Recommended actions should be practical and supported by the data.`;
 }
 
 function cleanJsonText(text) {

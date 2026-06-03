@@ -2,6 +2,43 @@ import DeviceModel from "../models/device.model.js";
 import { Common as CommonErrors } from "../constants/errors.js";
 import { assertValidObjectId } from "../utils/validators.js";
 import { LimitMode } from "../constants/limitMode.js";
+import {
+  getJerusalemDateKey,
+  getJerusalemWeekDateKeys,
+} from "../utils/time.js";
+
+const MAX_APP_DAILY_HISTORY_ENTRIES = 35;
+
+function buildAppDailyUsageHistory(history, todayKey, usedTodayMinutes) {
+  const safeHistory = Array.isArray(history) ? history : [];
+  const safeMinutes = Math.max(0, Number(usedTodayMinutes ?? 0));
+
+  const withoutToday = safeHistory.filter(
+    (entry) => entry?.dateKey !== todayKey
+  );
+
+  return [
+    ...withoutToday,
+    {
+      dateKey: todayKey,
+      usedMinutes: safeMinutes,
+      recordedAt: new Date()
+    }
+  ].slice(-MAX_APP_DAILY_HISTORY_ENTRIES);
+}
+
+function calculateAppWeeklyUsageFromHistory(history, now) {
+  const weekKeys = getJerusalemWeekDateKeys(now);
+  const safeHistory = Array.isArray(history) ? history : [];
+
+  return safeHistory.reduce((total, entry) => {
+    if (!weekKeys.includes(entry?.dateKey)) {
+      return total;
+    }
+
+    return total + Math.max(0, Number(entry.usedMinutes ?? 0));
+  }, 0);
+}
 
 export async function createDevice(doc) {
   return DeviceModel.create(doc);
@@ -111,7 +148,7 @@ export async function addExtraMinutesToDevice(deviceId, minutes) {
   if (!device) {
     return null;
   }
-  
+
   if (
     device.screenTime?.isLimitEnabled !== true ||
     device.screenTime?.limitMode !== LimitMode.DAILY
@@ -178,6 +215,23 @@ export async function resetDailyScreenTime(deviceId, now, history = null) {
     fieldsToSet["screenTime.dailyUsageHistory"] = history;
   }
 
+  //reset apps usage
+  const nextApplications = (device.applications ?? []).map((app) => {
+    const currentScreenTime = app.screenTime ?? {};
+
+    return {
+      ...app,
+      screenTime: {
+        ...currentScreenTime,
+        usedTodayMinutes: 0,
+        extraMinutesToday: 0,
+        lastDailyResetAt: now
+      }
+    };
+  });
+
+  fieldsToSet.applications = nextApplications;
+
   return DeviceModel.findByIdAndUpdate(
     deviceId,
     {
@@ -210,6 +264,22 @@ export async function resetWeeklyScreenTime(deviceId, now, weeklyHistory = null)
   if (Array.isArray(weeklyHistory)) {
     fieldsToSet["screenTime.weeklyUsageHistory"] = weeklyHistory;
   }
+
+  //reset apps
+  const nextApplications = (device.applications ?? []).map((app) => {
+    const currentScreenTime = app.screenTime ?? {};
+
+    return {
+      ...app,
+      screenTime: {
+        ...currentScreenTime,
+        usedWeekMinutes: 0,
+        lastWeeklyResetAt: now
+      }
+    };
+  });
+
+  fieldsToSet.applications = nextApplications;
 
   return DeviceModel.findByIdAndUpdate(
     deviceId,
@@ -477,6 +547,7 @@ export async function syncDeviceApplicationsUsage(deviceId, usageStats) {
   );
 
   const now = new Date();
+  const todayKey = getJerusalemDateKey(now);
 
   const nextApplications = (device.applications ?? []).map((app) => {
     const usage = usageByPackage.get(app.packageName);
@@ -485,13 +556,30 @@ export async function syncDeviceApplicationsUsage(deviceId, usageStats) {
       return app;
     }
 
+    const currentScreenTime = app.screenTime ?? {};
+
+    const nextDailyUsageHistory = buildAppDailyUsageHistory(
+      currentScreenTime.dailyUsageHistory,
+      todayKey,
+      usage.usedTodayMinutes
+    );
+
+    const nextUsedWeekMinutes = calculateAppWeeklyUsageFromHistory(
+      nextDailyUsageHistory,
+      now
+    );
+
+
     return {
       ...app,
       name: app.name || usage.name || app.packageName,
       screenTime: {
-        ...(app.screenTime ?? {}),
+        ...currentScreenTime,
         usedTodayMinutes: usage.usedTodayMinutes,
-        lastDailyResetAt: now
+        usedWeekMinutes: nextUsedWeekMinutes,
+        dailyUsageHistory: nextDailyUsageHistory,
+        lastDailyResetAt: currentScreenTime.lastDailyResetAt ?? now,
+        lastWeeklyResetAt: currentScreenTime.lastWeeklyResetAt ?? now
       },
       lastUsedAt: usage.lastTimeUsed
         ? new Date(Number(usage.lastTimeUsed))

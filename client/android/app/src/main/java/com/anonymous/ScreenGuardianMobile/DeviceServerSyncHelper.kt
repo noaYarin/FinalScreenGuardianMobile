@@ -7,6 +7,9 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import com.facebook.react.bridge.ReadableMap
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * DeviceServerSyncHelper
@@ -45,6 +48,10 @@ object DeviceServerSyncHelper {
     private const val TAG = "DeviceServerSync"
     private const val MAX_MINUTES_PER_DAY = 24 * 60
 private const val LOW_TIME_LOCAL_DEBOUNCE_MS = 60 * 60 * 1000L
+
+
+@Volatile
+private var lastAppUsageSyncAt: Long = 0L
 
 @Volatile
 private var lastLowTimeAlertSentAt: Long = 0L
@@ -205,6 +212,80 @@ fun sendUsageIfChanged(context: Context, minDeltaMinutes: Int = 1) {
  }
 
 
+ fun sendAppUsage(context: Context) {
+    try {
+        val baseUrl = PolicyStore.getHeartbeatBaseUrl(context) ?: return
+        val deviceId = PolicyStore.getHeartbeatDeviceId(context) ?: return
+        val token = PolicyStore.getHeartbeatToken(context) ?: return
+
+        val usageStats = UsageStatsHelper.getTodayUsageByAppJson(context)
+
+        if (usageStats.length() == 0) {
+            Log.d(TAG, "sendAppUsage skipped: no app usage stats")
+            return
+        }
+
+        Thread {
+            var connection: HttpURLConnection? = null
+
+            try {
+                val url = URL("${baseUrl.trimEnd('/')}/api/v1/devices/$deviceId/apps/usage")
+                connection = url.openConnection() as HttpURLConnection
+
+                connection.requestMethod = "PATCH"
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.setRequestProperty("Authorization", "Bearer $token")
+                connection.doOutput = true
+                connection.connectTimeout = 10000
+                connection.readTimeout = 10000
+
+                val body = org.json.JSONObject().apply {
+                    put("usageStats", usageStats)
+                }.toString()
+
+                connection.outputStream.use {
+                    it.write(body.toByteArray(Charsets.UTF_8))
+                }
+
+                val responseCode = connection.responseCode
+                val responseBody = readResponse(connection)
+
+                Log.d(
+                    TAG,
+                    "App usage responseCode=$responseCode count=${usageStats.length()} body=$responseBody"
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to send app usage", e)
+            } finally {
+                connection?.disconnect()
+            }
+        }.start()
+
+    } catch (e: Exception) {
+        Log.e(TAG, "sendAppUsage error", e)
+    }
+}
+
+
+fun sendAppUsageIfIntervalPassed(
+    context: Context,
+    intervalMs: Long = 5 * 60 * 1000L
+) {
+    try {
+        val now = System.currentTimeMillis()
+
+        if (now - lastAppUsageSyncAt < intervalMs) {
+            return
+        }
+
+        lastAppUsageSyncAt = now
+        sendAppUsage(context)
+    } catch (e: Exception) {
+        Log.e(TAG, "sendAppUsageIfIntervalPassed error", e)
+    }
+}
+
+
  fun reportBlockedAppAttempt(context: Context, packageName: String) {
     try {
         val baseUrl = PolicyStore.getHeartbeatBaseUrl(context) ?: return
@@ -264,6 +345,7 @@ fun sendUsageIfChanged(context: Context, minDeltaMinutes: Int = 1) {
      */
     fun clearSessionCache() {
         lastSentUsageMinutes = null
+        lastAppUsageSyncAt = 0L
     }
 
     // Read response safely (handles both success and error streams)

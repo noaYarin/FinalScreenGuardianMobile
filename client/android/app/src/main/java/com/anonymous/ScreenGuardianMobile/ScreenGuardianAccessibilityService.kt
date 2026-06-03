@@ -134,6 +134,7 @@ class ScreenGuardianAccessibilityService : AccessibilityService() {
                 evaluateLock(lastForegroundPackage)
 
                 DeviceServerSyncHelper.sendUsageIfChanged(applicationContext, 1)
+                DeviceServerSyncHelper.sendAppUsageIfIntervalPassed(applicationContext)
                 DeviceServerSyncHelper.sendHeartbeat(applicationContext)
 
             } catch (e: Exception) {
@@ -258,7 +259,7 @@ val isBlockedApp =
 
 val shouldLock =
     PolicyStore.shouldShowBlockScreen(applicationContext, currentPackage)
-    
+
 // Resolve the UI reason with correct priority:
 // device-level locks first, app-specific block only as fallback.
 val blockReason =

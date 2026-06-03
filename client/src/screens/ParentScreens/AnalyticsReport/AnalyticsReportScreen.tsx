@@ -6,7 +6,8 @@ import {
   View,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
 import AppText from "@/src/components/AppText/AppText";
 import {
   getParentAnalyticsReport,
@@ -76,10 +77,13 @@ export default function AnalyticsReportScreen() {
   }, [loadReport]);
 
   const reportHtml = useMemo(
-    () => (report?.indicators ? buildAnalyticsReportHtml(report) : ""),
-    [report]
+    () =>
+      report?.indicators
+        ? buildAnalyticsReportHtml(report, aiInsights)
+        : "",
+    [report, aiInsights]
   );
-
+  
   const onSharePdf = async () => {
     if (!report || !reportHtml) {
       return;
@@ -88,8 +92,6 @@ export default function AnalyticsReportScreen() {
     setIsExporting(true);
 
     try {
-      const Print = await import("expo-print");
-      const Sharing = await import("expo-sharing");
       const { uri } = await Print.printToFileAsync({ html: reportHtml });
       const canShare = await Sharing.isAvailableAsync();
 
@@ -138,7 +140,8 @@ export default function AnalyticsReportScreen() {
             report={report}
             aiInsights={aiInsights}
             isAiLoading={isAiLoading}
-          />        </View>
+          />
+        </View>
       </ScrollView>
 
       <View style={styles.footer}>

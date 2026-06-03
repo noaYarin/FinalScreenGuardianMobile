@@ -243,7 +243,7 @@ export const analyticsStyles = StyleSheet.create({
     backgroundColor: "#EEF2FF",
     borderRadius: 999,
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 6,
   },
 
   attentionText: {
@@ -252,12 +252,15 @@ export const analyticsStyles = StyleSheet.create({
   },
 
   smartSummary: {
-    fontSize: 14,
-    lineHeight: 21,
-    color: "#374151",
+    marginTop: 12,
+    marginBottom: 12,
+    fontSize: 13,
+    lineHeight: 20,
+    color: "#4B5563",
   },
 
   insightsList: {
+    marginTop: 4,
     gap: 10,
   },
 
@@ -285,8 +288,8 @@ export const analyticsStyles = StyleSheet.create({
   },
 
   insightInfo: {
-    borderColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
+    borderColor: "#FAF7FF",
+    backgroundColor: "#EDE9FE",
   },
 
   insightHeaderRow: {
@@ -311,25 +314,15 @@ export const analyticsStyles = StyleSheet.create({
     color: "#4B5563",
   },
 
-  sectionHeaderCard: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    padding: 12,
-    marginTop: 16,
-  },
-
-  sectionHeaderTitle: {
-    ...PARENT_HEADING.h2,
-    color: "#111827",
-  },
-
-  sectionHeaderSubtitle: {
-    ...PARENT_TEXT.bodySmall,
+  generateNote: {
+    fontSize: 12,
+    lineHeight: 18,
     color: "#6B7280",
-    marginTop: 3,
+    textAlign: "center",
+    marginTop: 4,
+    marginBottom: 10,
   },
+
   appNameCell: {
     flexDirection: "row",
     alignItems: "center",
@@ -352,15 +345,167 @@ export const analyticsStyles = StyleSheet.create({
 
   appNameText: {
     flex: 1,
-    fontSize: 12,
-    color: "#374151",
+    fontSize: 13,
+    color: "#111827",
   },
-  generateNote: {
-  fontSize: 12,
-  lineHeight: 18,
-  color: "#6B7280",
-  textAlign: "center",
-  marginTop: 4,
-  marginBottom: 10,
-},
+
+  sectionDivider: {
+    height: 1,
+    backgroundColor: "#E5E7EB",
+    marginTop: 22,
+    marginBottom: 6,
+  },
+  sectionBlock: {
+    marginTop: 22,
+  },
+
+  sectionHeaderCard: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    padding: 14,
+    marginBottom: 12,
+  },
+
+  metricsHeaderCard: {
+    backgroundColor: "#EEF2FF",
+    borderColor: "#C7D2FE",
+  },
+
+  appsHeaderCard: {
+    backgroundColor: "#F0FDF4",
+    borderColor: "#BBF7D0",
+  },
+
+  aiHeaderCard: {
+    backgroundColor: "#FAF5FF",
+    borderColor: "#E9D5FF",
+  },
+
+  sectionHeaderTitle: {
+    ...PARENT_HEADING.h3,
+    color: "#111827",
+  },
+
+  sectionHeaderSubtitle: {
+    ...PARENT_TEXT.bodySmall,
+    color: REPORTS_COLORS.mutedText,
+    marginTop: 4,
+    lineHeight: 18,
+  },
+
+  summaryCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    padding: 14,
+  },
+
+  summaryText: {
+    fontSize: 14,
+    color: "#374151",
+    lineHeight: 22,
+  },
+
+  highlightGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+
+  highlightCard: {
+    width: "48%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#C7D2FE",
+    padding: 12,
+  },
+
+  highlightLabel: {
+    ...PARENT_TEXT.bodySmall,
+    color: REPORTS_COLORS.mutedText,
+  },
+
+  highlightValue: {
+    ...PARENT_DISPLAY.stat,
+    color: "#111827",
+    marginTop: 4,
+  },
+
+  metricsContentCard: {
+    backgroundColor: "#F8FAFF",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E0E7FF",
+    padding: 12,
+  },
+
+  appsContentCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    padding: 10,
+  },
+
+  aiSection: {
+    marginTop: 22,
+    backgroundColor: "#FDF4FF",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E9D5FF",
+    padding: 14,
+  },
+
+  aiContentCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#F3E8FF",
+    padding: 12,
+    marginTop: 12,
+  },
+
+  smartSummaryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+
+  smartSummaryTitle: {
+    fontSize: 14,
+    color: "#111827",
+  },
+  actionsList: {
+    marginTop: 14,
+    gap: 8,
+  },
+
+  actionsTitle: {
+    fontSize: 14,
+    color: "#111827",
+    marginBottom: 2,
+  },
+
+  actionCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    padding: 10,
+  },
+
+  actionText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#374151",
+    lineHeight: 18,
+  },
 });

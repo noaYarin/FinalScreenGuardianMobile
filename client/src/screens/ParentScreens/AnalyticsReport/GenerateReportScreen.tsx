@@ -105,7 +105,7 @@ export default function GenerateReportScreen() {
           </View>
 
           <AppText style={styles.generateNote}>
-            Your selected dates will be used for the report. AI insights focus on recent weekly trends.
+            This report includes selected-period statistics, top apps, and AI insights comparing the last 7 days with the previous 7 days.
           </AppText>
 
           <Pressable style={styles.generateBtn} onPress={onGenerate}>
