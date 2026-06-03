@@ -203,6 +203,8 @@ private fun checkUnlockLoop() {
     window.decorView.postDelayed({
         if (!isMonitoring) return@postDelayed
 
+        // For app-specific block, close only if the app is no longer blocked in policy.
+        // Do not decide here based on foreground package.
         if (currentBlockReason == "APP_BLOCKED") {
             val isStillBlocked =
                 currentBlockedPackageName.isNotBlank() &&
@@ -217,6 +219,7 @@ private fun checkUnlockLoop() {
             return@postDelayed
         }
 
+        // For device-level locks, close only when the actual lock policy is no longer active.
         if (!PolicyStore.shouldLockDevice(this)) {
             finish()
             return@postDelayed
