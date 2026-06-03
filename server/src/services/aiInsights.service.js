@@ -115,6 +115,18 @@ function extractComparableReport(report) {
         extensionRequestsCount: normalizeNumber(
             indicators.extensionRequestsCount
         ),
+        topApplications: Array.isArray(report?.topApplications)
+            ? report.topApplications.map((app) => ({
+                name: String(app?.name || "Unknown app"),
+                packageName: String(app?.packageName || ""),
+                usedRangeMinutes: normalizeNumber(app?.usedRangeMinutes),
+                usedTodayMinutes: normalizeNumber(app?.usedTodayMinutes),
+                usedWeekMinutes: normalizeNumber(app?.usedWeekMinutes),
+                isBlocked: app?.isBlocked === true,
+                isLimitEnabled: app?.isLimitEnabled === true,
+                limitMode: app?.limitMode || "NONE",
+            }))
+            : [],
     };
 }
 
@@ -154,6 +166,8 @@ function buildFallbackInsights(aiContext, reason = "fallback") {
     const current = aiContext.currentPeriod;
     const comparison = aiContext.comparison;
     const insights = [];
+    const hasPreviousUsageData =
+        normalizeNumber(aiContext.previousPeriod?.totalMinutes) > 0;
 
     if (!aiContext.device) {
         insights.push({
@@ -176,24 +190,31 @@ function buildFallbackInsights(aiContext, reason = "fallback") {
             type: "info",
         });
     } else {
-        if (comparison.totalMinutesChangePercent != null) {
-            const change = comparison.totalMinutesChangePercent;
+        if (!hasPreviousUsageData) {
+            insights.push({
+                title: "Limited comparison data",
+                message:
+                    "There is not enough previous-week usage data for a reliable trend comparison yet.",
+                type: "info",
+            });
+        }
 
-            if (change < 0) {
-                insights.push({
-                    title: "Positive weekly trend",
-                    message: `Screen time decreased by ${Math.abs(
-                        change
-                    )}% compared with the previous 7 days.`,
-                    type: "positive",
-                });
-            } else if (change > 0) {
-                insights.push({
-                    title: "Screen time increased",
-                    message: `Screen time increased by ${change}% compared with the previous 7 days.`,
-                    type: "warning",
-                });
-            }
+        const change = comparison.totalMinutesChangePercent;
+
+        if (change < 0) {
+            insights.push({
+                title: "Positive weekly trend",
+                message: `Screen time decreased by ${Math.abs(
+                    change
+                )}% compared with the previous 7 days.`,
+                type: "positive",
+            });
+        } else if (change > 0) {
+            insights.push({
+                title: "Screen time increased",
+                message: `Screen time increased by ${change}% compared with the previous 7 days.`,
+                type: "warning",
+            });
         }
 
         if (comparison.limitExceededDaysChange < 0) {
@@ -233,8 +254,8 @@ function buildFallbackInsights(aiContext, reason = "fallback") {
 
     const riskLevel =
         current.limitExceededDays >= 3 ||
-            (comparison.totalMinutesChangePercent != null &&
-                comparison.totalMinutesChangePercent > 20)
+        (comparison.totalMinutesChangePercent != null &&
+            comparison.totalMinutesChangePercent > 20)
             ? "HIGH"
             : current.limitExceededDays > 0
                 ? "MEDIUM"
@@ -265,13 +286,16 @@ Important rules:
 - Write in English.
 - Analyze the last 7 days compared with the previous 7 days.
 - If the previous period has 0 total minutes, do not describe a percentage increase or decrease. Explain that there is not enough previous-week data for a reliable trend comparison.
+- If the current period has 0 total minutes, do not generate behavioral conclusions. Say that there is not enough current usage data.
+- If topApplications is empty, do not mention specific app usage patterns.
+- Only mention app-specific insights if they are supported by topApplications in the provided data.
 - If no screen-time limit is enabled, mention that limit exceedance analysis is not available.
 - Do not diagnose mental health or make emotional assumptions.
 - Do not mention private personal details.
 - Be practical, calm, and non-judgmental.
 - Do not tell the parent to punish the child.
 - Do not change limits automatically. Only suggest actions.
-- Use screen-time totals, daily averages, limit exceedances, extension requests, tasks, permissions and lock state.
+- Use screen-time totals, daily averages, limit exceedances, extension requests, tasks, top applications, permissions and lock state.
 - If permissions are disabled or unknown, mention that usage data may be incomplete.
 - Return JSON only. No markdown.
 
