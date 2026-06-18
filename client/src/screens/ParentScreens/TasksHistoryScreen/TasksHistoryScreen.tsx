@@ -18,6 +18,7 @@ import { styles } from "./styles";
 import { getMyChildrenThunk } from "../../../redux/thunks/childrenThunks";
 import { getParentTasksThunk } from "../../../redux/thunks/tasksThunks";
 import { resolveAssignedChildLabel } from "@/src/utils/assignedChildLabel";
+import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
 
 type UiChild = {
   id: string;
@@ -47,7 +48,7 @@ function formatCompletedLabel(completedAt: string | null | undefined) {
     if (!Number.isNaN(date.getTime())) {
       return date.toLocaleDateString("en-GB");
     }
-  } catch {}
+  } catch { }
 
   return "Completed";
 }
@@ -252,90 +253,86 @@ export default function TasksHistoryScreen() {
               </View>
 
               <View style={styles.listContent}>
-              {visibleTasks.length > 0 ? (
-                visibleTasks.map((task) => (
-                  <View key={task.id} style={styles.taskCard}>
-                    <View style={styles.taskTopRow}>
-                      <View style={styles.taskMainInfo}>
-                        <AppText weight="extraBold" style={styles.taskTitle}>
-                          {task.title}
-                        </AppText>
-
-                        <AppText weight="medium" style={styles.taskMeta}>
-                          {task.childName} · {task.completedAtLabel}
-                        </AppText>
-                      </View>
-
-                      <View style={styles.coinsBadge}>
-                        <CoinIcon size={16} />
-                        <AppText weight="bold" style={styles.coinsBadgeText}>
-                          {task.coins}
-                        </AppText>
-                      </View>
-                    </View>
-
-                    <AppText weight="medium" style={styles.taskNote}>
-                      {task.note}
-                    </AppText>
-
-                    <View style={styles.taskBottomRow}>
-                      <View style={styles.metaPill}>
-                        <AppText weight="bold" style={styles.metaPillText}>
-                          {task.recurrenceLabel}
-                        </AppText>
-                      </View>
-
-                      <View style={styles.approvedPill}>
-                        <MaterialCommunityIcons
-                          name="check-decagram-outline"
-                          size={15}
-                          color="#15803D"
-                        />
-                        <AppText weight="bold" style={styles.approvedPillText}>
-                          Approved
-                        </AppText>
-                      </View>
-
-                      {task.hasProofImage ? (
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel={`Open proof image for ${task.title}`}
-                          onPress={() =>
-                            setSelectedProofImage(task.proofImageUrl)
-                          }
-                          style={({ pressed }) => [
-                            styles.proofPill,
-                            pressed && styles.pressed,
-                          ]}
-                        >
-                          <MaterialCommunityIcons
-                            name="image-outline"
-                            size={15}
-                            color="#4C6FFF"
-                          />
-                          <AppText weight="bold" style={styles.proofPillText}>
-                            Proof image
+                {visibleTasks.length > 0 ? (
+                  visibleTasks.map((task) => (
+                    <View key={task.id} style={styles.taskCard}>
+                      <View style={styles.taskTopRow}>
+                        <View style={styles.taskMainInfo}>
+                          <AppText weight="extraBold" style={styles.taskTitle}>
+                            {task.title}
                           </AppText>
-                        </Pressable>
-                      ) : null}
+
+                          <AppText weight="medium" style={styles.taskMeta}>
+                            {task.childName} · {task.completedAtLabel}
+                          </AppText>
+                        </View>
+
+                        <View style={styles.coinsBadge}>
+                          <CoinIcon size={16} />
+                          <AppText weight="bold" style={styles.coinsBadgeText}>
+                            {task.coins}
+                          </AppText>
+                        </View>
+                      </View>
+
+                      <AppText weight="medium" style={styles.taskNote}>
+                        {task.note}
+                      </AppText>
+
+                      <View style={styles.taskBottomRow}>
+                        <View style={styles.metaPill}>
+                          <AppText weight="bold" style={styles.metaPillText}>
+                            {task.recurrenceLabel}
+                          </AppText>
+                        </View>
+
+                        <View style={styles.approvedPill}>
+                          <MaterialCommunityIcons
+                            name="check-decagram-outline"
+                            size={15}
+                            color="#15803D"
+                          />
+                          <AppText weight="bold" style={styles.approvedPillText}>
+                            Approved
+                          </AppText>
+                        </View>
+
+                        {task.hasProofImage ? (
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={`Open proof image for ${task.title}`}
+                            onPress={() =>
+                              setSelectedProofImage(task.proofImageUrl)
+                            }
+                            style={({ pressed }) => [
+                              styles.proofPill,
+                              pressed && styles.pressed,
+                            ]}
+                          >
+                            <MaterialCommunityIcons
+                              name="image-outline"
+                              size={15}
+                              color="#4C6FFF"
+                            />
+                            <AppText weight="bold" style={styles.proofPillText}>
+                              Proof image
+                            </AppText>
+                          </Pressable>
+                        ) : null}
+                      </View>
                     </View>
-                  </View>
-                ))
-              ) : (
-                <View style={styles.emptyState}>
-                  <MaterialCommunityIcons
-                    name="clipboard-text-search-outline"
-                    size={32}
-                    color="#94A3B8"
+                  ))
+                ) : (
+                  <EmptyStateCard
+                    icon="clipboard-text-search-outline"
+                    title="No approved tasks yet"
+                    subtitle={
+                      viewMode === "all"
+                        ? "Completed and approved tasks will appear here."
+                        : `${selectedChildName} has no approved tasks yet.`
+                    }
                   />
-                  <AppText weight="extraBold" style={styles.emptyStateTitle}>
-                    Nothing here yet
-                  </AppText>
-                  <AppText weight="medium" style={styles.emptyStateText}>
-                    No history items match this filter right now.
-                  </AppText>
-                </View>
-              )}
+                )}
               </View>
             </View>
           </View>

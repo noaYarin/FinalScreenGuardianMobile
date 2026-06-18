@@ -285,4 +285,11 @@ export const styles = StyleSheet.create({
   pressed: {
     opacity: 0.85,
   },
+  helperText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: "#64748B",
+    marginTop: 4,
+    marginBottom: 10,
+  },
 });
