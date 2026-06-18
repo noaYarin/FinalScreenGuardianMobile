@@ -189,6 +189,27 @@ export async function submitTask(taskId, childId, proofImg) {
     });
   }
 
+  if (task.isActive !== true || task.deletedAt) {
+    throw new AppError({
+      status: 409,
+      code: "TASK_NOT_RELEVANT",
+      message: "This task is no longer relevant",
+    });
+  }
+
+  const isExpiredRecurringTask =
+    task.isRegulary === true &&
+    task.endDate &&
+    new Date(task.endDate).getTime() <= Date.now();
+
+  if (isExpiredRecurringTask) {
+    throw new AppError({
+      status: 409,
+      code: "TASK_EXPIRED",
+      message: "This task period has expired",
+    });
+  }
+
   const normalizedProofImg =
     typeof proofImg === "string" ? proofImg.trim() : "";
 

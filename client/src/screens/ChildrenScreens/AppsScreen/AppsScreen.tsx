@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
-
+import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
 import { CHILD_TEXT } from "@/src/theme/childTypography";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
@@ -82,19 +82,19 @@ export default function AppsScreen() {
 
         const normalizedApps: InstalledApp[] = Array.isArray(installedApps)
           ? installedApps
-              .filter((app) => app?.packageName && app?.name)
-              .map((app) => {
-                const packageName = String(app.packageName);
+            .filter((app) => app?.packageName && app?.name)
+            .map((app) => {
+              const packageName = String(app.packageName);
 
-                return {
-                  name: String(app.name),
-                  packageName,
-                  icon: app.icon ? String(app.icon) : "default.png",
-                  isSystemApp: app.isSystemApp === true,
-                  isBlocked: blockedPackages.has(packageName),
-                };
-              })
-              .sort((a, b) => a.name.localeCompare(b.name))
+              return {
+                name: String(app.name),
+                packageName,
+                icon: app.icon ? String(app.icon) : "default.png",
+                isSystemApp: app.isSystemApp === true,
+                isBlocked: blockedPackages.has(packageName),
+              };
+            })
+            .sort((a, b) => a.name.localeCompare(b.name))
           : [];
 
         setApps(normalizedApps);
@@ -158,20 +158,20 @@ export default function AppsScreen() {
             </View>
           </View>
 
-          <View style={styles.lockedSection}>
-            <View style={styles.sectionHeader}>
-              <MaterialCommunityIcons
-                name="lock-outline"
-                size={22}
-                color="#DC2626"
-              />
+          {isLoading ? (
+            <View style={styles.lockedSection}>
+              <View style={styles.sectionHeader}>
+                <MaterialCommunityIcons
+                  name="lock-outline"
+                  size={22}
+                  color="#DC2626"
+                />
 
-              <AppText weight="extraBold" style={styles.sectionTitle}>
-                Locked Apps
-              </AppText>
-            </View>
+                <AppText weight="extraBold" style={styles.sectionTitle}>
+                  Locked Apps
+                </AppText>
+              </View>
 
-            {isLoading ? (
               <View style={styles.stateCard}>
                 <ActivityIndicator />
 
@@ -179,7 +179,21 @@ export default function AppsScreen() {
                   Loading locked apps...
                 </AppText>
               </View>
-            ) : errorText ? (
+            </View>
+          ) : errorText ? (
+            <View style={styles.lockedSection}>
+              <View style={styles.sectionHeader}>
+                <MaterialCommunityIcons
+                  name="lock-outline"
+                  size={22}
+                  color="#DC2626"
+                />
+
+                <AppText weight="extraBold" style={styles.sectionTitle}>
+                  Locked Apps
+                </AppText>
+              </View>
+
               <View style={styles.stateCard}>
                 <MaterialCommunityIcons
                   name="alert-circle-outline"
@@ -195,23 +209,27 @@ export default function AppsScreen() {
                   {errorText}
                 </AppText>
               </View>
-            ) : blockedApps.length === 0 ? (
-              <View style={styles.stateCard}>
+            </View>
+          ) : blockedApps.length === 0 ? (
+            <EmptyStateCard
+              icon="lock-open-outline"
+              title="No locked apps"
+              subtitle="No apps are locked right now."
+            />
+          ) : (
+            <View style={styles.lockedSection}>
+              <View style={styles.sectionHeader}>
                 <MaterialCommunityIcons
-                  name="lock-open-outline"
-                  size={34}
-                  color="#64748B"
+                  name="lock-outline"
+                  size={22}
+                  color="#DC2626"
                 />
 
-                <AppText weight="extraBold" style={styles.emptyTitle}>
-                  No locked apps
-                </AppText>
-
-                <AppText weight="medium" style={styles.stateText}>
-                  No apps are locked right now.
+                <AppText weight="extraBold" style={styles.sectionTitle}>
+                  Locked Apps
                 </AppText>
               </View>
-            ) : (
+
               <View style={styles.appsList}>
                 {blockedApps.map((app) => {
                   const iconUri = getAppIconUri(app.icon);
@@ -231,9 +249,9 @@ export default function AppsScreen() {
                           />
                         ) : (
                           <MaterialCommunityIcons
-                            name="lock"
+                            name="view-grid-outline"
                             size={26}
-                            color="#DC2626"
+                            color="#64748B"
                           />
                         )}
                       </View>
@@ -271,10 +289,6 @@ export default function AppsScreen() {
                             </View>
                           ) : null}
                         </View>
-
-                        <AppText weight="medium" style={styles.packageName}>
-                          {app.packageName}
-                        </AppText>
                       </View>
 
                       <View style={[styles.statusBadge, styles.lockedBadge]}>
@@ -298,10 +312,10 @@ export default function AppsScreen() {
                   );
                 })}
               </View>
-            )}
-          </View>
+            </View>
+          )}
         </View>
       </ScrollView>
-    </ScreenLayout>
+    </ScreenLayout >
   );
 }

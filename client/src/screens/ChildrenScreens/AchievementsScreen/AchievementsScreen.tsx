@@ -186,6 +186,7 @@ export default function AchievementsScreen() {
             </AppText>
           </View>
 
+         
           <View style={styles.heroSummaryRow}>
             <View style={[styles.heroSummaryCard, styles.heroSummaryCardGreen]}>
               <View style={styles.heroSummaryTop}>

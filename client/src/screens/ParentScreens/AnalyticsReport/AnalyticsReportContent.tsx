@@ -210,7 +210,7 @@ export default function AnalyticsReportContent({
 
           <View style={styles.aiContentCard}>
             <AppText style={styles.smartSummary}>
-              Generating AI insights from recent activity...
+              Generating AI insights from recent activity... Please wait.
             </AppText>
           </View>
         </View>
@@ -252,9 +252,6 @@ export default function AnalyticsReportContent({
             </AppText>
 
             <View style={styles.smartSummaryRow}>
-              <AppText weight="extraBold" style={styles.smartSummaryRow}>
-                Smart insights
-              </AppText>
 
               <View style={styles.insightsList}>
                 {aiInsights.insights.map((insight, index) => (

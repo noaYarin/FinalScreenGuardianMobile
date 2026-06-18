@@ -13,6 +13,7 @@ import {
   deleteTaskThunk,
 } from "../../../redux/thunks/tasksThunks";
 import { showSuccessToast, showErrorToast } from "@/src/utils/appToast";
+import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
 
 function getRecurrenceLabel(task: any) {
   if (task?.recurrenceType === "daily") return "Daily";
@@ -172,19 +173,11 @@ export default function RecurringTasksScreen() {
               );
             })
           ) : (
-            <View style={styles.emptyState}>
-              <MaterialCommunityIcons
-                name="repeat-off"
-                size={36}
-                color="#94A3B8"
-              />
-              <AppText weight="extraBold" style={styles.emptyTitle}>
-                No recurring tasks yet
-              </AppText>
-              <AppText weight="medium" style={styles.emptyText}>
-                Daily and weekly tasks will appear here.
-              </AppText>
-            </View>
+            <EmptyStateCard
+              icon="repeat-off"
+              title="No recurring tasks yet"
+              subtitle="Daily and weekly tasks will appear here."
+            />
           )}
         </View>
       </ScrollView>

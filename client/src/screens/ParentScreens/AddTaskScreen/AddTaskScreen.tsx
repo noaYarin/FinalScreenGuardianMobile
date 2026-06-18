@@ -35,9 +35,9 @@ const RECURRENCE_OPTIONS: {
   label: string;
   value: RecurrenceType;
 }[] = [
-  { label: "Daily", value: "daily" },
-  { label: "Weekly", value: "weekly" },
-];
+    { label: "Daily", value: "daily" },
+    { label: "Weekly", value: "weekly" },
+  ];
 
 export default function AddTaskScreen() {
   const dispatch = useDispatch<any>();
@@ -257,6 +257,10 @@ export default function AddTaskScreen() {
             <View style={styles.formGroup}>
               <AppText weight="bold" style={styles.label}>
                 Is this a recurring task?
+              </AppText>
+
+              <AppText weight="medium" style={styles.helperText}>
+                Recurring tasks are created again automatically every day or every week.
               </AppText>
 
               <View style={styles.segmentRow}>

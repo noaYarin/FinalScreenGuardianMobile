@@ -205,7 +205,7 @@ export default function SystemAlertsScreen() {
 
       const link = getNotificationLink(notification);
 
-      if (!link) {
+      if (!link || link === "/Parent/systemAlerts") {
         return;
       }
 
@@ -213,7 +213,7 @@ export default function SystemAlertsScreen() {
     },
     [dispatch, router]
   );
-  
+
   const handleLoadMore = useCallback(async () => {
     if (
       isFetchingMore ||

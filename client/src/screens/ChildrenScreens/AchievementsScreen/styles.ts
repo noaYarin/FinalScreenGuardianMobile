@@ -352,7 +352,7 @@ export const styles = StyleSheet.create({
   centerText: {
     textAlign: "center",
   },
-  
+
   unlockedAtText: {
     marginTop: 8,
     ...CHILD_TEXT.bodySmall,

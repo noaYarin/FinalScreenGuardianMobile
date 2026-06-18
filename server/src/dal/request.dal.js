@@ -46,3 +46,22 @@ export async function findPendingRequestForDevice({ parentId, childId, deviceId 
         status: RequestStatus.PENDING,
     }).lean();
 }
+
+export async function expireRequestIfPending({ requestId, parentId }) {
+    return RequestModel.findOneAndUpdate(
+        {
+            _id: requestId,
+            parentId,
+            status: RequestStatus.PENDING
+        },
+        {
+            $set: {
+                status: RequestStatus.EXPIRED,
+                decidedAt: new Date()
+            }
+        },
+        {
+            new: true
+        }
+    );
+}

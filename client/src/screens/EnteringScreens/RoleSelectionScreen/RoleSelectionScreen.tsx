@@ -35,7 +35,7 @@ export const RoleSelectionScreen: React.FC = () => {
         <View style={styles.cardsContainer}>
           <RoleCard
             title="Child"
-            imageSource={require("../../../../assets/images/childrens.webp")}
+            imageSource={require("../../../../assets/images/childrens.png")}
             description="Use the device with limits set by your parent"
             onPress={handleChildSelect}
             backgroundColor={COLORS.light.secondary}
@@ -44,7 +44,7 @@ export const RoleSelectionScreen: React.FC = () => {
 
           <RoleCard
             title="Parent"
-            imageSource={require("../../../../assets/images/parents.webp")}
+            imageSource={require("../../../../assets/images/parents.png")}
             description="Manage limits, monitor usage and approve requests"
             onPress={handleParentSelect}
             backgroundColor={COLORS.light.tint}

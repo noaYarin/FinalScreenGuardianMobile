@@ -73,7 +73,12 @@ export const Request = {
     status: 400,
     code: "EXTENSION_ONLY_DAILY_LIMIT",
     message: "Extension requests can only be approved while a daily limit is active"
-  }
+  },
+  REQUEST_EXPIRED: {
+    status: 409,
+    code: "REQUEST_EXPIRED",
+    message: "This extension request is no longer relevant"
+  },
 };
 
 
