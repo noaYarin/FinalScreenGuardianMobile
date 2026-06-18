@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { View, ScrollView, Pressable, useWindowDimensions } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
-
+import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import CoinIcon from "../../../components/CoinIcon/CoinIcon";
@@ -37,7 +37,7 @@ function formatRedeemedLabel(value: string | null | undefined) {
     if (!Number.isNaN(date.getTime())) {
       return date.toLocaleDateString("en-GB");
     }
-  } catch {}
+  } catch { }
 
   return "Redeemed";
 }
@@ -91,11 +91,7 @@ export default function RewardsHistoryScreen() {
         const childId = String(reward?.childId ?? "");
         const childName =
           children.find((child) => child.id === childId)?.name ?? "Child";
-        const childDisplayName = resolveAssignedChildLabel(
-          reward,
-          childName,
-          viewMode
-        );
+        const childDisplayName = childName;
 
         return {
           id: String(reward?._id ?? reward?.id ?? Math.random()),
@@ -107,7 +103,7 @@ export default function RewardsHistoryScreen() {
           note: "This reward was already redeemed.",
         };
       });
-  }, [parentRewards, children, viewMode]);
+  }, [parentRewards, children]);
 
   const visibleRewards = useMemo(() => {
     if (viewMode === "all") {
@@ -213,60 +209,56 @@ export default function RewardsHistoryScreen() {
               </View>
 
               <View style={styles.listContent}>
-              {visibleRewards.length > 0 ? (
-                visibleRewards.map((reward) => (
-                  <View key={reward.id} style={styles.rewardCard}>
-                    <View style={styles.rewardTopRow}>
-                      <View style={styles.rewardMainInfo}>
-                        <AppText weight="extraBold" style={styles.rewardTitle}>
-                          {reward.title}
-                        </AppText>
-                        <AppText weight="medium" style={styles.rewardMeta}>
-                          {reward.childName} · {reward.redeemedAtLabel}
-                        </AppText>
+                {visibleRewards.length > 0 ? (
+                  visibleRewards.map((reward) => (
+                    <View key={reward.id} style={styles.rewardCard}>
+                      <View style={styles.rewardTopRow}>
+                        <View style={styles.rewardMainInfo}>
+                          <AppText weight="extraBold" style={styles.rewardTitle}>
+                            {reward.title}
+                          </AppText>
+                          <AppText weight="medium" style={styles.rewardMeta}>
+                            {reward.childName} · {reward.redeemedAtLabel}
+                          </AppText>
+                        </View>
+
+                        <View style={styles.coinsBadge}>
+                          <CoinIcon size={16} />
+                          <AppText weight="bold" style={styles.coinsBadgeText}>
+                            {reward.coins}
+                          </AppText>
+                        </View>
                       </View>
 
-                      <View style={styles.coinsBadge}>
-                        <CoinIcon size={16} />
-                        <AppText weight="bold" style={styles.coinsBadgeText}>
-                          {reward.coins}
-                        </AppText>
+                      <AppText weight="medium" style={styles.rewardNote}>
+                        {reward.note}
+                      </AppText>
+
+                      <View style={styles.rewardBottomRow}>
+                        <View style={styles.redeemedPill}>
+                          <MaterialCommunityIcons
+                            name="check-decagram-outline"
+                            size={15}
+                            color="#15803D"
+                          />
+                          <AppText weight="bold" style={styles.redeemedPillText}>
+                            Redeemed
+                          </AppText>
+                        </View>
                       </View>
                     </View>
-
-                    <AppText weight="medium" style={styles.rewardNote}>
-                      {reward.note}
-                    </AppText>
-
-                    <View style={styles.rewardBottomRow}>
-                      <View style={styles.redeemedPill}>
-                        <MaterialCommunityIcons
-                          name="check-decagram-outline"
-                          size={15}
-                          color="#15803D"
-                        />
-                        <AppText weight="bold" style={styles.redeemedPillText}>
-                          Redeemed
-                        </AppText>
-                      </View>
-                    </View>
-                  </View>
-                ))
-              ) : (
-                <View style={styles.emptyState}>
-                  <MaterialCommunityIcons
-                    name="gift-outline"
-                    size={32}
-                    color="#94A3B8"
+                  ))
+                ) : (
+                  <EmptyStateCard
+                    icon="gift-open-outline"
+                    title="No redeemed rewards yet"
+                    subtitle={
+                      viewMode === "all"
+                        ? "Rewards redeemed by your children will appear here."
+                        : `${selectedChildName} has not redeemed any rewards yet.`
+                    }
                   />
-                  <AppText weight="extraBold" style={styles.emptyStateTitle}>
-                    Nothing here yet
-                  </AppText>
-                  <AppText weight="medium" style={styles.emptyStateText}>
-                    No reward history items match this filter right now.
-                  </AppText>
-                </View>
-              )}
+                )}
               </View>
             </View>
           </View>

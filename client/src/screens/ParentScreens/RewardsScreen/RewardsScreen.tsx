@@ -7,7 +7,6 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, type Href } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
-
 import ScreenLayout from "../../../layouts/ScreenLayout/ScreenLayout";
 import AppText from "../../../components/AppText/AppText";
 import EmptyStateCard from "../../../components/EmptyStateCard/EmptyStateCard";
@@ -52,7 +51,7 @@ function formatDateLabel(value: string | null | undefined) {
     if (!Number.isNaN(date.getTime())) {
       return date.toLocaleDateString("en-GB");
     }
-  } catch {}
+  } catch { }
 
   return "No date";
 }
@@ -107,11 +106,7 @@ export default function RewardsScreen() {
       const childId = String(reward?.childId ?? "");
       const childName =
         children.find((child) => child.id === childId)?.name ?? "Child";
-      const childDisplayName = resolveAssignedChildLabel(
-        reward,
-        childName,
-        viewMode
-      );
+      const childDisplayName = childName;
 
       const status: RewardStatus = reward?.redeemedAt
         ? "redeemed"
@@ -245,257 +240,263 @@ export default function RewardsScreen() {
             />
           ) : (
             <>
-          <View style={styles.mainPanel}>
-            <View style={styles.panelSection}>
-              <AppText weight="bold" style={styles.panelLabel}>
-                Filter by child
-              </AppText>
-
-              <View style={styles.filterModeRow}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Show rewards for all children"
-                  onPress={() => setViewMode("all")}
-                  style={({ pressed }) => [
-                    styles.filterModeButton,
-                    viewMode === "all" && styles.filterModeButtonActive,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <AppText
-                    weight={viewMode === "all" ? "extraBold" : "medium"}
-                    style={[
-                      styles.filterModeButtonText,
-                      viewMode === "all" && styles.filterModeButtonTextActive,
-                    ]}
-                  >
-                    All Children
+              <View style={styles.mainPanel}>
+                <View style={styles.panelSection}>
+                  <AppText weight="bold" style={styles.panelLabel}>
+                    Filter by child
                   </AppText>
-                </Pressable>
 
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Show rewards for one child"
-                  onPress={() => setViewMode("single")}
-                  style={({ pressed }) => [
-                    styles.filterModeButton,
-                    viewMode === "single" && styles.filterModeButtonActive,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <AppText
-                    weight={viewMode === "single" ? "extraBold" : "medium"}
-                    style={[
-                      styles.filterModeButtonText,
-                      viewMode === "single" &&
-                        styles.filterModeButtonTextActive,
-                    ]}
-                  >
-                    One Child
-                  </AppText>
-                </Pressable>
-              </View>
+                  <View style={styles.filterModeRow}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Show rewards for all children"
+                      onPress={() => setViewMode("all")}
+                      style={({ pressed }) => [
+                        styles.filterModeButton,
+                        viewMode === "all" && styles.filterModeButtonActive,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <AppText
+                        weight={viewMode === "all" ? "extraBold" : "medium"}
+                        style={[
+                          styles.filterModeButtonText,
+                          viewMode === "all" && styles.filterModeButtonTextActive,
+                        ]}
+                      >
+                        All Children
+                      </AppText>
+                    </Pressable>
 
-              {viewMode === "single" ? (
-                <View style={styles.selectorWrap}>
-                  <ChildDeviceSelector
-                    selectedChildId={selectedChildId}
-                    onSelectChild={setSelectedChildId}
-                    showDevices={false}
-                  />
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Show rewards for one child"
+                      onPress={() => setViewMode("single")}
+                      style={({ pressed }) => [
+                        styles.filterModeButton,
+                        viewMode === "single" && styles.filterModeButtonActive,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <AppText
+                        weight={viewMode === "single" ? "extraBold" : "medium"}
+                        style={[
+                          styles.filterModeButtonText,
+                          viewMode === "single" &&
+                          styles.filterModeButtonTextActive,
+                        ]}
+                      >
+                        One Child
+                      </AppText>
+                    </Pressable>
+                  </View>
+
+                  {viewMode === "single" ? (
+                    <View style={styles.selectorWrap}>
+                      <ChildDeviceSelector
+                        selectedChildId={selectedChildId}
+                        onSelectChild={setSelectedChildId}
+                        showDevices={false}
+                      />
+                    </View>
+                  ) : null}
                 </View>
-              ) : null}
-            </View>
 
-            <View style={styles.panelDivider} />
+                <View style={styles.panelDivider} />
 
-            <View style={styles.panelSection}>
-              <AppText weight="bold" style={styles.panelLabel}>
-                Reward status
-              </AppText>
-
-              <View style={styles.tabsRow}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Show available rewards"
-                  onPress={() => setActiveTab("available")}
-                  style={({ pressed }) => [
-                    styles.tabButton,
-                    activeTab === "available" && styles.tabButtonActive,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <MaterialCommunityIcons
-                    name="gift-outline"
-                    size={16}
-                    color={activeTab === "available" ? "#FFFFFF" : "#4C6FFF"}
-                  />
-                  <AppText
-                    weight={activeTab === "available" ? "extraBold" : "bold"}
-                    style={[
-                      styles.tabButtonText,
-                      activeTab === "available" && styles.tabButtonTextActive,
-                    ]}
-                  >
-                    Available
+                <View style={styles.panelSection}>
+                  <AppText weight="bold" style={styles.panelLabel}>
+                    Reward status
                   </AppText>
 
-                  <View
-                    style={[
-                      styles.tabCountBadge,
-                      activeTab === "available" && styles.tabCountBadgeActive,
-                    ]}
-                  >
-                    <AppText
-                      weight="bold"
-                      style={[
-                        styles.tabCountText,
-                        activeTab === "available" && styles.tabCountTextActive,
+                  <View style={styles.tabsRow}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Show available rewards"
+                      onPress={() => setActiveTab("available")}
+                      style={({ pressed }) => [
+                        styles.tabButton,
+                        activeTab === "available" && styles.tabButtonActive,
+                        pressed && styles.pressed,
                       ]}
                     >
-                      {availableRewards.length}
-                    </AppText>
-                  </View>
-                </Pressable>
+                      <MaterialCommunityIcons
+                        name="gift-outline"
+                        size={16}
+                        color={activeTab === "available" ? "#FFFFFF" : "#4C6FFF"}
+                      />
+                      <AppText
+                        weight={activeTab === "available" ? "extraBold" : "bold"}
+                        style={[
+                          styles.tabButtonText,
+                          activeTab === "available" && styles.tabButtonTextActive,
+                        ]}
+                      >
+                        Available
+                      </AppText>
 
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Show redeemed rewards"
-                  onPress={() => setActiveTab("redeemed")}
-                  style={({ pressed }) => [
-                    styles.tabButton,
-                    activeTab === "redeemed" && styles.tabButtonActive,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <MaterialCommunityIcons
-                    name="check-decagram-outline"
-                    size={16}
-                    color={activeTab === "redeemed" ? "#FFFFFF" : "#4C6FFF"}
-                  />
-                  <AppText
-                    weight={activeTab === "redeemed" ? "extraBold" : "bold"}
-                    style={[
-                      styles.tabButtonText,
-                      activeTab === "redeemed" && styles.tabButtonTextActive,
-                    ]}
-                  >
-                    Redeemed
-                  </AppText>
-
-                  <View
-                    style={[
-                      styles.tabCountBadge,
-                      activeTab === "redeemed" && styles.tabCountBadgeActive,
-                    ]}
-                  >
-                    <AppText
-                      weight="bold"
-                      style={[
-                        styles.tabCountText,
-                        activeTab === "redeemed" && styles.tabCountTextActive,
-                      ]}
-                    >
-                      {redeemedRewards.length}
-                    </AppText>
-                  </View>
-                </Pressable>
-              </View>
-            </View>
-
-            <View style={styles.panelDivider} />
-
-            <View style={[styles.panelSection, styles.panelListSection]}>
-       
-
-              <View style={styles.listContent}>
-              {visibleRewards.length > 0 ? (
-                visibleRewards.map((reward: RewardCardItem) => {
-                  const isDeleting = deletingRewardId === reward.id;
-
-                  return (
-                    <View key={reward.id} style={styles.rewardCard}>
-                      <View style={styles.rewardTopRow}>
-                        <View style={styles.rewardMainInfo}>
-                          <AppText
-                            weight="extraBold"
-                            style={styles.rewardTitle}
-                          >
-                            {reward.title}
-                          </AppText>
-                          <View style={styles.cardMetaRow}>
-                            <AppText style={styles.cardMetaLabel}>Child</AppText>
-                            <AppText weight="bold" style={styles.cardMetaValue}>
-                              {reward.childName}
-                            </AppText>
-                          </View>
-                          <View style={styles.cardMetaRow}>
-                            <AppText style={styles.cardMetaLabel}>
-                              {reward.status === "redeemed" ? "Redeemed" : "Created"}
-                            </AppText>
-                            <AppText weight="bold" style={styles.cardMetaValue}>
-                              {reward.createdOrRedeemedLabel}
-                            </AppText>
-                          </View>
-                        </View>
-
-                        <View style={styles.coinsBadge}>
-                          <CoinIcon size={18} />
-                          <AppText weight="bold" style={styles.coinsBadgeText}>
-                            {reward.coins}
-                          </AppText>
-                          <AppText style={styles.coinsBadgeLabel}>coins</AppText>
-                        </View>
-                      </View>
-
-                      <View style={styles.rewardBottomRow}>
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel={`Delete ${reward.title}`}
-                          disabled={isDeleting}
-                          onPress={() => handleDeleteReward(reward)}
-                          style={({ pressed }) => [
-                            styles.deleteRewardButton,
-                            pressed && styles.pressed,
-                            isDeleting && styles.disabledButton,
+                      <View
+                        style={[
+                          styles.tabCountBadge,
+                          activeTab === "available" && styles.tabCountBadgeActive,
+                        ]}
+                      >
+                        <AppText
+                          weight="bold"
+                          style={[
+                            styles.tabCountText,
+                            activeTab === "available" && styles.tabCountTextActive,
                           ]}
                         >
-                          <MaterialCommunityIcons
-                            name="trash-can-outline"
-                            size={15}
-                            color="#DC2626"
-                          />
-                          <AppText
-                            weight="bold"
-                            style={styles.deleteRewardButtonText}
-                          >
-                            {isDeleting ? "Deleting..." : "Delete"}
-                          </AppText>
-                        </Pressable>
+                          {availableRewards.length}
+                        </AppText>
                       </View>
-                    </View>
-                  );
-                })
-              ) : (
-                <View style={styles.emptyState}>
-                  <MaterialCommunityIcons
-                    name="gift-outline"
-                    size={32}
-                    color="#94A3B8"
-                  />
-                  <AppText weight="extraBold" style={styles.emptyStateTitle}>
-                    Nothing here yet
-                  </AppText>
-                  <AppText weight="medium" style={styles.emptyStateText}>
-                    {activeTab === "available"
-                      ? "No available rewards. Tap Add Reward to create one."
-                      : "No redeemed rewards yet."}
-                  </AppText>
+                    </Pressable>
+
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Show redeemed rewards"
+                      onPress={() => setActiveTab("redeemed")}
+                      style={({ pressed }) => [
+                        styles.tabButton,
+                        activeTab === "redeemed" && styles.tabButtonActive,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <MaterialCommunityIcons
+                        name="check-decagram-outline"
+                        size={16}
+                        color={activeTab === "redeemed" ? "#FFFFFF" : "#4C6FFF"}
+                      />
+                      <AppText
+                        weight={activeTab === "redeemed" ? "extraBold" : "bold"}
+                        style={[
+                          styles.tabButtonText,
+                          activeTab === "redeemed" && styles.tabButtonTextActive,
+                        ]}
+                      >
+                        Redeemed
+                      </AppText>
+
+                      <View
+                        style={[
+                          styles.tabCountBadge,
+                          activeTab === "redeemed" && styles.tabCountBadgeActive,
+                        ]}
+                      >
+                        <AppText
+                          weight="bold"
+                          style={[
+                            styles.tabCountText,
+                            activeTab === "redeemed" && styles.tabCountTextActive,
+                          ]}
+                        >
+                          {redeemedRewards.length}
+                        </AppText>
+                      </View>
+                    </Pressable>
+                  </View>
                 </View>
-              )}
+
+                <View style={styles.panelDivider} />
+
+                <View style={[styles.panelSection, styles.panelListSection]}>
+
+
+                  <View style={styles.listContent}>
+                    {visibleRewards.length > 0 ? (
+                      visibleRewards.map((reward: RewardCardItem) => {
+                        const isDeleting = deletingRewardId === reward.id;
+
+                        return (
+                          <View key={reward.id} style={styles.rewardCard}>
+                            <View style={styles.rewardTopRow}>
+                              <View style={styles.rewardMainInfo}>
+                                <AppText
+                                  weight="extraBold"
+                                  style={styles.rewardTitle}
+                                >
+                                  {reward.title}
+                                </AppText>
+                                <View style={styles.cardMetaRow}>
+                                  <AppText style={styles.cardMetaLabel}>Child</AppText>
+                                  <AppText weight="bold" style={styles.cardMetaValue}>
+                                    {reward.childName}
+                                  </AppText>
+                                </View>
+                                <View style={styles.cardMetaRow}>
+                                  <AppText style={styles.cardMetaLabel}>
+                                    {reward.status === "redeemed" ? "Redeemed" : "Created"}
+                                  </AppText>
+                                  <AppText weight="bold" style={styles.cardMetaValue}>
+                                    {reward.createdOrRedeemedLabel}
+                                  </AppText>
+                                </View>
+                              </View>
+
+                              <View style={styles.coinsBadge}>
+                                <CoinIcon size={18} />
+                                <AppText weight="bold" style={styles.coinsBadgeText}>
+                                  {reward.coins}
+                                </AppText>
+                                <AppText style={styles.coinsBadgeLabel}>coins</AppText>
+                              </View>
+                            </View>
+
+                            <View style={styles.rewardBottomRow}>
+                              <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel={`Delete ${reward.title}`}
+                                disabled={isDeleting}
+                                onPress={() => handleDeleteReward(reward)}
+                                style={({ pressed }) => [
+                                  styles.deleteRewardButton,
+                                  pressed && styles.pressed,
+                                  isDeleting && styles.disabledButton,
+                                ]}
+                              >
+                                <MaterialCommunityIcons
+                                  name="trash-can-outline"
+                                  size={15}
+                                  color="#DC2626"
+                                />
+                                <AppText
+                                  weight="bold"
+                                  style={styles.deleteRewardButtonText}
+                                >
+                                  {isDeleting ? "Deleting..." : "Delete"}
+                                </AppText>
+                              </Pressable>
+                            </View>
+                          </View>
+                        );
+                      })
+                    ) : (
+                      <EmptyStateCard
+                        icon={
+                          activeTab === "available"
+                            ? "gift-outline"
+                            : "check-decagram-outline"
+                        }
+                        title={
+                          activeTab === "available"
+                            ? "No available rewards"
+                            : "No redeemed rewards yet"
+                        }
+                        subtitle={
+                          activeTab === "available"
+                            ? viewMode === "all"
+                              ? "Create a reward for one or more children to get started."
+                              : "This child has no available rewards right now."
+                            : viewMode === "all"
+                              ? "Redeemed rewards will appear here."
+                              : "This child has not redeemed any rewards yet."
+                        }
+                      />
+                    )}
+                  </View>
+                </View>
               </View>
-            </View>
-          </View>
             </>
           )}
         </View>
