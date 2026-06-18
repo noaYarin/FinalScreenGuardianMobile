@@ -23,8 +23,8 @@ export function getLockedAchievementHint(key?: string, fallback?: string) {
       return "Complete your first weekly goal to unlock this badge.";
 
     case "all_goals_completed":
-      return "trophy-award";
-
+      return "Complete all of your weekly goals to unlock this badge.";
+      
     case "avatar_level_2":
       return "Reach avatar level 2 to unlock this badge.";
 

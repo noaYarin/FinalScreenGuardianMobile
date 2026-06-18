@@ -222,8 +222,49 @@ export const styles = StyleSheet.create({
     color: "#9B5B00",
   },
   completedDateText: {
-  ...CHILD_TEXT.bodySmall,
-  color: "#64748B",
-  marginTop: 2,
-},
+    ...CHILD_TEXT.bodySmall,
+    color: "#64748B",
+    marginTop: 2,
+  },
+  statusApproved: {
+    color: "#16A34A",
+  },
+
+  statusWaiting: {
+    color: "#D97706",
+  },
+  recurringBadge: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: "#EEF3FF",
+  },
+
+  recurringBadgeText: {
+    fontSize: 12,
+    color: "#4C6FFF",
+  },
+  statusBoxWaiting: {
+    flexDirection: "row",
+    backgroundColor: "#FFF7ED",
+    borderWidth: 1,
+    borderColor: "#FED7AA",
+    borderRadius: 18,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: "center",
+    gap: 10,
+  },
+  statusIconCircleWaiting: {
+    backgroundColor: "#FFEDD5",
+  },
+  statusTextBlock: {
+    flex: 1,
+    gap: 2,
+  },
+
 });

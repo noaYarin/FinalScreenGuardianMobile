@@ -261,7 +261,7 @@ export default function StoreScreen() {
               <EmptyStateCard
                 icon="gift-outline"
                 title="No rewards yet"
-                subtitle="There are no available rewards right now. Check again after your parent adds new rewards."
+                subtitle="There are no available rewards right now."
               />
             ) : (
               rewards.map((item) => {

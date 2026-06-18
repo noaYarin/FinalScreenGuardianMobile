@@ -242,7 +242,7 @@ export const styles = StyleSheet.create({
   },
 
   appIconLocked: {
-    backgroundColor: COLORS.redSoft,
+    backgroundColor: "#F1F5F9",
   },
 
   appInfo: {
