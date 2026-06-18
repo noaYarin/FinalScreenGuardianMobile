@@ -14,39 +14,47 @@ export const HomeScreen: React.FC = () => {
     router.replace("/Entering/onboardingRoute");
   };
 
-     return (
+  return (
     <View style={styles.screenRoot}>
       <ScreenLayout scrollable={false}>
         <View style={styles.container}>
-        <View style={styles.heroBlock}>
-          <Image
-            source={require("../../../../assets/images/homeImg.webp")}
-            style={styles.homeImg}
-            contentFit="contain"
-          />
+          <View style={styles.heroBlock}>
+            <Image
+              source={require("../../../../assets/images/homeImg.png")}
+              style={styles.homeImg}
+              contentFit="contain"
+            />
 
-          <AppText weight="extraBold" style={styles.title}>
-            ScreenTime Guardian
-          </AppText>
+            <AppText weight="extraBold" style={styles.title}>
+              <AppText weight="extraBold" style={{ color: "#D99A3D" }}>
+                ScreenTime
+              </AppText>
 
-          <AppText style={styles.subtitle}>
-            Smart screen-time support for families
-          </AppText>
-        </View>
+              {" "}
 
-        <View style={styles.buttonArea}>
-          <TouchableOpacity
-            style={styles.nextButton}
-            onPress={handleStartOnboarding}
-            accessibilityRole="button"
-            accessibilityLabel="Start onboarding"
-            activeOpacity={0.85}
-          >
-            <AppText weight="extraBold" style={styles.buttonText}>
-              Get Started
+              <AppText weight="extraBold" style={{ color: "#67b2eb" }}>
+                Guardian
+              </AppText>
             </AppText>
-          </TouchableOpacity>
-        </View>
+
+            <AppText style={styles.subtitle}>
+              Smart screen-time support for families
+            </AppText>
+          </View>
+
+          <View style={styles.buttonArea}>
+            <TouchableOpacity
+              style={styles.nextButton}
+              onPress={handleStartOnboarding}
+              accessibilityRole="button"
+              accessibilityLabel="Start onboarding"
+              activeOpacity={0.85}
+            >
+              <AppText weight="extraBold" style={styles.buttonText}>
+                Get Started
+              </AppText>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScreenLayout>
     </View>

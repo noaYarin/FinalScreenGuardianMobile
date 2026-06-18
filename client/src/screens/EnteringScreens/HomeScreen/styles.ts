@@ -15,6 +15,7 @@ export const styles = StyleSheet.create({
     paddingTop: 56,
     paddingBottom: 40,
   },
+  
 
   heroBlock: {
     flex: 1,
@@ -23,11 +24,13 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
+  
   homeImg: {
     width: SIZES.width * 0.8,
     height: SIZES.width * 0.8,
     marginBottom: 10,
   },
+  
 
   title: {
     fontSize: 30,
