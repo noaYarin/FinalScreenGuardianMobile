@@ -156,7 +156,56 @@ export async function decideRequest({ parentId, requestId, decision }) {
 
     assertDecision(decision);
 
-    //update only if still pending
+    const existing = await requestDal.findRequestByIdForParent({
+        requestId,
+        parentId
+    });
+
+    if (!existing) {
+        throw new AppError(RequestErrors.REQUEST_NOT_FOUND);
+    }
+
+    if (existing.status !== RequestStatus.PENDING) {
+        throw new AppError(RequestErrors.REQUEST_NOT_PENDING);
+    }
+
+    if (decision === RequestStatus.APPROVED) {
+        const device = await validateDeviceAccess({
+            deviceId: existing.deviceId,
+            parentId,
+            childId: existing.childId
+        });
+
+        const screenTime = device.screenTime;
+
+        const isDailyLimitActive =
+            screenTime?.isLimitEnabled === true &&
+            screenTime?.limitMode === LimitMode.DAILY;
+
+        const requestCreatedAt = new Date(existing.createdAt);
+
+        const lastDailyResetAt = screenTime?.lastDailyResetAt
+            ? new Date(screenTime.lastDailyResetAt)
+            : null;
+
+        const requestIsExpired =
+            !isDailyLimitActive ||
+            (
+                lastDailyResetAt &&
+                requestCreatedAt < lastDailyResetAt
+            );
+
+        if (requestIsExpired) {
+            await requestDal.expireRequestIfPending({
+                requestId,
+                parentId
+            });
+
+            throw new AppError(RequestErrors.REQUEST_EXPIRED);
+        }
+    }
+
+    // Update only if the request is still pending.
     const updated = await requestDal.updateRequestDecisionIfPending({
         requestId,
         parentId,
@@ -216,12 +265,6 @@ export async function decideRequest({ parentId, requestId, decision }) {
         }
 
         return updated;
-    }
-    // If not updated- then why
-    const existing = await requestDal.findRequestByIdForParent({ requestId, parentId });
-
-    if (!existing) {
-        throw new AppError(RequestErrors.REQUEST_NOT_FOUND);
     }
 
     // request exist but not pending

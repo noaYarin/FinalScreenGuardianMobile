@@ -9,7 +9,7 @@ export type ParentExtensionRequest = {
   deviceId: string;
   requestedMinutes: number;
   reason: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  status: "PENDING" | "APPROVED" | "REJECTED" | "EXPIRED";
   createdAt?: string;
   updatedAt?: string;
 };

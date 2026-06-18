@@ -94,10 +94,10 @@ export default function ExtensionRequestsScreen() {
   }, [children, selectedChildId]);
 
   useEffect(() => {
-    children.forEach((child) => {
-      dispatch(fetchDevicesByChild(String(child._id)));
-    });
-  }, [children, dispatch]);
+    if (!selectedChildId) return;
+
+    dispatch(fetchDevicesByChild(selectedChildId));
+  }, [selectedChildId, dispatch]);
 
   useEffect(() => {
     if (!selectedChildId) return;
@@ -160,8 +160,17 @@ export default function ExtensionRequestsScreen() {
       showSuccessToast("The request was approved and extra time was added.");
     } catch (error: any) {
       showErrorToast(
-        error?.message ?? "Could not update the request. Please try again.",
+        typeof error === "string"
+          ? error
+          : "Could not update the request. Please try again.",
         "Error"
+      );
+
+      // Refresh the list because an expired request is no longer pending.
+      await dispatch(
+        fetchPendingRequestsThunk({
+          childId: selectedChildId,
+        })
       );
     }
   };

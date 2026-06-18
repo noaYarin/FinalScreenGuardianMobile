@@ -4,6 +4,7 @@ export const RequestStatus = {
   REJECTED: 'REJECTED',
   CANCELLED: 'CANCELLED',
   COMPLETED: 'COMPLETED',
+  EXPIRED: "EXPIRED"
 };
 
 export const ScreenTimeStatus = {
