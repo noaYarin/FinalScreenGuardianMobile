@@ -58,28 +58,6 @@ const achievementsSeed = [
     xpReward: 30,
   },
 
-  // Not fully implemented yet:
-  // This requires reliable daily screen-time usage tracking and a clear end-of-day/daily-reset check.
-  // Socket exists, but the achievement itself should wait until daily usage sync/reset logic is stable.
-  {
-    key: "first_day_under_limit",
-    title: "Balanced Day",
-    description: "Stayed within your daily screen-time limit",
-    icon: "achievement_balanced_day.png",
-    xpReward: 25,
-  },
-
-  // Not implemented yet:
-  // Requires saving daily history or streak data across multiple days.
-  // Socket can update the UI after unlock, but the backend still needs stable multi-day tracking.
-  {
-    key: "three_days_under_limit",
-    title: "Balance Builder",
-    description: "Stayed within the daily limit for 3 days",
-    icon: "achievement_balance_builder.png",
-    xpReward: 40,
-  },
-
   // Implemented flow:
   // Can be unlocked when the child sends the first screen-time extension request.
   // The request action already happens through the app, and socket can update parent/child state live.
@@ -91,7 +69,6 @@ const achievementsSeed = [
     xpReward: 15,
   },
 
-  // Partially implemented / depends on weekly goals feature:
   // Can be unlocked if weekly goals are actually created and completed in the system.
   // Socket can be used to update the UI after completion, but this depends on the goal flow being connected.
   {
@@ -102,8 +79,6 @@ const achievementsSeed = [
     xpReward: 30,
   },
 
-  // Not implemented yet:
-  // Requires full weekly-goals tracking and a reliable weekly summary/check.
   // Socket can notify the app after unlock, but the backend still needs the weekly completion logic.
   {
     key: "all_goals_completed",

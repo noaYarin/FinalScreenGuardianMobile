@@ -13,5 +13,6 @@ export async function findAuditLogsByParent({ parentId, childId }) {
 
   return AuditLogModel.find(filter)
     .sort({ createdAt: -1 })
+    .limit(30)
     .lean();
 }
