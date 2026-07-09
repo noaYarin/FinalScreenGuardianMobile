@@ -315,13 +315,19 @@ function buildCurrentStatus(device) {
 // Builds the minimal policy payload sent to the child device for real-time enforcement updates
 function buildPolicyPayload(device) {
   return {
+    deviceId: String(device._id),
+    childId: String(device.childId),
+    parentId: String(device.parentId),
+
     isLocked: device.isLocked ?? false,
+
     lockState: {
       manualLockEnabled: device.manualLockEnabled ?? false,
       dailyLimitLockActive: device.dailyLimitLockActive ?? false,
       weeklyLimitLockActive: device.weeklyLimitLockActive ?? false,
-      scheduleLockActive: device.scheduleLockActive ?? false
+      scheduleLockActive: device.scheduleLockActive ?? false,
     },
+
     screenTime: {
       isLimitEnabled: device.screenTime?.isLimitEnabled ?? false,
       dailyLimitMinutes: Number(device.screenTime?.dailyLimitMinutes ?? 0),
@@ -332,6 +338,7 @@ function buildPolicyPayload(device) {
       usedWeekMinutes: Number(device.screenTime?.usedWeekMinutes ?? 0),
       weeklySchedule: device.screenTime?.weeklySchedule ?? [],
     },
+
     applications: (device.applications ?? []).map((app) => ({
       packageName: app.packageName,
       name: app.name,
@@ -341,9 +348,10 @@ function buildPolicyPayload(device) {
 }
 
 // Sends a real-time policy update to the linked child room after a policy-related device change
+// Sends a real-time policy update to the specific child device room
 export function pushPolicyUpdate(device) {
-  if (!device?.childId) return;
-  emitPolicyUpdated(String(device.childId), buildPolicyPayload(device));
+  if (!device?._id) return;
+  emitPolicyUpdated(String(device._id), buildPolicyPayload(device));
 }
 
 
@@ -908,14 +916,14 @@ export async function deleteDeviceForParent(parentId, childId, deviceId) {
 
   const io = getIO();
 
-  if (io) {
-    io.to(`child_${String(childId)}`).emit(FORCE_CHILD_LOGOUT, {
-      deviceId: String(deviceId),
-      reason: "DEVICE_DELETED",
-      message: "This device has been disconnected by the parent."
-    });
-  }
-
+if (io) {
+  io.to(`device_${String(deviceId)}`).emit(FORCE_CHILD_LOGOUT, {
+    deviceId: String(deviceId),
+    childId: String(childId),
+    reason: "DEVICE_DELETED",
+    message: "This device has been disconnected by the parent."
+  });
+}
 
   await deleteDeviceById(deviceId);
 
