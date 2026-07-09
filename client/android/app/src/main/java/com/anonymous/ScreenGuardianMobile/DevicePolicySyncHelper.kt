@@ -21,95 +21,111 @@ object DevicePolicySyncHelper {
     /**
      * Applies policy data from the backend payload into PolicyStore.
      *
-     * This method is shared by:
+     * Shared by:
      * - HTTP policy sync
-     * - future socket-based policy updates
-     * Important:
-     * If the device was removed while it was offline, the server will no longer
-     * return a valid policy for it. In that case, fetchAndSavePolicy detects a
-     * permanent device-removal response and clears the local managed state
-     * instead of keeping stale policy values.
+     * - Socket policy updates
+     *
+     * Safety:
+     * If the payload contains deviceId and it does not match this device,
+     * the policy is ignored.
      */
-   fun applyPolicyData(context: Context, data: JSONObject) {
-   val screenTime = data.optJSONObject("screenTime") ?: JSONObject()
-val lockState = data.optJSONObject("lockState") ?: JSONObject()
+    fun applyPolicyData(context: Context, data: JSONObject) {
+        val currentDeviceId = PolicyStore.getDeviceId(context)
+        val payloadDeviceId = data.optString("deviceId", "")
 
-val isLocked = data.optBoolean("isLocked", false)
-val isLimitEnabled = screenTime.optBoolean("isLimitEnabled", false)
-
-val limitMode = screenTime.optString(
-    "limitMode",
-    PolicyStore.LIMIT_MODE_NONE
-)
-
-val manualLockEnabled = lockState.optBoolean("manualLockEnabled", false)
-val dailyLimitLockActive = lockState.optBoolean("dailyLimitLockActive", false)
-val weeklyLimitLockActive = lockState.optBoolean("weeklyLimitLockActive", false)
-val scheduleLockActive = lockState.optBoolean("scheduleLockActive", false)
-
-val dailyLimitMinutesRaw = screenTime.optInt("dailyLimitMinutes", 0)
-    val dailyLimitMinutes = max(0, min(dailyLimitMinutesRaw, MAX_MINUTES_PER_DAY))
-
-    val extraMinutesRaw = screenTime.optInt("extraMinutesToday", 0)
-    val extraMinutesToday = max(0, min(extraMinutesRaw, MAX_MINUTES_PER_DAY))
-
-    val weeklyLimitMinutesRaw = screenTime.optInt("weeklyLimitMinutes", 0)
-    val weeklyLimitMinutes = max(0, weeklyLimitMinutesRaw)
-
-    val usedWeekMinutesRaw = screenTime.optInt("usedWeekMinutes", 0)
-    val usedWeekMinutes = max(0, usedWeekMinutesRaw)
-
-    val weeklySchedule = screenTime.optJSONArray("weeklySchedule") ?: JSONArray()
-
-    val blockedApps = mutableListOf<String>()
-    val applications = data.optJSONArray("applications") ?: JSONArray()
-
-    for (i in 0 until applications.length()) {
-        val app = applications.optJSONObject(i) ?: continue
-        val packageName = app.optString("packageName", "")
-        val isBlocked = app.optBoolean("isBlocked", false)
-
-        if (packageName.isNotBlank() && isBlocked) {
-            blockedApps.add(packageName)
+        if (
+            !currentDeviceId.isNullOrBlank() &&
+            payloadDeviceId.isNotBlank() &&
+            payloadDeviceId != currentDeviceId
+        ) {
+            Log.d(
+                TAG,
+                "Ignoring policy for another device. payloadDeviceId=$payloadDeviceId currentDeviceId=$currentDeviceId"
+            )
+            return
         }
+
+        val screenTime = data.optJSONObject("screenTime") ?: JSONObject()
+        val lockState = data.optJSONObject("lockState") ?: JSONObject()
+
+        val isLocked = data.optBoolean("isLocked", false)
+        val isLimitEnabled = screenTime.optBoolean("isLimitEnabled", false)
+
+        val limitMode = screenTime.optString(
+            "limitMode",
+            PolicyStore.LIMIT_MODE_NONE
+        )
+
+        val manualLockEnabled = lockState.optBoolean("manualLockEnabled", false)
+        val dailyLimitLockActive = lockState.optBoolean("dailyLimitLockActive", false)
+        val weeklyLimitLockActive = lockState.optBoolean("weeklyLimitLockActive", false)
+        val scheduleLockActive = lockState.optBoolean("scheduleLockActive", false)
+
+        val dailyLimitMinutesRaw = screenTime.optInt("dailyLimitMinutes", 0)
+        val dailyLimitMinutes = max(0, min(dailyLimitMinutesRaw, MAX_MINUTES_PER_DAY))
+
+        val extraMinutesRaw = screenTime.optInt("extraMinutesToday", 0)
+        val extraMinutesToday = max(0, min(extraMinutesRaw, MAX_MINUTES_PER_DAY))
+
+        val weeklyLimitMinutesRaw = screenTime.optInt("weeklyLimitMinutes", 0)
+        val weeklyLimitMinutes = max(0, weeklyLimitMinutesRaw)
+
+        val usedWeekMinutesRaw = screenTime.optInt("usedWeekMinutes", 0)
+        val usedWeekMinutes = max(0, usedWeekMinutesRaw)
+
+        val weeklySchedule = screenTime.optJSONArray("weeklySchedule") ?: JSONArray()
+
+        val blockedApps = mutableListOf<String>()
+        val applications = data.optJSONArray("applications") ?: JSONArray()
+
+        for (i in 0 until applications.length()) {
+            val app = applications.optJSONObject(i) ?: continue
+            val packageName = app.optString("packageName", "")
+            val isBlocked = app.optBoolean("isBlocked", false)
+
+            if (packageName.isNotBlank() && isBlocked) {
+                blockedApps.add(packageName)
+            }
+        }
+
+        PolicyStore.setServerLocked(context, isLocked)
+
+        PolicyStore.setManualLockEnabled(context, manualLockEnabled)
+        PolicyStore.setDailyLimitLockActive(context, dailyLimitLockActive)
+        PolicyStore.setWeeklyLimitLockActive(context, weeklyLimitLockActive)
+        PolicyStore.setScheduleLockActive(context, scheduleLockActive)
+
+        PolicyStore.setLimitEnabled(context, isLimitEnabled)
+        PolicyStore.setLimitMode(context, limitMode)
+        PolicyStore.setDailyLimit(context, dailyLimitMinutes)
+        PolicyStore.setExtraMinutes(context, extraMinutesToday)
+        PolicyStore.setWeeklyLimit(context, weeklyLimitMinutes)
+        PolicyStore.setUsedWeek(context, usedWeekMinutes)
+        PolicyStore.setWeeklySchedule(context, weeklySchedule)
+
+        PolicyStore.setBlockedApps(context, blockedApps)
+
+        val shouldLock = PolicyStore.shouldLockDevice(context)
+        val blockReason = PolicyStore.resolveBlockReason(context)
+
+        if (shouldLock && blockReason.isNotBlank()) {
+            PolicyStore.setBlockReason(context, blockReason)
+        } else {
+            PolicyStore.clearBlockReason(context)
+        }
+
+        Log.d(
+            TAG,
+            "Policy applied: deviceId=$payloadDeviceId locked=$isLocked limitEnabled=$isLimitEnabled mode=$limitMode daily=$dailyLimitMinutes extra=$extraMinutesToday weekly=$weeklyLimitMinutes usedWeek=$usedWeekMinutes scheduleDays=${weeklySchedule.length()} manualLock=$manualLockEnabled dailyLock=$dailyLimitLockActive weeklyLock=$weeklyLimitLockActive scheduleLock=$scheduleLockActive blockedApps=${blockedApps.size}"
+        )
     }
-PolicyStore.setServerLocked(context, isLocked)
-
-PolicyStore.setManualLockEnabled(context, manualLockEnabled)
-PolicyStore.setDailyLimitLockActive(context, dailyLimitLockActive)
-PolicyStore.setWeeklyLimitLockActive(context, weeklyLimitLockActive)
-PolicyStore.setScheduleLockActive(context, scheduleLockActive)
-
-PolicyStore.setLimitEnabled(context, isLimitEnabled)
-PolicyStore.setLimitMode(context, limitMode)
-PolicyStore.setDailyLimit(context, dailyLimitMinutes)
-PolicyStore.setExtraMinutes(context, extraMinutesToday)
-PolicyStore.setWeeklyLimit(context, weeklyLimitMinutes)
-PolicyStore.setUsedWeek(context, usedWeekMinutes)
-PolicyStore.setWeeklySchedule(context, weeklySchedule)
-
-PolicyStore.setBlockedApps(context, blockedApps)
-
-val shouldLock = PolicyStore.shouldLockDevice(context)
-val blockReason = PolicyStore.resolveBlockReason(context)
-
-if (shouldLock && blockReason.isNotBlank()) {
-    PolicyStore.setBlockReason(context, blockReason)
-} else {
-    PolicyStore.clearBlockReason(context)
-}
-
-Log.d(
-    TAG,
-"Policy applied: locked=$isLocked limitEnabled=$isLimitEnabled mode=$limitMode daily=$dailyLimitMinutes extra=$extraMinutesToday weekly=$weeklyLimitMinutes usedWeek=$usedWeekMinutes scheduleDays=${weeklySchedule.length()} manualLock=$manualLockEnabled dailyLock=$dailyLimitLockActive weeklyLock=$weeklyLimitLockActive scheduleLock=$scheduleLockActive blockedApps=${blockedApps.size}")
-}
 
     fun fetchAndSavePolicy(
         context: Context,
         onFinished: (() -> Unit)? = null
     ) {
         val baseUrl = PolicyStore.getHeartbeatBaseUrl(context)
-        val deviceId = PolicyStore.getHeartbeatDeviceId(context)
+        val deviceId = PolicyStore.getDeviceId(context)
         val token = PolicyStore.getHeartbeatToken(context)
 
         if (baseUrl.isNullOrBlank() || deviceId.isNullOrBlank() || token.isNullOrBlank()) {
@@ -164,26 +180,6 @@ Log.d(
         }.start()
     }
 
-    /**
-     * Returns true only for permanent backend responses that mean this device
-     * is no longer managed and should clear its local policy/session state.
-     *
-     * We intentionally do NOT treat general failures as deletion:
-     * - network loss
-     * - timeout
-     * - 5xx server errors
-     * - temporary backend issues
-     *
-     * Only explicit device-management errors should trigger a local reset.
-     * The backend returns errors in this shape:
-     * {
-     *   "ok": false,
-     *   "error": {
-     *     "code": "...",
-     *     "message": "..."
-     *   }
-     * }
-     */
     private fun isPermanentDeviceRemoval(responseCode: Int, responseBody: String): Boolean {
         if (responseCode != 400 && responseCode != 404) {
             return false
@@ -196,18 +192,11 @@ Log.d(
 
             errorCode == "DEVICE_NOT_FOUND" ||
                 errorCode == "DEVICE_NOT_ACTIVE"
-                    } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
 
-    /**
-     * Clears all locally stored managed-device state after the server confirms
-     * that this device is no longer linked or managed.
-     *
-     * This prevents the native layer from continuing to enforce an old cached
-     * policy after the device was deleted or unpaired on the backend.
-     */
     private fun clearLocalManagedState(context: Context) {
         PolicyStore.clearAll(context)
         DeviceServerSyncHelper.clearSessionCache()
@@ -240,7 +229,7 @@ Log.d(
                     reader.readText()
                 }
             } ?: ""
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             "Failed to read response"
         }
     }
