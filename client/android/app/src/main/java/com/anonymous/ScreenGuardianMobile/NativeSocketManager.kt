@@ -9,44 +9,17 @@ import org.json.JSONObject
 /**
  * NativeSocketManager
  *
- * This object is responsible for managing the native Socket.IO connection
- * on the Android side for the child device.
+ * Manages the native Socket.IO connection on the Android child device.
  *
  * Main responsibilities:
- * - Create and maintain a single socket connection
- * - Join the correct child room on the backend
- * - Listen for real-time policy updates from the server
- * - Listen for forced logout / device removal events
- * - Apply incoming policy updates to PolicyStore
- * - Trigger a callback so the service can immediately re-evaluate lock state
- *
- * Why this exists:
- * - HTTP policy sync is still kept as a fallback
- * - Socket allows important policy changes to arrive in real time
- *   without waiting for the next polling cycle
- *
- * Expected server-side events:
- * - "POLICY_UPDATED"
- *   Sent when the parent changes something that affects enforcement
- *   (lock/unlock, daily limit, extra minutes, blocked apps, etc.)
- *
- * - "FORCE_CHILD_LOGOUT"
- *   Sent when the child device should be disconnected or cleared
- *   (for example after device deletion / unlink)
- *
- * How it works:
- * 1. Reads baseUrl, childId, and parentId from PolicyStore
- * 2. Opens a socket connection if needed
- * 3. Emits JOIN_CHILD when connected
- * 4. Applies policy updates when POLICY_UPDATED arrives
- * 5. Clears local state when FORCE_CHILD_LOGOUT arrives
- *
- * Notes:
- * - This manager keeps only one socket instance at a time
- * - If already connected for the same child, it does nothing
- * - Reconnection is enabled through Socket.IO options
- * - This object does not calculate usage and does not enforce lock by itself
- *   It only updates local policy and notifies the caller
+ * - Create and maintain one socket connection.
+ * - Join both:
+ *   1. child room for general child-level events.
+ *   2. device room for device-specific policy events.
+ * - Listen for real-time policy updates from the server.
+ * - Listen for forced logout / device removal events.
+ * - Apply incoming policy updates only if they belong to this specific device.
+ * - Trigger a callback so the AccessibilityService can re-evaluate lock state.
  */
 object NativeSocketManager {
 
@@ -55,18 +28,12 @@ object NativeSocketManager {
     // Single active socket instance
     private var socket: Socket? = null
 
-    // Tracks which child this socket is currently bound to
+    // Tracks which child/device this socket is currently bound to
     private var boundChildId: String? = null
+    private var boundDeviceId: String? = null
 
     /**
-     * Ensures the socket is connected for the current child.
-     *
-     * If already connected for the same childId, nothing happens.
-     * Otherwise, disconnects the previous socket (if any),
-     * creates a new connection, and registers event listeners.
-     *
-     * @param context Used to read saved config from PolicyStore
-     * @param onPolicyUpdated Optional callback invoked after policy changes arrive
+     * Ensures the socket is connected for the current child device.
      */
     fun ensureConnected(
         context: Context,
@@ -75,9 +42,14 @@ object NativeSocketManager {
         val baseUrl = PolicyStore.getHeartbeatBaseUrl(context) ?: return
         val childId = PolicyStore.getChildId(context) ?: return
         val parentId = PolicyStore.getParentId(context) ?: return
+        val deviceId = PolicyStore.getDeviceId(context) ?: return
 
-        // Already connected for this child -> nothing to do
-        if (socket?.connected() == true && boundChildId == childId) {
+        // Already connected for this exact child + device -> nothing to do
+        if (
+            socket?.connected() == true &&
+            boundChildId == childId &&
+            boundDeviceId == deviceId
+        ) {
             return
         }
 
@@ -91,29 +63,50 @@ object NativeSocketManager {
                 .build()
 
             socket = IO.socket(baseUrl.trimEnd('/'), options)
-            boundChildId = childId
 
-            // When socket connects, join the child room on the backend
+            boundChildId = childId
+            boundDeviceId = deviceId
+
+            // When socket connects, join the device room on the backend.
+            // The backend may also add this socket to child room for general events.
             socket?.on(Socket.EVENT_CONNECT) {
                 Log.d(TAG, "Socket connected")
 
                 val payload = JSONObject().apply {
                     put("childId", childId)
                     put("parentId", parentId)
+                    put("deviceId", deviceId)
                 }
 
-                socket?.emit("JOIN_CHILD", payload)
+                socket?.emit("JOIN_DEVICE", payload)
+
+                Log.d(
+                    TAG,
+                    "JOIN_DEVICE emitted childId=$childId parentId=$parentId deviceId=$deviceId"
+                )
             }
 
-            // Real-time policy update from server
+            // Real-time policy update from server.
+            // Important:
+            // Even if the server accidentally sends a policy to the child room,
+            // this device ignores policies that belong to another deviceId.
             socket?.on("POLICY_UPDATED") { args ->
                 try {
                     val payload = args.firstOrNull() as? JSONObject ?: return@on
 
-                    // Save incoming policy into local PolicyStore
+                    val currentDeviceId = PolicyStore.getDeviceId(context) ?: return@on
+                    val payloadDeviceId = payload.optString("deviceId", "")
+
+                    if (payloadDeviceId.isNotBlank() && payloadDeviceId != currentDeviceId) {
+                        Log.d(
+                            TAG,
+                            "Ignoring POLICY_UPDATED for another device. payloadDeviceId=$payloadDeviceId currentDeviceId=$currentDeviceId"
+                        )
+                        return@on
+                    }
+
                     DevicePolicySyncHelper.applyPolicyData(context, payload)
 
-                    // Notify caller so it can re-evaluate lock immediately
                     onPolicyUpdated?.invoke()
 
                 } catch (e: Exception) {
@@ -121,21 +114,44 @@ object NativeSocketManager {
                 }
             }
 
-            // Forced logout / device unlink event
-            socket?.on("FORCE_CHILD_LOGOUT") {
+            // Forced logout / device unlink event.
+            // If deviceId exists in payload, only the matching device should clear state.
+            socket?.on("FORCE_CHILD_LOGOUT") { args ->
                 try {
-                    // Clear all locally cached policy/session state
+                    val payload = args.firstOrNull() as? JSONObject
+
+                    val currentDeviceId = PolicyStore.getDeviceId(context)
+                    val payloadDeviceId = payload?.optString("deviceId", "") ?: ""
+
+                    if (
+                        !currentDeviceId.isNullOrBlank() &&
+                        payloadDeviceId.isNotBlank() &&
+                        payloadDeviceId != currentDeviceId
+                    ) {
+                        Log.d(
+                            TAG,
+                            "Ignoring FORCE_CHILD_LOGOUT for another device. payloadDeviceId=$payloadDeviceId currentDeviceId=$currentDeviceId"
+                        )
+                        return@on
+                    }
+
                     PolicyStore.clearAll(context)
 
-                    // Clear local usage sync cache as well
                     DeviceServerSyncHelper.clearSessionCache()
 
-                    // Notify caller so it can react immediately
                     onPolicyUpdated?.invoke()
 
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to handle FORCE_CHILD_LOGOUT", e)
                 }
+            }
+
+            socket?.on(Socket.EVENT_DISCONNECT) {
+                Log.d(TAG, "Socket disconnected")
+            }
+
+            socket?.on(Socket.EVENT_CONNECT_ERROR) { args ->
+                Log.e(TAG, "Socket connect error: ${args.joinToString()}")
             }
 
             socket?.connect()
@@ -157,6 +173,7 @@ object NativeSocketManager {
         } finally {
             socket = null
             boundChildId = null
+            boundDeviceId = null
         }
     }
 

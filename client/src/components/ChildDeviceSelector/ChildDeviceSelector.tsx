@@ -52,26 +52,54 @@ export default function ChildDeviceSelector({
     return 170;
   }, [width]);
 
+  const getNormalizedDeviceType = (device: any): DeviceType => {
+    const rawType =
+      device?.type ??
+      device?.deviceType ??
+      device?.formFactor ??
+      device?.kind ??
+      "";
+
+    const normalized = String(rawType).trim().toLowerCase();
+
+    if (
+      normalized === "tablet" ||
+      normalized === "tablets" ||
+      normalized === "tab" ||
+      normalized === "pad"
+    ) {
+      return "tablet";
+    }
+
+    return "phone";
+  };
+
   const getFallbackDeviceName = (device: any) => {
-    const rawName = device?.deviceName || device?.model|| device?.name || "";
+    const rawName = device?.deviceName || device?.model || device?.name || "";
     const trimmedName = String(rawName).trim();
 
     if (trimmedName.length > 0) {
       return trimmedName;
     }
 
-    return device?.type === "tablet" ? "Tablet device" : "Phone device";
+    return getNormalizedDeviceType(device) === "tablet"
+      ? "Tablet device"
+      : "Phone device";
   };
 
   const currentChildDevices = useMemo(() => {
     const rawDevices = devicesByChild[selectedChildId] || [];
 
-    const mapped: ChildDevice[] = rawDevices.map((d: any) => ({
-      id: d.deviceId || d._id,
-      name: getFallbackDeviceName(d),
-      type: d.type === "tablet" ? "tablet" : "phone",
-      icon: d.type === "tablet" ? "tablet" : "phone",
-    }));
+    const mapped: ChildDevice[] = rawDevices.map((d: any) => {
+      const deviceType = getNormalizedDeviceType(d);
+
+      return {
+        id: d.deviceId || d._id,
+        name: getFallbackDeviceName(d),
+        type: deviceType,
+        icon: deviceType === "tablet" ? "tablet" : "phone",
+      };
+    });
 
     if (includeAllDevicesOption && mapped.length > 0) {
       const allOption: ChildDevice = {
@@ -97,6 +125,7 @@ export default function ChildDeviceSelector({
     if (deviceSectionTitleKey === "childDeviceSelector.devicesSectionTitle") {
       return "Select Device";
     }
+
     return "Devices";
   };
 
@@ -138,7 +167,10 @@ export default function ChildDeviceSelector({
                     }
                     style={({ pressed }) => [
                       styles.deviceChip,
-                      { minWidth: computedDeviceChipWidth, flexDirection: "row" },
+                      {
+                        minWidth: computedDeviceChipWidth,
+                        flexDirection: "row",
+                      },
                       isSelected && styles.deviceChipSelected,
                       pressed ? styles.pressed : null,
                     ]}
