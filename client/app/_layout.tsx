@@ -121,7 +121,14 @@ function AppStack() {
     connectSocket(
       String(activeChildId),
       "child",
-      parentId ? { parentId: String(parentId) } : undefined
+      parentId && myCurrentDeviceId
+        ? {
+          parentId: String(parentId),
+          deviceId: String(myCurrentDeviceId),
+        }
+        : parentId
+          ? { parentId: String(parentId) }
+          : undefined
     );
 
     const unsubscribeForceLogout = onEvent(
@@ -129,7 +136,11 @@ function AppStack() {
       async (data: any) => {
         const targetDeviceId = data?.deviceId;
 
-        if (targetDeviceId && targetDeviceId !== myCurrentDeviceId) {
+        if (
+          targetDeviceId &&
+          myCurrentDeviceId &&
+          String(targetDeviceId) !== String(myCurrentDeviceId)
+        ) {
           return;
         }
 

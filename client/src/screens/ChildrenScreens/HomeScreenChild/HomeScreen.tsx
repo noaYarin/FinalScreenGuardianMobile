@@ -122,46 +122,46 @@ const AVATAR_INFO_SLIDES: {
   iconBgColor: string;
   iconColor: string;
 }[] = [
-  {
-    icon: "trophy-outline",
-    title: "Achievements",
-    description:
-      "Check your achievements to earn XP and celebrate your progress.",
-    bgColor: "#FFF7ED",
-    borderColor: "#FED7AA",
-    iconBgColor: "#FFE8C2",
-    iconColor: "#B45309",
-  },
-  {
-    icon: "star-circle",
-    title: "XP",
-    description:
-      "XP helps your avatar level up as you complete goals and unlock achievements.",
-    bgColor: "#EEF4FF",
-    borderColor: "#CFE3FF",
-    iconBgColor: "#DBEAFE",
-    iconColor: "#2563EB",
-  },
-  {
-    icon: "trending-up",
-    title: "Levels",
-    description:
-      "The more XP you collect, the higher your avatar level becomes.",
-    bgColor: "#F3EDFF",
-    borderColor: "#E0D2FF",
-    iconBgColor: "#E9D5FF",
-    iconColor: "#6D28D9",
-  },
-  {
-    icon: "palette-outline",
-    title: "Avatar stages",
-    description: "At special levels, your avatar grows and gets a new look.",
-    bgColor: "#EEFFF4",
-    borderColor: "#CFF7DD",
-    iconBgColor: "#DCFCE7",
-    iconColor: "#16A34A",
-  },
-];
+    {
+      icon: "trophy-outline",
+      title: "Achievements",
+      description:
+        "Check your achievements to earn XP and celebrate your progress.",
+      bgColor: "#FFF7ED",
+      borderColor: "#FED7AA",
+      iconBgColor: "#FFE8C2",
+      iconColor: "#B45309",
+    },
+    {
+      icon: "star-circle",
+      title: "XP",
+      description:
+        "XP helps your avatar level up as you complete goals and unlock achievements.",
+      bgColor: "#EEF4FF",
+      borderColor: "#CFE3FF",
+      iconBgColor: "#DBEAFE",
+      iconColor: "#2563EB",
+    },
+    {
+      icon: "trending-up",
+      title: "Levels",
+      description:
+        "The more XP you collect, the higher your avatar level becomes.",
+      bgColor: "#F3EDFF",
+      borderColor: "#E0D2FF",
+      iconBgColor: "#E9D5FF",
+      iconColor: "#6D28D9",
+    },
+    {
+      icon: "palette-outline",
+      title: "Avatar stages",
+      description: "At special levels, your avatar grows and gets a new look.",
+      bgColor: "#EEFFF4",
+      borderColor: "#CFF7DD",
+      iconBgColor: "#DCFCE7",
+      iconColor: "#16A34A",
+    },
+  ];
 
 export default function HomeScreen() {
   const params = useLocalSearchParams<{ initialName?: string }>();
@@ -311,7 +311,14 @@ export default function HomeScreen() {
     connectSocket(
       String(activeChildId),
       "child",
-      parentId ? { parentId: String(parentId) } : undefined
+      parentId && deviceId
+        ? {
+          parentId: String(parentId),
+          deviceId: String(deviceId),
+        }
+        : parentId
+          ? { parentId: String(parentId) }
+          : undefined
     );
 
     const unsubscribe = onEvent(REQUEST_CHILD_LOCATION, (data) => {
@@ -321,7 +328,7 @@ export default function HomeScreen() {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [activeChildId, parentId]);
+  }, [activeChildId, parentId, deviceId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -841,7 +848,7 @@ export default function HomeScreen() {
               style={styles.avatarModalOverlay}
               onPress={() => setAvatarInfoVisible(false)}
             >
-              <Pressable style={styles.avatarInfoCard} onPress={() => {}}>
+              <Pressable style={styles.avatarInfoCard} onPress={() => { }}>
                 <View style={styles.avatarInfoImageWrap}>
                   <Image
                     source={homeAvatarImage}

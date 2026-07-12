@@ -434,7 +434,6 @@ function buildDeviceStatusPayload(device) {
     weeklyLimitMinutes,
     extraMinutesToday,
     remainingMinutes,
-
     lastSeenAt: device.lastSeenAt ?? null,
     accessibilityEnabled: device.accessibilityEnabled ?? null,
     usageAccessEnabled: device.usageAccessEnabled ?? null

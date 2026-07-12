@@ -31,13 +31,23 @@ const parentHomeSlice = createSlice({
       state,
       action: PayloadAction<Partial<HomeSummaryChild> & { childId: string }>
     ) => {
-      const { childId } = action.payload;
+      const { childId, deviceId } = action.payload;
 
       const idx = state.childrenSummary.findIndex(
         (child) => String(child.childId) === String(childId)
       );
 
       if (idx < 0) return;
+
+      const currentDeviceId = state.childrenSummary[idx].deviceId;
+
+      if (
+        currentDeviceId &&
+        deviceId &&
+        String(currentDeviceId) !== String(deviceId)
+      ) {
+        return;
+      }
 
       state.childrenSummary[idx] = {
         ...state.childrenSummary[idx],

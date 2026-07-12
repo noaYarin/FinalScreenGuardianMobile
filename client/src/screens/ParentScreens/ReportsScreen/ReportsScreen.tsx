@@ -168,9 +168,9 @@ export default function ParentReportsScreen() {
         dispatch(fetchDevicesByChild(effectiveChildId)).unwrap(),
         dispatch(fetchParentHomeSummaryThunk()).unwrap(),
       ]);
-    } catch {
-      showErrorToast("Could not load reports");
-      setLoadError("Could not load reports");
+    } catch (error) {
+      console.log("Reports prefetch failed:", error);
+
     }
 
     if (!selectedDeviceId) {
@@ -185,6 +185,7 @@ export default function ParentReportsScreen() {
         selectedDeviceId
       );
       setUsageReport(report);
+      setLoadError(null);
     } catch (error) {
       const state = store.getState();
       const fallback = buildFallbackReport(
@@ -195,9 +196,11 @@ export default function ParentReportsScreen() {
       if (fallback?.hasLinkedDevice) {
         setUsageReport(fallback);
       } else {
-        setLoadError(
-          error instanceof Error ? error.message : "Could not load reports"
-        );
+        const message =
+          error instanceof Error ? error.message : "Could not load reports";
+
+        setLoadError(message);
+        showErrorToast("Could not load reports");
       }
     } finally {
       setIsReportLoading(false);
