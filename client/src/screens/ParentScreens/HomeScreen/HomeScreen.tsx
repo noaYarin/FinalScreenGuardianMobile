@@ -152,9 +152,11 @@ export default function HomeParentScreen() {
   const childCards: ChildCard[] = useMemo(() => {
     return children.map((child) => {
       const dailyLimitWithExtra =
-        child.dailyLimitMinutes == null
-          ? null
-          : Number(child.dailyLimitMinutes) + Number(child.extraMinutesToday ?? 0);
+        child.limitMinutes != null
+          ? Number(child.limitMinutes)
+          : child.dailyLimitMinutes == null
+            ? null
+            : Number(child.dailyLimitMinutes) + Number(child.extraMinutesToday ?? 0);
 
       return {
         id: String(child.childId),
